@@ -1,0 +1,4 @@
+cassbernate
+===========
+
+Hibernate Cassandra integration
