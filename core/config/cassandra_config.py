@@ -1,4 +1,4 @@
 class CassandraConfig(object):
     def __init__(self):
-        self.nodes = []
+        self.contact_points = []
         self.keyspace = ''

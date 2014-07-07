@@ -1,3 +1,0 @@
-class SessionFactory(object):
-    pass
-
