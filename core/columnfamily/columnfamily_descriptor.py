@@ -7,14 +7,16 @@ class ColumnfamilyDescriptor(object):
 
 
 class ColumnDescriptor(object):
-    def __init__(self, name=None, type=None):
+    def __init__(self, name=None, data_type=None):
         self.name = ''
 
         if name is not None:
             self.name = name
 
-        if type is not None:
-            self.type = type
+        self.data_type = ''
+
+        if data_type is not None:
+            self.data_type = data_type
 
     def __str__(self):
-        return "{0} {1}".format(self.name, self.type)
+        return "{0} {1}".format(self.name, self.data_type)
