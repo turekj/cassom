@@ -6,8 +6,7 @@ class KeyspaceManager(object):
         session.execute(self._create_keyspace_str(keyspace_settings))
 
     def check_keyspace_exists(self, session, name):
-        session.execute("USE SYSTEM;")
-        result = session.execute("SELECT * FROM schema_keyspaces WHERE keyspace_name = '{0}';".format(name))
+        result = session.execute("SELECT * FROM SYSTEM.schema_keyspaces WHERE keyspace_name = '{0}';".format(name))
         return len(result) > 0
 
     def drop_keyspace(self, session, name):
