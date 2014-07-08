@@ -2,6 +2,7 @@ from inspect import getmembers
 from core.columnfamily.columnfamily_descriptor import ColumnfamilyDescriptor, ColumnDescriptor
 from core.field.field import Field
 from core.model.model import Model
+from utilities.string.string_utilities import StringUtilities
 
 
 class DescriptorFactory(object):
@@ -11,7 +12,7 @@ class DescriptorFactory(object):
     def create_descriptor(self, model):
         if isinstance(model, Model):
             descriptor = ColumnfamilyDescriptor()
-            descriptor.name = type(model).__name__
+            descriptor.name = StringUtilities.convert_to_underscore(type(model).__name__)
 
             fields = dir(model)
 

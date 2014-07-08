@@ -11,7 +11,7 @@ class TestDescriptorFactory(TestCase):
 
         descriptor = descriptor_factory.create_descriptor(test_model)
 
-        self.assertEqual('TestModel', descriptor.name)
+        self.assertEqual('test_model', descriptor.name)
         self.assertEqual(2, len(descriptor.columns))
         self.assertEqual('id', descriptor.columns[0].name)
         self.assertEqual('uuid', descriptor.columns[0].data_type)
