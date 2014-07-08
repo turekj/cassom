@@ -1,4 +1,4 @@
-from utilities.string.string_utilities import StringUtilities
+from core.model.model_metadata import ModelMetadataFactory
 
 
 class ModelMeta(type):
@@ -8,11 +8,11 @@ class ModelMeta(type):
         if not hasattr(cls, 'registry'):
             cls.registry = {}
         else:
-            cls.registry[StringUtilities.convert_to_underscore(name)] = cls
+            cls.registry[name] = cls
 
 
 class Model(object):
     __metaclass__ = ModelMeta
 
     def __init__(self):
-        pass
+        self.metadata = ModelMetadataFactory().create_model_metadata(self)
