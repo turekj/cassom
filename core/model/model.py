@@ -28,13 +28,15 @@ class Model(object):
         pass
 
     @staticmethod
-    def populate():
-        if Model.engine is None:
+    def bind(engine):
+        if engine is None:
             raise AttributeError('engine is not initialized')
+
+        Model.engine = engine
 
         if not Model.keyspace_manager.check_keyspace_exists(Model.engine, Model.engine.get_keyspace()):
             Model.keyspace_manager.create_keyspace(Model.engine, Model.engine.get_keyspace())
 
-        for metadata in Model.metadata:
-            if not Model.table_manager.check_table_exists(metadata):
-                Model.table_manager.create_table(Model.engine, metadata)
+        for metadata_key in Model.metadata:
+            if not Model.table_manager.check_table_exists(Model.engine, metadata_key):
+                Model.table_manager.create_table(Model.engine, Model.metadata[metadata_key])

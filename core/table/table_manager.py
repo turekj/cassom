@@ -9,7 +9,10 @@ class TableManager(object):
         return len(result) > 0
 
     def create_table(self, engine, metadata):
-        engine.execute_query(self._create_table_str(engine.get_keyspace(), metadata))
+        if len(metadata.primary_key) > 0:
+            engine.execute_query(self._create_table_str(engine.get_keyspace(), metadata))
+        else:
+            raise AttributeError('No primary key defined for model ' + metadata.name)
 
     def _create_table_str(self, keyspace, metadata):
         return self.create_query.format(keyspace,
