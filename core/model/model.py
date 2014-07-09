@@ -1,4 +1,4 @@
-from core.model.model_metadata import ModelMetadataFactory
+from core.model.model_metadata import ModelMetadataFactory, ModelMetadata
 
 
 class ModelMeta(type):
@@ -10,9 +10,14 @@ class ModelMeta(type):
         else:
             cls.registry[name] = cls
 
+        if not hasattr(cls, 'metadata'):
+            cls.metadata = ModelMetadata()
+        else:
+            cls.metadata[name] = ModelMetadataFactory().create_table_metadata(cls)
+
 
 class Model(object):
     __metaclass__ = ModelMeta
 
     def __init__(self):
-        self.metadata = ModelMetadataFactory().create_model_metadata(self)
+        pass

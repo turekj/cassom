@@ -19,3 +19,5 @@ class Follower(Model):
     follower = DenormalizedField(User, ['username'])
     since = TimestampField()
 
+
+Model.metadata.populate()

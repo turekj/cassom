@@ -9,7 +9,7 @@ class TestModelMetadataFactory(TestCase):
         test_model = TestModel()
         model_metadata = ModelMetadataFactory()
 
-        descriptor = model_metadata.create_model_metadata(test_model)
+        descriptor = model_metadata.create_table_metadata(test_model)
 
         self.assertEqual('test_model', descriptor.name)
         self.assertEqual(2, len(descriptor.columns))
