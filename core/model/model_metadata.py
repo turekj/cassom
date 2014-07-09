@@ -12,16 +12,12 @@ class ModelMetadata(object):
     def __setitem__(self, key, value):
         self.table_metadata[key] = value
 
-    def populate(self):
-        for table in self.table_metadata:
-            print 'populating metadata for table %s' % table
-
 
 class TableMetadata(object):
     def __init__(self):
         self.name = ''
         self.columns = {}
-        self.primary_key = ''
+        self.primary_key = []
 
 
 class ModelMetadataFactory(object):

@@ -1,3 +1,5 @@
+from core.keyspace.keyspace_manager import KeyspaceManager
+from core.table.table_manager import TableManager
 from core.model.model_metadata import ModelMetadataFactory, ModelMetadata
 
 
@@ -18,6 +20,21 @@ class ModelMeta(type):
 
 class Model(object):
     __metaclass__ = ModelMeta
+    engine = None
+    keyspace_manager = KeyspaceManager()
+    table_manager = TableManager()
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def populate():
+        if Model.engine is None:
+            raise AttributeError('engine is not initialized')
+
+        if not Model.keyspace_manager.check_keyspace_exists(Model.engine, Model.engine.get_keyspace()):
+            Model.keyspace_manager.create_keyspace(Model.engine, Model.engine.get_keyspace())
+
+        for metadata in Model.metadata:
+            if not Model.table_manager.check_table_exists(metadata):
+                Model.table_manager.create_table(Model.engine, metadata)

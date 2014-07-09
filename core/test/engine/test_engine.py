@@ -11,10 +11,10 @@ class TestEngine(TestCase):
 
         self.assertEqual('127.0.0.1', engine_with_port.configuration.contact_point)
         self.assertEqual(9170, engine_with_port.configuration.port)
-        self.assertEqual('TestKeyspace', engine_with_port.configuration.keyspace_name)
+        self.assertEqual('test_keyspace', engine_with_port.configuration.keyspace_name)
         self.assertEqual('127.0.0.1', engine_without_port.configuration.contact_point)
         self.assertIsNone(engine_without_port.configuration.port)
-        self.assertEqual('TestKeyspace', engine_without_port.configuration.keyspace_name)
+        self.assertEqual('test_keyspace', engine_without_port.configuration.keyspace_name)
 
     def test_execute_query(self):
         engine = Engine.create_engine('cassandra://127.0.0.1/TestKeyspace')
