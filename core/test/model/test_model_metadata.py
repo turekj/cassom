@@ -1,7 +1,5 @@
 from unittest import TestCase
-from core.field.field import Field
 from core.field.fields import IdField, TextField
-from core.model.model import Model
 from core.model.model_metadata import ModelMetadataFactory
 
 

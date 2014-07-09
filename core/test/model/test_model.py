@@ -12,12 +12,17 @@ class TestModel(TestCase):
         Model.bind(engine)
 
         test_model_exists = engine.execute_query(table_test_query.format('test_keyspace', 'example_model'))
-        another_test_model_exists = engine.execute_query(table_test_query.format('test_keyspace', 'another_example_model'))
+        another_test_model_exists = engine.execute_query(
+            table_test_query.format('test_keyspace', 'another_example_model'))
         test_model_id_exists = engine.execute_query(column_test_query.format('test_keyspace', 'example_model', 'id'))
-        test_model_test_text_exists = engine.execute_query(column_test_query.format('test_keyspace', 'example_model', 'test_text'))
-        another_test_model_id_exists = engine.execute_query(column_test_query.format('test_keyspace', 'another_example_model', 'id'))
-        another_test_model_user_exists = engine.execute_query(column_test_query.format('test_keyspace', 'another_example_model', 'user'))
-        another_test_model_password_exists = engine.execute_query(column_test_query.format('test_keyspace', 'another_example_model', 'password'))
+        test_model_test_text_exists = engine.execute_query(
+            column_test_query.format('test_keyspace', 'example_model', 'test_text'))
+        another_test_model_id_exists = engine.execute_query(
+            column_test_query.format('test_keyspace', 'another_example_model', 'id'))
+        another_test_model_user_exists = engine.execute_query(
+            column_test_query.format('test_keyspace', 'another_example_model', 'user'))
+        another_test_model_password_exists = engine.execute_query(
+            column_test_query.format('test_keyspace', 'another_example_model', 'password'))
         engine.execute_query('DROP KEYSPACE test_keyspace;')
 
         self.assertTrue(len(test_model_exists) > 0)
