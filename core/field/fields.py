@@ -2,20 +2,20 @@ from core.field.field import Field
 
 
 class IdField(Field):
-    def field_type(self):
-        return 'uuid'
+    def table_columns(self, field_name):
+        return {field_name: 'uuid'}
 
 
 class TextField(Field):
-    def field_type(self):
-        return 'text'
+    def table_columns(self, field_name):
+        return {field_name: 'text'}
 
 
 class PasswordField(Field):
-    def field_type(self):
-        return 'text'
+    def table_columns(self, field_name):
+        return {field_name: 'text'}
 
 
 class TimestampField(Field):
-    def field_type(self):
-        return 'timestamp'
+    def table_columns(self, field_name):
+        return {field_name: 'timestamp'}

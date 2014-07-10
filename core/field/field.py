@@ -1,12 +1,37 @@
 class Field(object):
-    def __init__(self, primary_key=False):
+    def __init__(self, primary_key=False, primary_key_gravity=-1):
         self.primary_key = primary_key
-
-    def field_type(self):
-        return ''
+        self.primary_key_gravity = primary_key_gravity
 
     def is_primary_key(self):
         if hasattr(self, 'primary_key'):
             return self.primary_key
 
         return False
+
+    def table_columns(self, field_name):
+        """
+        Returns mapping between required table columns names and their types.
+        """
+        return {field_name: ''}
+
+    def primary_keys(self, field_name):
+        """
+        Returns mapping between table column names which should be part of primary key and their gravities.
+        """
+        if self.primary_key:
+            return {field_name: self.primary_key_gravity}
+
+        return {}
+
+    def values_to_persist(self, object_field_values):
+        """
+        Returns mapping between table column names and their values.
+        """
+        return object_field_values
+
+    def model_transformation(self, cls, field_name):
+        """
+        Performs model class transformations between logical and physical model required for this field.
+        """
+        return [field_name]
