@@ -8,9 +8,9 @@ class ModelTransformator(object):
         pass
 
     def transform_model(self, cls):
-        if not (hasattr(cls, 'metadata') and hasattr(cls, 'handlers')):
+        if not (hasattr(cls, 'metadata') and hasattr(cls, 'fields')):
             cls.metadata = ModelMetadata()
-            cls.handlers = []
+            cls.fields = {}
             return
 
         table_name = StringUtilities.convert_to_underscore(cls.__name__)
@@ -22,8 +22,12 @@ class ModelTransformator(object):
             field = getattr(cls, field_name)
             table_columns = dict(table_columns.items() + field.table_columns(field_name).items())
             primary_keys = dict(primary_keys.items() + field.primary_keys(field_name).items())
-            fields_after_transform = field.model_transformation(cls, field_name)
-            cls.handlers.append((fields_after_transform, field))
+            field.model_transformation(cls, field_name)
+
+            if table_name not in cls.fields:
+                cls.fields[table_name] = []
+
+            cls.fields[table_name].append((field_name, field))
 
         table_metadata = TableMetadata()
         table_metadata.name = table_name

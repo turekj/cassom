@@ -28,5 +28,30 @@ class TestTableManager(TestCase):
         self.assertTrue(exists_after_create)
         self.assertFalse(exists_after_drop)
 
+    def test_insert_into_table(self):
+        metadata = TableMetadata()
+        metadata.name = 'test_table'
+        metadata.columns = {'id': 'uuid', 'name': 'text', 'surname': 'text'}
+        metadata.primary_key = ['id']
+        table_manager = TableManager()
+        first_row = {'id': '550e8400-e29b-41d4-a716-446655440000', 'name': "'Jan'", 'surname': "'Kowalski'"}
+        second_row = {'id': 'f47ac10b-58cc-4372-a567-0e02b2c3d479', 'name': "'Krzysztof'", 'surname': "'Nowak'"}
+
+        table_manager.create_table(self.engine, metadata)
+        table_manager.insert_into_table(self.engine, metadata.name, first_row)
+        table_manager.insert_into_table(self.engine, metadata.name, second_row)
+        first_row = self.engine.execute_query('SELECT * FROM test_keyspace.test_table WHERE id=550e8400-e29b-41d4-a716-446655440000;')
+        second_row = self.engine.execute_query('SELECT * FROM test_keyspace.test_table WHERE id=f47ac10b-58cc-4372-a567-0e02b2c3d479;')
+        table_manager.drop_table(self.engine, metadata.name)
+
+        self.assertIsNotNone(first_row)
+        self.assertEqual(1, len(first_row))
+        self.assertEqual('Jan', first_row[0].name)
+        self.assertEqual('Kowalski', first_row[0].surname)
+        self.assertIsNotNone(second_row)
+        self.assertEqual(1, len(second_row))
+        self.assertEqual('Krzysztof', second_row[0].name)
+        self.assertEqual('Nowak', second_row[0].surname)
+
     def tearDown(self):
         self.keyspace_manager.drop_keyspace(self.engine, self.engine.get_keyspace())

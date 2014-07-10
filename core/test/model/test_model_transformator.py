@@ -11,7 +11,8 @@ class TestModelTransformator(TestCase):
 
         metadata = TestModelTransformatorModel.metadata
         table_metadata = TestModelTransformatorModel.metadata['test_model_transformator_model']
-        handlers = TestModelTransformatorModel.handlers
+        fields = TestModelTransformatorModel.fields
+        table_fields = fields['test_model_transformator_model']
         has_dummy_field = hasattr(TestModelTransformatorModel, 'dummy')
         has_multi_field = hasattr(TestModelTransformatorModel, 'multi')
         has_multi_1_field = hasattr(TestModelTransformatorModel, 'multi_1')
@@ -33,11 +34,12 @@ class TestModelTransformator(TestCase):
         self.assertEqual(2, len(table_metadata.primary_key))
         self.assertEqual('multi_f3', table_metadata.primary_key[0])
         self.assertEqual('dummy', table_metadata.primary_key[1])
-        self.assertEqual(2, len(handlers))
-        self.assertEqual(['dummy'], handlers[0][0])
-        self.assertEqual('Field', type(handlers[0][1]).__name__)
-        self.assertEqual(['multi_1', 'multi_2', 'multi_3'], handlers[1][0])
-        self.assertEqual('TestModelTransformatorMultiField', type(handlers[1][1]).__name__)
+        self.assertEqual(1, len(fields))
+        self.assertEqual(2, len(table_fields))
+        self.assertEqual('dummy', table_fields[0][0])
+        self.assertEqual('Field', type(table_fields[0][1]).__name__)
+        self.assertEqual('multi', table_fields[1][0])
+        self.assertEqual('TestModelTransformatorMultiField', type(table_fields[1][1]).__name__)
         self.assertTrue(has_dummy_field)
         self.assertFalse(has_multi_field)
         self.assertTrue(has_multi_1_field)
@@ -65,7 +67,7 @@ class TestModelTransformatorMultiField(Field):
 
 class TestModelTransformatorModel(object):
     metadata = ModelMetadata()
-    handlers = []
+    fields = {}
 
     dummy = Field(primary_key=True, primary_key_gravity=1)
     multi = TestModelTransformatorMultiField()

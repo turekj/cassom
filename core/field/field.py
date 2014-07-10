@@ -3,12 +3,6 @@ class Field(object):
         self.primary_key = primary_key
         self.primary_key_gravity = primary_key_gravity
 
-    def is_primary_key(self):
-        if hasattr(self, 'primary_key'):
-            return self.primary_key
-
-        return False
-
     def table_columns(self, field_name):
         """
         Returns mapping between required table columns names and their types.
@@ -24,14 +18,14 @@ class Field(object):
 
         return {}
 
-    def values_to_persist(self, object_field_values):
-        """
-        Returns mapping between table column names and their values.
-        """
-        return object_field_values
-
     def model_transformation(self, cls, field_name):
         """
         Performs model class transformations between logical and physical model required for this field.
         """
         return [field_name]
+
+    def values_to_persist(self, model, field_name):
+        """
+        Returns mapping between table column names and their values.
+        """
+        return getattr(model, field_name)

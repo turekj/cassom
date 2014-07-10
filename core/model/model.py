@@ -3,6 +3,7 @@ from core.model.model_fields import ModelFieldsFactory
 from core.model.model_transformator import ModelTransformator
 from core.table.table_manager import TableManager
 from core.model.model_metadata import ModelMetadataFactory, ModelMetadata
+from utilities.string.string_utilities import StringUtilities
 
 
 class ModelMeta(type):
@@ -45,3 +46,13 @@ class Model(object):
         for metadata_key in Model.metadata:
             if not Model.table_manager.check_table_exists(Model.engine, metadata_key):
                 Model.table_manager.create_table(Model.engine, Model.metadata[metadata_key])
+
+    def save(self):
+        table_name = StringUtilities.convert_to_underscore(self.__class__.__name__)
+        fields = Model.fields[table_name]
+        column_values = {}
+
+        for field_name, field in fields:
+            column_values.update(field.values_to_persist(self, field_name))
+
+        
