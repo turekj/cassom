@@ -33,6 +33,22 @@ class TestModel(TestCase):
         self.assertTrue(len(another_test_model_user_exists) > 0)
         self.assertTrue(len(another_test_model_password_exists) > 0)
 
+    def test_save(self):
+        model = ExampleModel()
+        model.id = '550e8400-e29b-41d4-a716-446655440000'
+        model.test_text = 'test data'
+        engine = Engine.create_engine('cassandra://127.0.0.1/TestKeyspace')
+        Model.bind(engine)
+
+        model.save()
+        result = engine.execute_query('SELECT * FROM test_keyspace.example_model WHERE id=550e8400-e29b-41d4-a716-446655440000;')
+        engine.execute_query('DROP TABLE test_keyspace.example_model;')
+        engine.execute_query('DROP KEYSPACE test_keyspace;')
+
+        self.assertIsNotNone(result)
+        self.assertEqual(1, len(result))
+        self.assertEqual('test data', result[0].test_text)
+
 
 class ExampleModel(Model):
     id = IdField(primary_key=True)

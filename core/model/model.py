@@ -55,4 +55,4 @@ class Model(object):
         for field_name, field in fields:
             column_values.update(field.values_to_persist(self, field_name))
 
-        
+        Model.table_manager.insert_into_table(Model.engine, table_name, column_values)
