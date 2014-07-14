@@ -3,8 +3,8 @@ from core.field.field import Field
 
 
 class IdField(Field):
-    def __init__(self, primary_key=False, primary_key_gravity=-1):
-        self.primary_key = primary_key
+    def __init__(self, primary_key_gravity=-1):
+        self.primary_key = True
         self.primary_key_gravity = primary_key_gravity
         self.id_regex = re.compile('^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$')
 
@@ -20,6 +20,8 @@ class IdField(Field):
 
         raise AttributeError('ID not parseable')
 
+    def update_from_persisted_values(self, model, table_values, field_name):
+        setattr(model, field_name, str(table_values[field_name]))
 
 class TextField(Field):
     def table_columns(self, field_name):

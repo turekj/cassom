@@ -17,4 +17,3 @@ class ModelFieldsFactory(object):
                 pwd_field_property = property(fget=lambda this: getattr(this, pwd_field), fset=lambda this, val: setattr(this, pwd_field, 'decrypted: ' + val))
                 setattr(model_class, pwd_field, '')
                 setattr(model_class, field, pwd_field_property)
-

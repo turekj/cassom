@@ -36,6 +36,7 @@ class Model(object):
         Model.engine = engine
         Model.create_keyspace()
         Model.create_tables()
+        Model.update_managers()
 
     @staticmethod
     def create_keyspace():
@@ -49,6 +50,12 @@ class Model(object):
                 Model.table_manager.create_table(Model.engine, Model.metadata[metadata_key])
 
     @staticmethod
+    def update_managers():
+        for _, manager in Model.managers.iteritems():
+            manager.engine = Model.engine
+            manager.table_manager = Model.table_manager
+
+    @staticmethod
     def _table_name(cls):
         return StringUtilities.convert_to_underscore(cls.__name__)
 
@@ -58,7 +65,7 @@ class Model(object):
 
     def save(self):
         manager = Model._manager(self.__class__)
-        manager.save(Model.engine, Model.table_manager, self)
+        manager.save(self)
 
     @classmethod
     def objects(cls):

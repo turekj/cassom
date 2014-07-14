@@ -26,7 +26,7 @@ class ModelTransformator(object):
             field.model_transformation(cls, field_name)
 
             if table_name not in cls.managers:
-                cls.managers[table_name] = ModelManager(table_name)
+                cls.managers[table_name] = ModelManager(cls)
 
             cls.managers[table_name].add_field(field_name, field)
 

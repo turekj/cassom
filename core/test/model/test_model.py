@@ -51,11 +51,11 @@ class TestModel(TestCase):
 
 
 class ExampleModel(Model):
-    id = IdField(primary_key=True)
+    id = IdField()
     test_text = TextField()
 
 
 class AnotherExampleModel(Model):
-    id = IdField(primary_key=True)
+    id = IdField()
     user = TextField()
     password = PasswordField()
