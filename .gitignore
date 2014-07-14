@@ -2,3 +2,8 @@
 .DS_Store
 target
 *.pyc
+*.fls
+*.log
+*.aux
+*.fdb_latexmk
+*.synctex.gz
