@@ -7,3 +7,4 @@ target
 *.aux
 *.fdb_latexmk
 *.synctex.gz
+*.toc

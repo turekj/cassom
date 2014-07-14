@@ -6,6 +6,8 @@ Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - po
 
 Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najbardziej znaczące przykłady użycia produkcyjnego to eBay\footnote{eBay - największy portal z~aukcjami internetowymi na świecie}, Instagram\footnote{Instagram - portal pozwalający na umieszczanie fotografii.} oraz GitHub\footnote{GitHub - usługa pozwalająca na przechowywanie i~wersjonowanie kodu źródłowego aplikacji.}. Największa światowa instalacja Cassandry obejmuje około 15000 węzłów, na których przechowywane jest łącznie ponad 4 petabajty danych. \cite{official_cassandra}
 
+W~przeciwieństwie do relacyjnych baz danych, Apache Cassandra nie zapewnia wsparcia dla reguły ACID\footnote{ACID (ang. Atomic, Consistency, Isolation, Durability) - zasada atomowości, spójności, izolacji i~trwałości, które gwarantują poprawne przetwarzanie transakcji w~bazach danych.}. Zamiast tego zostały zrealizowane postulaty twierdzenia CAP: ,,we współdzielonym systemie plików można zachować maksymalnie dwie z~trzech właściwości: spójności, dostępności oraz podatności na partycjonowanie''. \cite{cap_theorem} Apache Cassandra priorytetyzuje właściwości dostępności oraz partycjonowania. Spójność danych jest odwrotnie proporcjonalna i~może być regulowana w~zależności od czasu odpowiedzi. Wysoka spójność danych oznacza wolniejszą odpowiedź bazy.
+
 \section{Model danych}
 
 Model danych Apache Cassandra można przedstawić jako dwuwymiarowa mapa trójek wartości:
@@ -15,14 +17,14 @@ Model danych Apache Cassandra można przedstawić jako dwuwymiarowa mapa trójek
 	\verb+Map<RowKey, Map<ColumnKey, Triple<Value, Timestamp, TTL>>>+
 \end{figure}
 
-gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych.
+gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. \cite{mc_fadin_long_live_data_model} Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych.
 
 \begin{figure}[ht!]
 	\centering
-	\begin{tabular}{|l|c|c|c|c|}
+	\begin{tabular}{|l||c|c|c|c|}
 		\hline
 		& \textbf{ABC} & \textbf{DEF} & $\cdots$ & \textbf{XYZ} \\
-		\cline{2-5}
+		\hhline{|~||====|}
 		\textbf{123} & test value & another test value & $\cdots$ & not a~test value \\
 		\cline{2-5}
 		\textbf{456} & $20$ & $\infty$ & $\cdots$ & $\infty$ \\
@@ -34,3 +36,7 @@ gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator 
 	\label{fig:data_model_example}
 	\caption{Przykładowy wiersz modelu danych o~identyfikatorze 123456. Wartość komórki (123456, DEF) to ,,another test value''.}
 \end{figure}
+
+\section{Dystrybucja danych}
+
+
