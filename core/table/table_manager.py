@@ -32,3 +32,7 @@ class TableManager(object):
                                                       table_name,
                                                       ",".join(cols),
                                                       ",".join(vals)))
+
+    def select_from_table(self, engine, table_name, where_clause):
+        pass
+

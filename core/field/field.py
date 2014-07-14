@@ -29,3 +29,12 @@ class Field(object):
         Returns mapping between table column names and their values.
         """
         return getattr(model, field_name)
+
+    def update_from_persisted_values(self, model, table_values):
+        """
+        Updates model values according to persisted values.
+        """
+        field_name = table_values[0]
+        field_value = table_values[1]
+
+        setattr(model, field_name, field_value)

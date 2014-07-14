@@ -1,5 +1,6 @@
 from core.keyspace.keyspace_manager import KeyspaceManager
 from core.model.model_fields import ModelFieldsFactory
+from core.model.model_manager import ModelManager
 from core.model.model_transformator import ModelTransformator
 from core.table.table_manager import TableManager
 from core.model.model_metadata import ModelMetadataFactory, ModelMetadata
@@ -47,12 +48,18 @@ class Model(object):
             if not Model.table_manager.check_table_exists(Model.engine, metadata_key):
                 Model.table_manager.create_table(Model.engine, Model.metadata[metadata_key])
 
+    @staticmethod
+    def _table_name(cls):
+        return StringUtilities.convert_to_underscore(cls.__name__)
+
+    @staticmethod
+    def _manager(cls):
+        return Model.managers[Model._table_name(cls)]
+
     def save(self):
-        table_name = StringUtilities.convert_to_underscore(self.__class__.__name__)
-        fields = Model.fields[table_name]
-        column_values = {}
+        manager = Model._manager(self.__class__)
+        manager.save(Model.engine, Model.table_manager, self)
 
-        for field_name, field in fields:
-            column_values.update(field.values_to_persist(self, field_name))
-
-        Model.table_manager.insert_into_table(Model.engine, table_name, column_values)
+    @classmethod
+    def objects(cls):
+        return Model._manager(cls)
