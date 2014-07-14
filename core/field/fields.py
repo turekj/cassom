@@ -23,6 +23,7 @@ class IdField(Field):
     def update_from_persisted_values(self, model, table_values, field_name):
         setattr(model, field_name, str(table_values[field_name]))
 
+
 class TextField(Field):
     def table_columns(self, field_name):
         return {field_name: 'text'}
