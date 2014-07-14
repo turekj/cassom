@@ -1,3 +1,5 @@
+% -*- root: main.tex -*-
+
 \chapter{Apache Cassandra}
 
 Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza danych typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych. \cite{official_bigtable}}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do których dążyli twórcy Cassandry była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
@@ -6,3 +8,29 @@ Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najba
 
 \section{Model danych}
 
+Model danych Apache Cassandra można przedstawić jako dwuwymiarowa mapa trójek wartości:
+
+\begin{figure}[ht!]
+	\centering
+	\verb+Map<RowKey, Map<ColumnKey, Triple<Value, Timestamp, TTL>>>+
+\end{figure}
+
+gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|l|c|c|c|c|}
+		\hline
+		& \textbf{ABC} & \textbf{DEF} & $\cdots$ & \textbf{XYZ} \\
+		\cline{2-5}
+		\textbf{123} & test value & another test value & $\cdots$ & not a~test value \\
+		\cline{2-5}
+		\textbf{456} & $20$ & $\infty$ & $\cdots$ & $\infty$ \\
+		\cline{2-5}
+		& 1291987837942000 & 1291980736812000 & $\cdots$ & 1291980736212000 \\
+		\hline
+	\end{tabular}
+
+	\label{fig:data_model_example}
+	\caption{Przykładowy wiersz modelu danych o~identyfikatorze 123456. Wartość komórki (123456, DEF) to ,,another test value''.}
+\end{figure}
