@@ -2,7 +2,7 @@
 
 \chapter{Apache Cassandra}
 
-Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza danych typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych. \cite{official_bigtable}}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do których dążyli twórcy Cassandry była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
+Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza danych typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych.}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do których dążyli twórcy Cassandry była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
 
 Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najbardziej znaczące przykłady użycia produkcyjnego to eBay\footnote{eBay - największy portal z~aukcjami internetowymi na świecie}, Instagram\footnote{Instagram - portal pozwalający na umieszczanie fotografii.} oraz GitHub\footnote{GitHub - usługa pozwalająca na przechowywanie i~wersjonowanie kodu źródłowego aplikacji.}. Największa światowa instalacja Cassandry obejmuje około 15000 węzłów, na których przechowywane jest łącznie ponad 4 petabajty danych. \cite{official_cassandra}
 
@@ -10,19 +10,19 @@ W~przeciwieństwie do relacyjnych baz danych, Apache Cassandra nie zapewnia wspa
 
 \section{Model danych}
 
-Model danych Apache Cassandra można przedstawić jako dwuwymiarowa mapa trójek wartości:
+Model danych Apache Cassandra jest analogiczny do BigTable. \cite{official_bigtable} Można przedstawić go jako dwuwymiarowa mapa trójek wartości:
 
 \begin{figure}[ht!]
 	\centering
 	\verb+Map<RowKey, Map<ColumnKey, Triple<Value, Timestamp, TTL>>>+
 \end{figure}
 
-gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. \cite{mc_fadin_long_live_data_model} Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych.
+gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. \cite{mc_fadin_long_live_data_model} Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych. Pogrubiona wartość w~lewej komórce to klucz wiersza, natomiast wyróżnione wartości w~pierwszym wierszu oznaczają klucze poszczególnych kolumn. Każda komórka składa się z~trzech wartości: wartości, czasu życia oraz ,,odcisku czasu''.
 
 \begin{figure}[ht!]
 	\centering
 	\begin{tabular}{|l||c|c|c|c|}
-		\hline
+		\hhline{|-||----|}
 		& \textbf{ABC} & \textbf{DEF} & $\cdots$ & \textbf{XYZ} \\
 		\hhline{|~||====|}
 		\textbf{123} & test value & another test value & $\cdots$ & not a~test value \\
@@ -30,13 +30,48 @@ gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator 
 		\textbf{456} & $20$ & $\infty$ & $\cdots$ & $\infty$ \\
 		\cline{2-5}
 		& 1291987837942000 & 1291980736812000 & $\cdots$ & 1291980736212000 \\
-		\hline
+		\hhline{|-||----|}
 	\end{tabular}
 
-	\label{fig:data_model_example}
 	\caption{Przykładowy wiersz modelu danych o~identyfikatorze 123456. Wartość komórki (123456, DEF) to ,,another test value''.}
+	\label{fig:data_model_example}
 \end{figure}
 
 \section{Dystrybucja danych}
 
+Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kolejność elementów. Węzły są przedstawiane na w~topologii pierścienia. Algorytm dystrybucji zostanie omówiony na przykładzie ze schematu~\ref{fig:data_distribution}: 
 
+\begin{figure}[ht!]
+	\centering
+	
+	\begin{tikzpicture}
+		\def \n {6}
+		\def \radius {3cm}
+		\def \margin {10}
+
+		\foreach \a/\b [count=\s] in {B/-9, A/-16, F/17, E/9, D/4, C/-3}
+		{
+  			\node[draw, circle, minimum width=1cm] at ({360/\n * (\s - 1)}:\radius) {$\a$};
+  			\node at ({360/\n * (\s - 1)}:3.85cm) {$\b$};
+  			\draw[>=latex] ({360/\n * (\s - 1)+\margin}:\radius) 
+    			arc ({360/\n * (\s - 1)+\margin}:{360/\n * (\s)-\margin}:\radius);
+		}
+
+		\node[draw, rectangle, minimum height=1cm] at (-7.0, 0.0) {$data$};
+		\draw[dashed, -triangle 45] (-6.95,0.5) arc (135:45:2.8cm);
+		\node at (-5.1, 1.8) {$hash: -10$};
+		\draw[-triangle 45] (-2.5, 0.0) arc (135:45:3.55cm);
+		\draw[-triangle 45] (-2.5, 0.0) arc (90:32:4.5cm);
+		\draw[-triangle 45] (-2.5, 0.0) arc (90:-30:1.45cm);
+	\end{tikzpicture}
+
+	\caption{Schematyczna ilustracja dystrybucji danych w~bazie danych Apache Cassandra.}
+	\label{fig:data_distribution}
+\end{figure}
+
+\begin{enumerate}
+	\item Każdemu z~węzłów $\{A, B, C, D, E, F\}$ przypisywany jest token, który zawiera się w~zakresie wartości przyjmowanych przez funkcję skrótu. Strategię wybóru tokenu można konfigurować. Przykładową strategią jest wybór losowy. W~omawianym przykładzie węzłom zostały przypisane tokeny o~wartościach $\{-16, -9, -3, 4, 9, 17\}$.
+	\item Użytkownik bazy danych przesyła żądanie do dowolnego węzła, który pełni funkcję koordynatora dla danej operacji. Koordynator nadzoruje wpisanie danych do odpowiednich węzłów. W~omawianym przykładzie rolę koordynatora pełni węzeł~$E$.
+	\item \label{en:master_node} Każdy węzeł przechowuje dane, których funkcja skrótu zawiera się w~przedziale $(token_{n-1}, token_{n}]$, gdzie $n$ to numer kolejny węzła rosnący zgodnie z~ruchem wskazówek zegara. W~przykładzie węzeł~$C$ przechowuje wiersze o~wartościach funkcji skrótu z~przedziału $(-9, -3]$, natomiast węzeł~$D$ z~przedziału $(-3, 4]$. Wartości funkcji obliczane są cyklicznie, stąd węzeł~$A$ przechowuje wiersze o~skrócie z~przedziału $(-\infty, -16] \cup (17, \infty)$. W~przykładzie wiersz o~kluczu z~funkcją skrótu wartości $-10$ zostanie utrwalony na węźle~$B$.
+	\item Dane replikowane są na $n$ węzłach, gdzie $n$ to wartość konfigurowalnego współczynnika replikacji. Poza węzłem macierzystym (wyznaczanym w~punkcie \ref{en:master_node} algorytmu) dane są replikowane na $n - 1$ kolejnych (zgodnie z~ruchem wskazówek zegara) węzłach. W~omawianym przykładzie dane zostaną zreplikowane na węzłach~$C$~i~$D$.
+\end{enumerate}
