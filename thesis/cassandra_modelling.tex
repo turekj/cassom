@@ -78,7 +78,7 @@ Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kole
 
 \section{Konsekwencje dla modelowania dziedziny}
 
-Wewnętrzna struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandra zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.
+Wewnętrzna struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandra zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
 
 Załóżmy, że celem jest modelowanie danych dla sklepu internetowego. Zakupów dokonują użytkownicy, którzy mogą wstawić wiele przedmiotów z~oferty sklepu na listę życzeń. W~przypadku baz opartych o~język SQL jest to klasyczny problem relacji typu wiele-do-wielu, do modelowania których wykorzystywana jest najczęściej tabela pośrednia. 
 
@@ -142,4 +142,104 @@ Powyższy model jest wykorzystywany w~widoku listy życzeń na profilu użytkown
 	\label{lst:sql_wishlist}
 \end{figure}
 
+Cassandra umożliwia utworzenie dokładnej repliki relacyjnego modelu danych. Zostało to przedstawione na rysunku~\ref{tab:bad_cassandra_data_model}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{llll}
+		User &
+		\begin{tabular}{|l||c|c|}
+			\hhline{|-||--|}
+			& \textbf{name} & \textbf{surname} \\
+			\hhline{|~||==|}
+			\textbf{123} & Janusz & Kowalski \\
+			\hhline{=::==}
+			& \textbf{name} & \textbf{surname} \\
+			\hhline{|~||==|}
+			\textbf{124} & Marcin & Nowak \\
+			\hhline{|-||--|}
+		\end{tabular} &
+		Wishlist & 
+		\begin{tabular}{|l||c|c|}
+			\hhline{|-||--|}
+			& \textbf{userId} & \textbf{itemId} \\
+			\hhline{|~||==|}
+			\textbf{51} & 123 & 579 \\
+			\hhline{=::==}
+			& \textbf{userId} & \textbf{itemId} \\
+			\hhline{|~||==|}
+			\textbf{52} & 124 & 232 \\
+			\hhline{|-||--|}
+		\end{tabular} \\
+	\end{tabular}
+
+	\vspace{2em}
+
+	\begin{tabular}{ll}
+		Item &
+		\begin{tabular}{|l||c|c|c|c|c|}
+			\hhline{|-||-----|}
+			& \textbf{name} & \textbf{price} & \textbf{desc} & \textbf{category} & \textbf{weight} \\
+			\hhline{|~||=====|}
+			\textbf{232} & Master Chef & 20.34 & Cooking recipes & BOOKS & 0.2 \\
+			\hhline{=::=====}
+			& \textbf{name} & \textbf{price} & \textbf{desc} & \textbf{category} & \textbf{weight} \\
+			\hhline{|~||=====|}
+			\textbf{579} & Seat Hit & 159.99 & Wooden armchair & FURNITURE & 10.8  \\
+			\hhline{|-||-----|}
+		\end{tabular} \\
+	\end{tabular}
+
+	\caption{Wynik błędnego przeniesienia relacyjnego modelu danych do Cassandry.}
+	\label{tab:bad_cassandra_data_model}
+\end{figure}
+
+Taki model jest jednak niepoprawny. Nie umożliwia on filtrowania zawartości listy życzeń po identyfikatorze użytkownika. Wynika to z~faktu, że pobranie odpowiednich wierszy listy życzeń wymaga znajomości ich identyfikatorów, podczas gdy widok dysponuje wyłącznie odniesieniem do użytkownika. Błąd ten można łatwo naprawić zastępując encję \emph{Wishlist} encją \emph{WishlistByUser}, co przedstawia diagram~\ref{tab:wishlist_by_user_model_fix}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{ll}
+		WishlistByUser &
+		\begin{tabular}{|l||c|}
+			\hhline{|-||-|}
+			& \textbf{579} \\
+			\hhline{|~||=|}
+			\textbf{123} & - \\
+			\hhline{=::=}
+			& \textbf{232} \\
+			\hhline{|~||=|}
+			\textbf{124} & - \\
+			\hhline{|-||-|}
+		\end{tabular} \\
+	\end{tabular}
+
+	\caption{Definicja encji listy życzeń umożliwiająca filtrowanie względem użytkownika.}
+	\label{tab:wishlist_by_user_model_fix}
+\end{figure}
+
+Poprawiony model można poddać dalszej optymalizacji. Wyświetlenie listy życzeń użytkownika wymaga odwołania do encji \emph{Item}, w~której znajdują się informacje o~nazwie i~cenie przedmiotu. Ponieważ przedmioty mogą być rozmieszczone na różnych węzłach, silnik Cassandry nie może wykonać złączenia w~sposób optymalny - zapytanie o~każdą pozycję listy życzeń jest wykonywane osobno. W~celu przyspieszenia wykonywania operacji należy wykonać denormalizację. Dołączając do encji \emph{WishlistByUser} informacje o~nazwie i~cenie produktu można uniknąć wykonywania kosztownych złączeń. Pozostałe dane przedmiotu zostaną pobrane dopiero po przejściu na jego stronę. Efekt denormalizacji jest przedstawiony na diagramie~\ref{tab:denormalized_wishlist}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{ll}
+		WishlistByUser &
+		\begin{tabular}{|l||c|}
+			\hhline{|-||-|}
+			& \textbf{579} \\
+			\hhline{|~||=|}
+			\textbf{123} & (,,Master Chef'', 20.43) \\
+			\hhline{=::=}
+			& \textbf{232} \\
+			\hhline{|~||=|}
+			\textbf{124} & (,,Seat Hit'', 159.99) \\
+			\hhline{|-||-|}
+		\end{tabular} \\
+	\end{tabular}
+
+	\caption{Zdenormalizowana postać listy życzeń.}
+	\label{tab:denormalized_wishlist}
+\end{figure}
 
