@@ -243,3 +243,41 @@ Poprawiony model można poddać dalszej optymalizacji. Wyświetlenie listy życz
 	\label{tab:denormalized_wishlist}
 \end{figure}
 
+\section{CQL}
+
+Efektywne modelowanie i~obsługa danych w~Apache Cassandra wymaga dobrej znajomości wewnętrznej struktury bazy danych. Dodatkowym utrudnieniem przy korzystaniu z~początkowych wersji Cassandry była konieczność wykorzystania skomplikowanego interfejsu programistycznego opartego o~wywoływanie zdalnych procedur Thrift\footnote{Dokumentacja interfejsu dostępna jest pod adresem \url{https://wiki.apache.org/cassandra/API10}.}. Thrift jest platformą pozwalającą budować aplikacje przenośne między różnymi językami programowania. Dzięki temu rozwiązaniu baza danych dostępna była dla wszystkich platform. Niestety, skutkiem ubocznym było skomplikowanie interfejsu dostępowego.
+
+Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu do tej bazy danych. Interfejs ten nosi nazwę CQL\footnote{CQL (ang. Cassandra Query Language) - język zapytań Cassandry.} i~jest językiem zapytań, którego składnia wzorowana jest na SQL. Poza podobieństwami składniowymi języki te nie mają cech wspólnych. Nie są wzajemnie zgodne. W~chwili obecnej CQL jest rekomendowanym standardem komunikacji z~Apache Cassandra.~\cite{cql_preferred_over_thrift} Na listingu~\ref{lst:cql_example} przedstawiono zapytanie w~języku CQL, które opisuje omawianą wcześniej encję \emph{User}. Wynikiem wykonania tego zapytania jest prosty schemat modelu danych zaprezentowany na diagramie~\ref{tab:cql_example_query_result}.
+
+\begin{verbbox}
+	CREATE TABLE User (
+	    userId uuid PRIMARY KEY,
+	    name text,
+	    surname text);
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+
+	\caption{Zapytanie CQL, które tworzy encję \emph{User}.}
+	\label{lst:cql_example}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{ll}
+		User &
+		\begin{tabular}{|l||c|c|}
+			\hhline{|-||--|}
+			 & \textbf{name} & \textbf{surname} \\
+			\hhline{|~||==|}
+			\textbf{userId} & null & null \\
+			\hhline{|-||--|}
+		\end{tabular} \\
+	\end{tabular}
+
+	\caption{Wynik wykonania zapytania~\ref{lst:cql_example}.}
+	\label{tab:cql_example_query_result}
+\end{figure}
