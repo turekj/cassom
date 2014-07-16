@@ -281,3 +281,12 @@ Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu
 	\caption{Wynik wykonania zapytania~\ref{lst:cql_example}.}
 	\label{tab:cql_example_query_result}
 \end{figure}
+
+\section{Modelowanie - wzorce i~antywzorce}
+
+Pomimo, że CQL znacząco upraszcza modelowanie w~Cassandrze stworzenie efektywnego schematu danych nie jest zadaniem prostym. Aby ułatwić ten proces twórcy i~użytkownicy Cassandry zaczęli opisywać wzorce i~antywzorce modelowania oraz dostępu do danych. Pełnią one analogiczną role do wzorców i~antywzorców projektowych znanych z~programowania. Na ich opis składa się możliwie ogólna definicja problemu, a~także poprawny (lub niepoprawny) sposób jego rozwiązania. 
+
+Przykładem antywzorca modelowania jest kolejka oparta na kolumnach.~\cite{cassandra_queue_antipattern} Kolejka to struktura danych, w~której ilości wykonywanych operacji wstawiania, usuwania i~odczytu są do siebie zbliżone. W~przypadku Cassandry usuwanie kolumn z~wiersza nie jest wykonywane natychmiast po odebraniu żądania. Zamiast tego usunięta kolumna jest oznaczana specjalnym znacznikiem \emph{tombstone} i~fizycznie usuwana dopiero po upłynięciu pewnego czasu. Takie działanie przyspiesza znacząco operację usuwania kosztem operacji odczytu. Kiedy w~wierszu występuje wiele znaczników \emph{tombstone} operacje filtrowania zakresu kolumn wykonywane są znacznie wolniej.
+
+Przykładem wzorca dostępu do danych jest unikanie konfliktów synchronizacji poprzez uaktualnianie wyłącznie zmodyfikowanych wartości.~\cite{cassandra_concepts_patterns_antipatterns} Encja \emph{Item} z~diagramu~\ref{tab:bad_cassandra_data_model} ma 5~właściwości. Wyświetlenie ekranu aktualizacji przedmiotu wymaga pobrania zawartości całego wiersza z~bazy danych. Wzorzec stanowi, że jeżeli na tym ekranie zostanie zmieniony wyłącznie opis to do Cassandry należy przesłać żądanie uaktualniające zawartość wyłącznie jednej komórki - \emph{desc}. Pozostałe wartości z~formularza mogą być już nieaktualne. Przesłanie kompletu informacji poskutkowałoby nadpisaniem aktualnych wartości. Wykorzystanie wzorca pozwala wykorzystywać mechanizm rozwiązywania konfliktów wbudowany w~Cassandrę.
+
