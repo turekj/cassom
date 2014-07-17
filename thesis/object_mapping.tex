@@ -170,3 +170,86 @@ Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowe
 	\caption{Przykład nieczytelnego mapowania obiektowo-relacyjnego.}
 	\label{vrb:awful_orm}
 \end{figure}
+
+\section{Mapowanie obiektowe dla Cassandry - koncepcja}
+
+W~większości rozwiązań ORM encja modelu danych jest opisywana jako definicja klasy, której obiekty reprezentować będą instancję tej encji. Rozważmy listing~\ref{vrb:jpa_denormalization_theory}, który przedstawia hipotetyczne dostosowanie standardu JPA do denormalizacji dla modelu~\ref{tab:denormalized_wishlist}.
+
+\begin{verbbox}
+	@Table(name = "wishlist")
+	class Wishlist {
+	    @Id(type = IdType.PARTITION_KEY) 
+	    private String userId;
+	    @Denormalize(clustering_keys = { "itemId" }, 
+	                 fields = { "name", "price" })
+	    private Item item;
+	}
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Hipotetyczny przykład dostosowania definicji JPA do denormalizacji.}
+	\label{vrb:jpa_denormalization_theory}
+\end{figure}
+
+W~powyższym przykładzie denormalizacja jest modelowana jako zdegenerowany przypadek relacji jeden-do-jednego. Przypisanie zmiennej \emph{item} do obiektu klasy \emph{Wishlist} i~utrwalenie tego obiektu w~bazie danych spowoduje uzupełnienie wartości kolumn \emph{itemId}, \emph{name} oraz \emph{price} w~tabeli \emph{wishlist}. Po pobraniu obiektu klasy \emph{Wishlist} z~bazy danych przechowywany reprezentant klasy \emph{Item} posiada tylko część informacji. Takie rozwiązanie posiada istotną wadę. Podczas korzystania z~mechanizmu nie można jednoznacznie stwierdzić czy brak uzupełnienia pola \emph{desc} w~obiekcie klasy \emph{Item} jest spowodowany tym, że opisu faktycznie brakuje, czy też operacje dokonywane są na niekompletnym (zdenormalizowanym) obiekcie. Rozwiązaniem pozbawionym tej wady jest denormalizacja jawna przedstawiona na listingu~\ref{vrb:jpa_explicit_denormalization_theory}.
+
+\begin{verbbox}
+	@Table(name = "wishlist")
+	class Wishlist {
+	    @Id(type = IdType.PARTITION_KEY) 
+	    private String userId;
+
+	    @Id(type = IdType.CLUSTERING_KEY)
+	    private String itemId;
+
+	    @Column(name = "name")
+	    private String name;
+
+	    @Column(name = "price")
+	    private String price;
+	}
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Hipotetyczny przykład zastosowania denormalizacji jawnej w~JPA.}
+	\label{vrb:jpa_explicit_denormalization_theory}
+\end{figure}
+
+Denormalizacja jawna posiada jednak inne wady. Przede wszystkim model nie podaje, że kolumny \emph{itemId}, \emph{name} oraz \emph{price} powinny pochodzić od instancji klasy \emph{Item}. Ponadto użytkownik mechanizmu musi pamiętać o~ręcznym wypełnieniu pól, co jest z~kolei narażone na błędy. Eleganckie połączenie tych dwóch opcji nie jest możliwe w~języku Java. 
+
+Ze względu na mechanizm metaklas w~Pythonie stworzono eleganckie i~proste implementacje ORM dla relacyjnych baz danych. Dwa najpopularniejsze mechanizmy to Django ORM\footnote{Django ORM - część platformy Django, która odpowiada za operacje bazodanowe. Dokumentacja jest dostępna pod adresem \url{https://docs.djangoproject.com/en/dev/topics/db/}.} oraz SQLAlchemy\footnote{Strona domowa projektu jest dostępna pod adresem \url{http://www.sqlalchemy.org}.}. Wykorzystując metaklasy osiągalne jest stworzenie mapowania o~interfejsie wymienionych mechanizmów, który rozwiązuje problem zasygnalizowany w~przypadku języka Java. Ilustruje to listing~\ref{vrb:sql_alchemy_like_denormalization}.
+
+\begin{verbbox}
+	class Wishlist(Model):
+	    userId = TextField(partition_key=True)
+	    item = DenormalizedField(entity=Item, 
+	                             clustering_keys=['itemId'], 
+	                             fields=['name', 'price'])
+
+	w = Wishlist()
+	w.item = Item(id='1', name='n', price='10.0')
+	id = w.item_itemId    # id equals '1'
+	name = w.item_name    # name equals 'n'
+	price = w.item_price  # price equals '10.0'
+	i = w.item            # exception raised
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Hipotetyczny przykład denormalizacji w~mapowaniu w~języku Python.}
+	\label{vrb:sql_alchemy_like_denormalization}
+\end{figure}
+
+Dzięki metaklasom można dokonać następujących modyfikacji modelu \emph{Wishlist}:
+
+\begin{itemize}
+	\item Dla każdej instancji \emph{DenormalizedField} automatycznie dodać do klasy pola, które będą przechowywać zdenormalizowane wartości. W~przykładzie definicja klasy została rozszerzona o~pola \emph{item\_itemId}, \emph{item\_name}, \emph{item\_price}.
+	\item Każdą instancję \emph{DenormalizedField} zamienić na właściwość tylko do zapisu, która automatycznie ustawia wartości zdenormalizowanych pól.
+\end{itemize}
+
+Dzięki takim modyfikacjom możliwe jest ustawianie wartości zdenormalizowanych pól poprzez podawanie całej instancji obiektu \emph{Item}, jak w~listingu~\ref{vrb:jpa_denormalization_theory}. Jednocześnie pobieranie wartości z~obiektu możliwe jest tylko poprzez odwołania do zdenormalizowanych pól. Nie da się pomylić ze sobą zdenormalizowanych i~pełnych instancji klasy \emph{Item}.
