@@ -19,17 +19,19 @@ Wraz z~pojawieniem się języka CQL pojawiła się szansa wykorzystania istniej�
 
 Przykładem projektu, który wykorzystuje mechanizm ORM do obsługi NoSQLowych baz danych jest Kundera.\cite{kundera_home} Kundera zapewnia implementację mapowania obiektowego zgodną ze standardem JPA 2.0 między innymi dla Cassandry, HBase, MongoDB oraz Neo4j. Dodatkowo biblioteka wspiera obsługę wielu mechanizmów równocześnie.
 
-\subsection{Kundera - wydajność}
+\subsection{Wydajność}
 
-Wyniki pomiarów na stronie domowej projektu Kundera świadczą o~tym, że biblioteka nie wprowadza znacznych narzutów wydajnościowych względem bezpośredniego wykorzystania interfejsu bazy danych. W~przypadku wykorzystania mechanizmów mapowania obiektowo-relacyjnego w~odniesieniu do Cassandry należy zbadać jaki narzut związany jest z~modelowaniem dziedziny danych przy ich pomocy. Do pomiarów wykorzystano dwa modele: przedstawiony na diagramie~\ref{fig:er_wishlist} oraz~\ref{tab:denormalized_wishlist}. Pierwszy model został opisany w~standardzie JPA i~uruchomiony dla Cassandry oraz relacyjnej bazy danych. Drugi model bezpośrednio wykorzystuje CQL. Dla obu wariantów zostały przeprowadzone dwa testy: wstawianie oraz odczytywanie elementów z~bazy danych. 
+Wyniki pomiarów na stronie domowej projektu Kundera świadczą o~tym, że biblioteka nie wprowadza znacznych narzutów wydajnościowych względem bezpośredniego wykorzystania interfejsu bazy danych. Ważniejsze jest jednak sprawdzenie jak duży narzut wprowadza dostosowanie relacyjnego modelu danych do Apache Cassandry. W~tym celu Autor przeprowadził testy porównawcze masowego wstawiania i~pobierania obiektów. Dla każdej z~dwóch operacji zostały przeprowadzone trzy testy. Pierwszy test mierzy czas referencyjny. Jest wykonywany dla zdenormalizowanego modelu Cassandry przedstawionego na diagramie~\ref{tab:denormalized_wishlist}. Drugi test sprawdza czasy dla znormalizowanego modelu zaprezentowanego na diagramie~\ref{fig:er_wishlist}, opisanego w~JPA i~uruchomiony na Cassandrze z~wykorzystaniem biblioteki Kundera. Trzeci test wykorzystuje identyczny opis modelu jak drugi, jednakże wykonywany jest dla silnika MySQL. Wszystkie testy przeprowadzane były jednowątkowo. Czas opóźnień przesyłania danych jest pomijalny, gdyż testy były prowadzone na środowisku lokalnym.
 
-W~trakcie testów został zmierzony całkowity czas wykonania danej operacji. Przyjęte zostały następujące założenia:
+W~trakcie testów mierzony był całkowity czas wykonania danej operacji. Przyjęte zostały następujące założenia:
 
 \begin{itemize}
 	\item Liczba użytkowników i~przedmiotów są parametryzowane i~skalowane liniowo.
 	\item Liczba przedmiotów, które użytkownik może mieć na swojej liście życzeń zawiera się w~przedziale $[0;10]$.
 	\item Odczytywana jest parametryzowalna liczba użytkowników.
 \end{itemize}
+
+\noindent Wyniki czasu wstawiania wielu rekordów zostały przedstawione na wykresie~\ref{fig:insert_time_comparison}. Czasy pobierania wielu rekordów zostały zebrane na wykresie~\ref{fig:select_time_comparison}.
 
 \begin{figure}
 	\centering
@@ -74,6 +76,7 @@ W~trakcie testów został zmierzony całkowity czas wykonania danej operacji. Pr
 	\end{tikzpicture}
 
 	\caption{Porównanie czasu wstawiania wielu rekordów.}
+	\label{fig:insert_time_comparison}
 \end{figure}
 
 \begin{figure}
@@ -118,4 +121,13 @@ W~trakcie testów został zmierzony całkowity czas wykonania danej operacji. Pr
 	\end{tikzpicture}
 
 	\caption{Porównanie czasu pobierania wielu rekordów.}
+	\label{fig:select_time_comparison}
 \end{figure}
+
+Wyniki zebrane na wykresie~\ref{fig:insert_time_comparison} pokazują, że wykorzystanie mechanizmów mapowania obiektowo-relacyjnego dla bazy danych Cassandra jest bardzo złym wyborem. Narzut związany z~konwersją modelu danych do postaci relacyjnej jest tak duży, że w~praktyce pojedynczy węzeł Cassandry osiąga gorsze wyniki zapisu niż baza danych MySQL. Zmiana silnika bazodanowego dla istniejącego kodu nie tylko nie poprawi wyników wydajnościowych, ale może wręcz spowodować spowolnienie działania aplikacji. Jedynym zyskiem z~takiego rozwiązania będzie możliwość wykorzystania natywnego mechanizmu klastrowania węzłów Cassandry. Dzięki temu wyeliminowany zostanie pojedynczy punkt awarii systemu. Ten sam efekt można jednak uzyskać stosując rozwiązana dedykowane dla relacyjnych baz danych. Przykładami takich rozwiązań mogą być MySQL Cluster CGE dla bazy danych MySQL oraz Oracle RAC dla baz Oracle Database Enterprise Edition.
+
+Potencjalnym zastosowaniem mapowania obiektowo-relacyjnego dla bazy danych Cassandra są środowiska integracyjne dla wielu aplikacji. Wykorzystując homogeniczny model danych można odwoływać się do różnych silników bazodanowych. W~bibliotece Kundera istnieje takie rozwiązane. Zostało nazwane Polyglot Persistence\footnote{Polyglot Persistence (dosłowne tłumaczenie to ,,zapis poliglotyczny'') - opis mechanizmu znajduje się na stronie \url{https://github.com/impetus-opensource/Kundera/wiki/Polyglot-Persistence}.}. W~praktyce dostosowanie modelu danych ORM do istniejących schematów baz danych jest problematyczne.  
+
+Wykres~\ref{fig:insert_time_comparison} demonstruje jak ogromną przewagę szybkości przy zapisie posiada poprawnie zaprojektowany model danych Apache Cassandra. Przypuszczalnie osiągnięty czas mógłby być jeszcze lepszy, gdyż ograniczenie wydajności zapisu nastąpowało prawdopodobnie po stronie klienta testowego. Zgodnie ze specyfikacją Apache Cassandra jest w~stanie obsługiwać bez opóźnień znacznie więcej jednoczesnych żądań zapisu.
+
+Czasy pobierania listy życzeń użytkownika przedstawione na wykresie~\ref{fig:select_time_comparison} nie różnią się znacząco od siebie. Przewaga szybkości pobierania danych z~wykorzystaniem CQL ponownie wynika z~zastosowania lepszego modelu danych. Denormalizacja pól encji \emph{Item} pozwala pominąć pobieranie dla każdego użytkownika dodatkowego wiersza z~bazy danych. 
