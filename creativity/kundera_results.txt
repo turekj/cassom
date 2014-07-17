@@ -1,0 +1,35 @@
+Kundera Cassandra z relacjami, lazy fetch:
+==========================================
+
+1. 10000 użytkowników (5000 pobieranych), 1000 przedmiotów, maksymalnie 10 przedmiotów na użytkownika
+
+Users persisted in: 418915ms
+Users fetched in: 1378ms
+
+2. 5000 użytkowników (2500 pobieranych), 500 przedmiotów, maksymalnie 10 przedmiotów na użytkownika
+
+Users persisted in: 119453ms
+Users fetched in: 606ms
+
+3. 1000 użytkowników (500 pobieranych), 100 przedmiotów, maksymalnie 10 przedmiotów na użytkownika
+
+Users persisted in: 10657ms
+Users fetched in: 183ms
+
+Kundera Cassandra z relacjami, eager fetch:
+===========================================
+
+1. 10000 użytkowników (5000 pobieranych), 1000 przedmiotów, maksymalnie 10 przedmiotów na użytkownika
+
+Users persisted in: 425943ms
+Users fetched in: 1367ms
+
+2. 5000 użytkowników (2500 pobieranych), 500 przedmiotów, maksymalnie 10 przedmiotów na użytkownika
+
+Users persisted in: 114679ms
+Users fetched in: 794ms
+
+3. 1000 użytkowników (500 pobieranych), 100 przedmiotów, maksymalnie 10 przedmiotów na użytkownika
+
+Users persisted in: 15204ms
+Users fetched in: 391ms
