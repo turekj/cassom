@@ -131,3 +131,42 @@ Potencjalnym zastosowaniem mapowania obiektowo-relacyjnego dla bazy danych Cassa
 Wykres~\ref{fig:insert_time_comparison} demonstruje jak ogromną przewagę szybkości przy zapisie posiada poprawnie zaprojektowany model danych Apache Cassandra. Przypuszczalnie osiągnięty czas mógłby być jeszcze lepszy, gdyż ograniczenie wydajności zapisu nastąpowało prawdopodobnie po stronie klienta testowego. Zgodnie ze specyfikacją Apache Cassandra jest w~stanie obsługiwać bez opóźnień znacznie więcej jednoczesnych żądań zapisu.
 
 Czasy pobierania listy życzeń użytkownika przedstawione na wykresie~\ref{fig:select_time_comparison} nie różnią się znacząco od siebie. Przewaga szybkości pobierania danych z~wykorzystaniem CQL ponownie wynika z~zastosowania lepszego modelu danych. Denormalizacja pól encji \emph{Item} pozwala pominąć pobieranie dla każdego użytkownika dodatkowego wiersza z~bazy danych. 
+
+\section{Wnioski z~badania wydajności}
+
+Na podstawie wyników przeprowadzonych badań można wnioskować, że mechanizmy mapowania obiektowo-relacyjnego nie nadają się do wykorzystania przez bazę danych Apache Cassandra. Wynika to z~faktu, że mechanizmy te wspomagają normalizację i~zachowywanie relacji między encjami, natomiast efektywne modelowanie dziedziny danych w~Cassandrze dąży do denormalizacji i~maksymalnego uproszczenia zależności pomiędzy obiektami.
+
+Drastyczna różnica wydajności pomiędzy szybkością zapisu danych w~modelach zoptymalizowanym i~niezoptymalizowanym świadczy o~tym, że do efektywnego modelowania dziedziny w~Apache Cassandra niezbędna jest wiedza na temat sposobu przechowywania danych przez tę bazę i~podejmowanie świadomych wyborów. Dostarczona przez ORMy mechanizmy mogą natomiast wyłącznie spowolnić korzystanie z~Cassandry.
+
+Podczas badania wydajności Autor natrafił również na problemy z~przenośnością kodu źródłowego pomiędzy różnymi systemami bazodanowymi. Wykonanie operacji wstawiania partii danych w~bazie relacyjnej oraz Cassandrze wymagało modyfikacji kodu źródłowego aplikacji testowej. W~relacyjnej bazie danych nie można było ukończyć testu wstawiania i~pobierania danych wykorzystując jedynie elementy zdefiniowane w~JPA. Pomimo wielokrotnej zmiany konfiguracji w~pewnym momencie testu dochodziło do całkowitego zablokowania puli połączeń. Dopiero przejście do transakcji bezstanowej zdefiniowanej w~Hibernate ORM\footnote{Hibernate ORM - środowisko aplikacyjne implementujące standard JPA dla baz relacyjnych. Zdefiniowana w~ramach tego środowiska transakcja bezstanowa nie jest częścią interfejsu JPA, a~więc nie może być wspierana przez Kunderę.} umożliwiło zakończenie testu.
+
+Opisane problemy z~przenośnością kodu mogą być następstwem fundamentalnych różnic pomiędzy relacyjnymi systemami bazodanowymi a~Apache Cassandrą. Przykładowo transakcja, czyli jedno z~podstawowych pojęć związanych z~zapytaniami w~języku SQL, nie istnieje w~systemie Cassandra. Dostosowanie implementacji do interfejsu mapowania obiektowo-relacyjnego wymaga sztucznego blokowania zapytań po stronie klienta, co prowadzi do wystąpienia niepotrzebnych opóźnień i~nadmiernego wykorzystania mechanizmów synchronizacji wielowątkowej. Z~drugiej strony brak lub nieodpowiednie wykorzystanie transakcji w~przypadku bazy relacyjnej prowadzi do błędów zapytań. 
+
+Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowego dla Cassandry. Dla optymalnej wydajności należy jednak zastosować rozwiązane dedykowane:
+
+\begin{itemize}
+	\item Definiowanie modelu powinno być skoncentrowane wokół wewnętrznej reprezentacji danych w~Cassandrze. W~stosunku do mapowania obiektowo-relacyjnego kluczowe są aspekty obniżenia istotności relacji i~wsparcie dla operacji denormalizacji z~poziomu interfejsu.
+	\item Mapowanie powinno w~prosty i~transparentny sposób udostępniać realizację poprawnych wzorców modelowania. Przykładowo lista wartości powinna móc być zamodelowana przynajmniej na dwa sposoby: jako kolumna typu list lub jako lista kolumn o~nazwach zawierających wartości listy. Mapowanie obiektowe dla Cassandry powinno umożliwiać wymienienie fizycznej struktury danych bez zmiany wykorzystującego ją kodu źródłowego.
+	\item Mapowanie obiektowe dla Cassandry powinno być proste. Język CQL, w~porównaniu do SQL, ma prostą składnię i~nie udostępnia wielu operacji. Ponadto skomplikowany mechanizm mapowania mógłby niekorzystnie kontrastować z~wydajną bazą danych. Przykładem nieczytelnego mapowania z~dużą liczbą opcji konfiguracyjnych może być pole encji opisane w~JPA przedstawione na listingu~\ref{vrb:awful_orm}.
+\end{itemize}
+
+\begin{verbbox}
+	@ManyToMany
+	@JoinTable(name = "wishlist", 
+	           joinColumns = {
+	               @JoinColumn(name = "userId", 
+	                           referencedColumnName = "userId") },
+	           inverseJoinColumns = {
+	             { @JoinColumn(name = "itemId", 
+	                           referencedColumnName = "itemId") },
+	           foreignKey = @ForeignKey(name = "userId_fk"), 
+	           inverseForeignKey = @ForeignKey(name = "itemId_fk"))
+	private Set<Item> wishlistItems = new HashSet<Item>();
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład nieczytelnego mapowania obiektowo-relacyjnego.}
+	\label{vrb:awful_orm}
+\end{figure}

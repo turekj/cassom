@@ -20,7 +20,8 @@ public class User {
     @ManyToMany
     @JoinTable(name = "wishlist", joinColumns = {@JoinColumn(name = "userId",
             referencedColumnName = "userId")},
-            inverseJoinColumns = {@JoinColumn(name = "itemId", referencedColumnName = "itemId")})
+            inverseJoinColumns = {@JoinColumn(name = "itemId", referencedColumnName = "itemId")},
+            foreignKey = @ForeignKey(name = "userId_fk"), inverseForeignKey = @ForeignKey(name = "itemId_fk"))
     private Set<Item> wishlistItems = new HashSet<Item>();
 
     public String getUserId() {
