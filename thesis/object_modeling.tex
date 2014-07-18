@@ -10,3 +10,105 @@ Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassand
 	\item Mapowanie obiektowo-relacyjne dostarcza przede wszystkim niskopoziomowe odpowiedniki typów bazodanowych. Wyjątkiem jest relacja wiele-do-wielu. Modelowanie obiektowe dla Cassandry skupia się zarówno na polach niskiego poziomu (przykładowo kolumna o~wartości tekstowej), jak i~na reużywalności komponentów wysokopoziomowych odpowiadających wzorcom projektowym.
 	\item Częścią modelowania obiektowego dla Cassandry są opcjonalne mechanizmy mapowania obiektowo-relacyjnego. Należą do nich generacja schematu oraz migracje pomiędzy wersjami modelu.
 \end{itemize}
+
+W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego dostarczona wykonana przez Autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
+
+\section{OMC - podstawowe pojęcia}
+
+Środowisko aplikacyjne OMC definiuje trzy podstawowe pojęcia: model, pole oraz silnik.
+
+\subsection{Model}
+
+Jest to klasa, która opisuje atomowy względem kodu źródłowego obiekt modelujący bazę danych. Obiekt ten, w~zależności od definicji, może być mapowany na jedną lub wiele tabel. Jedynym wymaganiem, które musi spełnić klasa należąca do modelu jest dziedziczenie po klasie bazowej \verb+Model+. Ciało modelu stanowią pola.
+
+\subsection{Pole}
+
+Pole jest to zmienna klasy definiującej model. Opisuje atomową wartość z~punktu widzenia kodu źródłowego. W~zależności od typu pole może być mapowane na jedną kolumnę, wiele kolumn lub autonomiczną tabelę w~bazie danych. Aby pole klasy mogło zostać zakwalifikowane jako pole modelu, w~definicji klasy należy mu przypisać obiekt dziedziczący po klasie bazowej \verb+Field+.
+
+\subsection{Silnik}
+
+Silnik jest to obiekt, który odpowiada za nawiązywanie połączenia z~bazą danych. Po utworzeniu silnika wystarczy przypisać go do całego modelu. Wszystkie operacje bazodanowe będą domyślnie wykonywane przez przypisany silnik. 
+
+Utworzenie silnika wymaga podania adresu URL opisującego połączenie, nazwanego z~języka angielskiego \emph{connection string}. Strukturę tego adresu przedstawia listing~\ref{lst:connection_string}.
+
+\begin{verbbox}
+	cassandra://{ip}:{port}/{keyspace}?rf={rf}&strategy={strategy}
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Struktura adresu URL opisującego połączenie z~bazą danych Cassandra.}
+	\label{lst:connection_string}
+\end{figure}
+
+Wszystkie elementy ujęte w~znaki \textbf{\{\}} w~adresie~\ref{lst:connection_string} należy zamienić na wartości według poniższego objaśnienia:
+
+\begin{description}
+	\item[ip] adres IP węzła koordynatora, z~którym będzie komunikować się kod źródłowy,
+	\item[port] port IP koordynatora (podanie portu jest opcjonalne; wartość domyślna to 9042),
+	\item[keyspace] przestrzeń nazw Cassandry, w~której operuje OCM,
+	\item[rf] współczynnik replikacji\footnote{Współczynnik replikacji (ang. replication factor) - określa na ile węzłów kopiowany jest każdy wstawiony wiersz.} podawany przy tworzeniu przestrzeni nazw, jeżeli ta nie istnieje (parametr jest opcjonalny),
+	\item[strategy] nazwa strategii replikacji podawanej przy tworzeniu przestrzeni nazw, jeśli ta nie istnieje (parametr jest opcjonalny).
+\end{description}
+
+Do utworzenia silnika służy metoda \verb+Engine.create_engine(connection_string)+. Aby przypisać silnik do modelu należy użyć metody \verb+Model.bind(engine)+. Przykład wywołania przypisującego modelowi silnik dla serwera lokalnego i~przestrzeni nazw \verb+test+ został zaprezentowany na listingu~\ref{lst:engine_creation}.
+
+\begin{verbbox}
+	engine = Engine.create_engine('cassandra://127.0.0.1/test')
+	Model.bind(engine)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład wywołania tworzącego silnik i~przypisującego go do modelu.}
+	\label{lst:engine_creation}
+\end{figure} 
+
+\section{Lista życzeń użytkownika - studium przypadku}
+
+
+
+\begin{verbbox}
+class User(Model):
+    id = TimeUuidField(autotimestamp=True, partition_key=True)
+    name = TextField(selectable=True)
+    surname = TextField(selectable=True)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Tabela użytkownika opisana przy pomocy OMC.}
+\end{figure}
+
+\begin{verbbox}
+class Item(Model):
+    id = TimeUuidField(autotimestamp=True, partition_key=True)
+    name = TextField(length=255)
+    price = NumberField(decimal_positions=2)
+    desc = TextField()
+    category = DictionaryField(entries=['BOOKS', 'CLOTHES', 'FURNITURE'])
+    weight = NumberField(decimal_positions=1)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Tabela przedmiotu opisana przy pomocy OMC.}
+\end{figure}
+
+\begin{verbbox}
+class Wishlist(Model):
+    userId = TextField(partition_key=True)
+    item = DenormalizedField(relates=Item, 
+                             clustering_keys=['itemId'], 
+                             fields=['name', 'price'])
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Tabela listy życzeń opisana przy pomocy OMC.}
+\end{figure}

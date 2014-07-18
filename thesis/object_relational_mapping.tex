@@ -228,7 +228,7 @@ Ze względu na mechanizm metaklas w~Pythonie stworzono eleganckie i~proste imple
 \begin{verbbox}
 	class Wishlist(Model):
 	    userId = TextField(partition_key=True)
-	    item = DenormalizedField(entity=Item, 
+	    item = DenormalizedField(relates=Item, 
 	                             clustering_keys=['itemId'], 
 	                             fields=['name', 'price'])
 
