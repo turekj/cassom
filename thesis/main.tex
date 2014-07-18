@@ -1,0 +1,37 @@
+\documentclass[a4paper, 12pt, oneside]{report}
+
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{anysize}
+\usepackage{float}
+\usepackage{subfigure}
+\usepackage{multirow}
+\usepackage{textcomp}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{pgfplots}
+\usepackage{tikz, calc}
+\usetikzlibrary{arrows,shadows}
+\pgfplotsset{compat=1.8}
+\usepackage{verbatimbox}
+\usepackage{hhline}
+\usepackage{tikz-uml}
+\usepackage{hyperref}
+
+\pagestyle{headings}
+\setcounter{tocdepth}{1}
+
+\begin{document}
+ 
+ \include{titlePage}
+ 
+ \tableofcontents
+ 
+ \include{intro}
+ \include{cassandra_modelling}
+ \include{object_relational_mapping}
+ \include{object_modeling}
+ \include{bibliography}
+ \include{statement}
+ 
+\end{document}

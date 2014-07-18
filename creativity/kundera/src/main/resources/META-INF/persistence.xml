@@ -1,0 +1,55 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
+    http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+    <persistence-unit name="cassandra_pu">
+        <provider>com.impetus.kundera.KunderaPersistence</provider>
+        <properties>
+            <property name="kundera.nodes" value="localhost"/>
+            <property name="kundera.port" value="9160"/>
+            <property name="kundera.keyspace" value="KunderaExamples"/>
+            <property name="kundera.dialect" value="cassandra"/>
+            <property name="kundera.client.lookup.class"
+                      value="com.impetus.client.cassandra.thrift.ThriftClientFactory"/>
+            <property name="kundera.pool.size.max.active" value="50"/>
+            <property name="kundera.pool.size.max.total" value="50"/>
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="mysql_pu">
+        <provider>com.impetus.kundera.KunderaPersistence</provider>
+        <class>pl.edu.pw.elka.User</class>
+        <class>pl.edu.pw.elka.Item</class>
+        <properties>
+            <property name="kundera.client" value="rdbms"/>
+            <property name="kundera.client.lookup.class" value="com.impetus.client.rdbms.RDBMSClientFactory"/>
+            <property name="kundera.batch.size" value="20" />
+            <property name="kundera.pool.size.max.active" value="20" />
+            <property name="kundera.pool.size.max.idle" value="10" />
+            <property name="kundera.pool.size.min.idle" value="5" />
+            <property name="kundera.pool.size.max.total" value="20" />
+            <property name="hibernate.show_sql" value="false"/>
+            <property name="hibernate.format_sql" value="false"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect"/>
+            <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
+            <property name="hibernate.connection.url" value="jdbc:mysql://localhost/kundera?rewriteBatchedStatements=true"/>
+            <property name="hibernate.connection.username" value="root"/>
+            <property name="hibernate.connection.password" value=""/>
+            <property name="hibernate.current_session_context_class"
+                  value="org.hibernate.context.ThreadLocalSessionContext"/>
+            <property name="hibernate.c3p0.max_size" value="25" />
+            <property name="hibernate.c3p0.min_size" value="5"/>
+            <property name="hibernate.jdbc.batch_size" value="20"/>
+            <property name="hibernate.cache.use_second_level_cache" value="false"/>
+            <property name="hibernate.c3p0.timeout" value="300" />
+            <property name="hibernate.c3p0.max_statements" value="50" />
+            <property name="hibernate.c3p0.idle_test_period" value="60"/>
+            <property name="hibernate.c3p0.acquire_increment" value="1"/>
+            <property name="hibernate.c3p0.acquireRetryAttempts" value="5"/>
+            <property name="hibernate.c3p0.acquireRetryDelay" value="250"/>
+            <property name="hibernate.c3p0.preferredTestQuery" value="select 1" />
+            <property name="hibernate.c3p0.validate" value="true" />
+            <property name="hibernate.c3p0.testConnectionOnCheckout" value="true" />
+            <property name="hibernate.c3p0.testConnectionOnCheckin" value="true" />
+        </properties>
+    </persistence-unit>
+</persistence>
