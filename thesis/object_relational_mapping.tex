@@ -1,6 +1,6 @@
 % -*- root: main.tex -*-
 
-\chapter{Mapowanie obiektowe}
+\chapter{Mapowanie obiektowo-relacyjne}
 
 Jedną z~największych zalet relacyjnych baz danych w~kontekście programowania obiektowego jest dostępność bibliotek, które umożliwiają proste mapowanie obiektowo-relacyjne\footnote{W~dalszej części pracy używany będzie skrót ORM od angielskiego pojęcia object-relational mapping.}. Wykorzystanie ORM znacząco upraszcza proces tworzenia oprogramowania wykorzystującego bazy danych:
 
@@ -133,6 +133,7 @@ Wykres~\ref{fig:insert_time_comparison} demonstruje jak ogromną przewagę szybk
 Czasy pobierania listy życzeń użytkownika przedstawione na wykresie~\ref{fig:select_time_comparison} nie różnią się znacząco od siebie. Przewaga szybkości pobierania danych z~wykorzystaniem CQL ponownie wynika z~zastosowania lepszego modelu danych. Denormalizacja pól encji \emph{Item} pozwala pominąć pobieranie dla każdego użytkownika dodatkowego wiersza z~bazy danych. 
 
 \section{Wnioski z~badania wydajności}
+\label{sec:cassandra_orm_performance_summary}
 
 Na podstawie wyników przeprowadzonych badań można wnioskować, że mechanizmy mapowania obiektowo-relacyjnego nie nadają się do wykorzystania przez bazę danych Apache Cassandra. Wynika to z~faktu, że mechanizmy te wspomagają normalizację i~zachowywanie relacji między encjami, natomiast efektywne modelowanie dziedziny danych w~Cassandrze dąży do denormalizacji i~maksymalnego uproszczenia zależności pomiędzy obiektami.
 
@@ -172,6 +173,7 @@ Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowe
 \end{figure}
 
 \section{Mapowanie obiektowe dla Cassandry - koncepcja}
+\label{sec:om_for_cassandra_concept}
 
 W~większości rozwiązań ORM encja modelu danych jest opisywana jako definicja klasy, której obiekty reprezentować będą instancję tej encji. Rozważmy listing~\ref{vrb:jpa_denormalization_theory}, który przedstawia hipotetyczne dostosowanie standardu JPA do denormalizacji dla modelu~\ref{tab:denormalized_wishlist}.
 
