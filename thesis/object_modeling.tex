@@ -99,21 +99,28 @@ Imię i~nazwisko opisane są polem typu \verb+TextField+. Jest ono mapowane na b
 	\label{lst:user_search_by_name_surname}
 \end{figure}
 
+Opis encji przedmiotu w~OMC został zaprezentowany na listingu~\ref{lst:omc_item_definition}. 
+
 \begin{verbbox}
 class Item(Model):
-    id = TimestampField(auto_now=True, partition_key=True)
-    name = TextField(length=255)
-    price = NumberField(decimal_positions=2)
+    id = UuidField(type=TimeUuid, auto_generate=True, partition_key=True)
+    name = TextField(searchable=True, length=255)
+    price = DecimalField(total_positions=8, decimal_positions=2)
     desc = TextField()
     category = DictionaryField(entries=['BOOKS', 'CLOTHES', 'FURNITURE'])
-    weight = NumberField(decimal_positions=1)
+    weight = DecimalField(total_positions=5, decimal_positions=1)
 \end{verbbox}
 
 \begin{figure}[ht!]
 	\centering
 	\theverbbox
 	\caption{Tabela przedmiotu opisana przy pomocy OMC.}
+	\label{lst:omc_item_definition}
 \end{figure}
+
+W~stosunku do poprzedniej definicji zostały użyte dwa nowe typy pól: \verb+NumberField+ oraz \verb+DictionaryField+. Pierwsze z~nich służy do przechowywania wartości liczb dziesiętnych. Cassandra nie posiada odpowiednika znanego z~relacyjnych baz danych stałoprzecinkowego typu \verb+NUMBER+. O~umieszczanie poprawnie zaokrąglonych wartości musi zadbać autor oprogramowania korzystającego z~Apache Cassandra. Aby to ułatwić, OMC dostarcza programowe wsparcie dla operacji stałoprzecinkowych. Pole \verb+DecimalField+ posiada dwa parametry. Opcja \verb+total_positions+ opisuje maksymalną liczbę cyfr dziesiętnych, z~których może składać się liczba, a~\verb+decimal_positions+ definiuje ile z~tych cyfr należy do części ułamkowej pola. \verb+DecimalField+ w~przezroczysty dla programisty sposób wspiera przypisywanie i~wszystkie operacje arytmetyczne dla typów \verb+int+, \verb+long+ oraz \verb+float+.
+
+Pole \verb+DictionaryField+ dostarcza wsparcia dla słowników jednokrotnego wyboru. Parametr \verb+entries+ pozwala na wyspecyfikowanie listy dozwolonych wartości pola. Podanie wartości spoza listy powoduje zgłoszenie wyjątku \verb+AttributeError+. Typ pola jest automatycznie wnioskowany z~wartości parametru \verb+entries+. Dla listy elementów typu \verb+str+ pole zostanie zmapowanie na wartość typu \verb+text+. W~przypadku, gdy typ nie może być wywnioskowany na podstawie listy, należy podać go jawnie za pomocą parametru \verb+type+.
 
 \begin{verbbox}
 class Wishlist(Model):
@@ -127,4 +134,5 @@ class Wishlist(Model):
 	\centering
 	\theverbbox
 	\caption{Tabela listy życzeń opisana przy pomocy OMC.}
+	\label{lst:omc_wishlist_definition}
 \end{figure}
