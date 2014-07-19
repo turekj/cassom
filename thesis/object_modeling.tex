@@ -155,7 +155,7 @@ Najprostszą możliwością jest zebranie wszystkich próbek dla danego urządze
 
 \begin{verbbox}
 class TimeSeriesPatternOne(Model):
-    weatherstation_id = TextField(primary_key=True)
+    weatherstation_id = TextField(partitioning_key=True)
     event_time = TimestampField(clustering_key=True, auto_on_create=True)
     temperature = TextField()
 \end{verbbox}
@@ -170,3 +170,34 @@ class TimeSeriesPatternOne(Model):
 Zapis śladu czasu w~nazwie kolumny można uzyskać poprzez dołączenie pola do złożonego klucza głównego tabeli jako \emph{clustering key}\footnote{Clustering key (ang. dosłownie ,,klucz klastrowania'') - część złożonego klucza głównego tabeli, która określa w~jakiej kolejności grupowane są wpisy względem klucza partycjonowania (identyfikatora wiersza).}. Dołączenie to dokonuje się poprzez ustawienie flagi \verb+clustering_key+ na \verb+True+. 
 
 Udogodnieniem dla programisty korzystającego z~OMC jest możliwość automatycznej generacji śladu czasu dla chwili obecnej. Ślad czasu może być wygenerowany w~trakcie tworzenia obiektu (\verb+auto_on_create=True+) lub w~trakcie wstawiania obiektu do bazy danych (\verb+auto_on_save=True+).  
+
+\paragraph{Grupowanie odczytów dla urządzenia i~fragmentu daty} 
+
+W~przypadku gdy odczytów jest zbyt dużo by mieściły się w~jednym wierszu sugerowanym rozwiązaniem jest dodatkowe partycjonowanie wierszy po komponencie daty: miesiącu, dniu, itd. Autor wzorca sugeruje utworzenie w~modelu dodatkowego pola, do którego wpisywany jest komponent daty i~dołączenie tego pola do klucza partycjonowania. Takie modelowanie dziedziny może prowadzić do potencjalnych błędów. Ta sama dana - ślad czasu - przechowywana jest w~dwóch polach, które różnią się formatowaniem. 
+
+OMC posiada mechanizm partycjonowania dat po komponencie. W~modelu znajduje się tylko jedna dana - faktyczny ślad czasu. OMC na jej podstawie automatycznie tworzy i~formatuje klucz partycjonowania. Dzięki temu programista nie musi dbać o~ręczne wyznaczanie komponentu daty. Listing~\ref{lst:time_series_modeling_two} przedstawia opis modelu z~partycjonowaniem względem dnia.
+
+\begin{verbbox}
+class TimeSeriesPatternTwo(Model):
+    weatherstation_id = TextField(partitioning_key=True)
+    event_time = TimestampField(clustering_key=True, 
+                                auto_on_create=True, 
+                                partitioning_by_day=True)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Modelowanie szeregu zdarzeń. Partycjonowanie zdarzeń po komponencie daty.}
+	\label{lst:time_series_modeling_two}
+\end{figure}
+
+Pole \verb+event_time+ modelu \verb+TimeSeriesPatternTwo+ jest kluczem klastrowania. Dodatkowo posiada ono ustawioną flagę \verb+partitioning_by_day=True+, która spełnia trzy zadania:
+
+\begin{itemize}
+	\item Przy tworzeniu schematu tabeli dodaje dodatkową kolumnę \verb+event_time_day+\footnote{Nazwa jest tworzona z~nazwy pola oraz nazwy komponentu daty.} o~typie tekstowym. Pole to jest automatycznie włączane do klucza partycjonowania.
+	\item Przy zapisywaniu obiektu do bazy danych automatycznie wypełnia wartość dodatkowego pola o~ślad czasu obcięty do z~dokładnością do dnia.
+	\item Przy wyszukiwaniu obiektów po dacie automatycznie filtruje dane zarówno po wartości pola \verb+event_time_day+, jak i~\verb+event_time+.
+\end{itemize}
+
+Dostępne jest kilka rodzajów komponentów daty, po których można dokonać partycjonowania. Różnią się one ostatnim członem nazwy parametru. Wybór obejmuje partycjonowanie po latach (\verb+_year+), miesiącach (\verb+_month+), dniach (\verb+_day+), godzinach (\verb+_hour+), minutach (\verb+_minute+) oraz sekundach (\verb+_second+).
