@@ -201,3 +201,28 @@ Pole \verb+event_time+ modelu \verb+TimeSeriesPatternTwo+ jest kluczem klastrowa
 \end{itemize}
 
 Dostępne jest kilka rodzajów komponentów daty, po których można dokonać partycjonowania. Różnią się one ostatnim członem nazwy parametru. Wybór obejmuje partycjonowanie po latach (\verb+_year+), miesiącach (\verb+_month+), dniach (\verb+_day+), godzinach (\verb+_hour+), minutach (\verb+_minute+) oraz sekundach (\verb+_second+).
+
+\paragraph{Odczyty z~ograniczoną pamięcią}
+
+Korzystając z~wbudowanego mechanizmu Cassandry możliwe jest tworzenie automatycznie przedawniających się wartości. Wstawiając pozycję do bazy danych można ustawić czas życia, po którym zostanie ona usunięta. Przedawnianie się wartości może być wykorzystywane w~połączeniu z~odwrotną kolejnością sortowania wpisów (od najnowszego do najstarszego). Dzięki temu bardzo łatwo jest budować widoki, które prezentują kilka najnowszych informacji.
+
+OMC zapewnia dwa rodzaje wsparcia dla czasu życia wartości. Czas życia może być ustawiany dla indywidualnych obiektów. Przy zapisywaniu obiektu należy na jego instancji wywołać metodę \verb+save(ttl=20)+. Parametr \verb+ttl+ definiuje czas życia wartości w~sekundach. Czas życia można również ustawić globalnie dla wszystkich instancji modelu. Wykorzystuje się do tego pole \verb+__ttl__+ klasy. Zaprezentowano to na listingu~\ref{lst:time_series_modeling_three}.
+
+\begin{verbbox}
+class TimeSeriesPatternThree(Model):
+    __ttl__ = 20
+    weatherstation_id = TextField(partitioning_key=True)
+    event_time = TimestampField(clustering_key=True, 
+                                descending_clustering=True
+                                auto_on_create=True)
+    temperature = TextField()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Modelowanie szeregu zdarzeń. Przedawniające się odczyty jako kolumny z~sortowaniem od najnowszego.}
+	\label{lst:time_series_modeling_three}
+\end{figure} 
+
+Dla każdego pola, które jest częścią klucza klastrowania można ustawić odwrotną kolejność sortowania elementów. Do tego celu należy ustawić flagę \verb+descending_clustering+ na \verb+True+.
