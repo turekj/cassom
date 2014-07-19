@@ -68,11 +68,11 @@ Do utworzenia silnika służy metoda \verb+Engine.create_engine(connection_strin
 
 \section{Lista życzeń użytkownika - studium przypadku}
 
-
+Encję użytkownika przy pomocy OMC można opisać modelem \verb+User+ zaprezentowanym na listingu~\ref{lst:omc_user_definition}. Model posiada trzy pola: identyfikator (\verb+id+), imię (\verb+name+) oraz nazwisko (\verb+surname+).
 
 \begin{verbbox}
 class User(Model):
-    id = TimeUuidField(autotimestamp=True, partition_key=True)
+    id = UuidField(type=TimeUuid, auto_generate=True, partition_key=True)
     name = TextField(selectable=True)
     surname = TextField(selectable=True)
 \end{verbbox}
@@ -81,11 +81,27 @@ class User(Model):
 	\centering
 	\theverbbox
 	\caption{Tabela użytkownika opisana przy pomocy OMC.}
+	\label{lst:omc_user_definition}
+\end{figure}
+
+Identyfikator jest opisany polem typu \verb+UuidField+. Ze względu na zadeklarowany parametr \verb+type=TimeUuid+ pole zostanie zmapowane w~Cassandrze jako dana o~typie \verb+timeuuid+. Mechanizm OMC posiada wbudowaną walidację dla identyfikatorów. Przypisanie polu \verb+id+ instancji modelu \verb+User+ błędnej wartości spowoduje zgłoszenie wyjątku \verb+AttributeError+. Parametr \verb+auto_generate=True+ oznacza, że jeżeli identyfikator nie zostanie ustawiony manualnie, to zostanie wygenerowany automatycznie podczas mapowania modelu na bazę danych. Ustawienie \verb+partition_key=True+ oznacza natomiast, że pole będzie częścią klucza wiersza tabeli. 
+
+Imię i~nazwisko opisane są polem typu \verb+TextField+. Jest ono mapowane na bazodanowy typ \verb+text+. Deklaracja \verb+selectable=True+ oznacza, że na polu zostanie utworzony indeks drugiego stopnia. Dzięki temu możliwe jest przeszukiwanie tabeli po wartości tego pola. Na listingu~\ref{lst:user_search_by_name_surname} przedstawiono odwołanie do OCM, dzięki któremu można wyszukać wszystkich użytkowników o~imieniu Jakub i~nazwisko Turek.
+
+\begin{verbbox}
+	User.objects().find(name='Jakub', surname='Turek')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład wyszukiwania użytkownika po imieniu i~nazwisku.}
+	\label{lst:user_search_by_name_surname}
 \end{figure}
 
 \begin{verbbox}
 class Item(Model):
-    id = TimeUuidField(autotimestamp=True, partition_key=True)
+    id = TimestampField(auto_now=True, partition_key=True)
     name = TextField(length=255)
     price = NumberField(decimal_positions=2)
     desc = TextField()
