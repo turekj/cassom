@@ -122,9 +122,11 @@ W~stosunku do poprzedniej definicji zostały użyte dwa nowe typy pól: \verb+Nu
 
 Pole \verb+DictionaryField+ dostarcza wsparcia dla słowników jednokrotnego wyboru. Parametr \verb+entries+ pozwala na wyspecyfikowanie listy dozwolonych wartości pola. Podanie wartości spoza listy powoduje zgłoszenie wyjątku \verb+AttributeError+. Typ pola jest automatycznie wnioskowany z~wartości parametru \verb+entries+. Dla listy elementów typu \verb+str+ pole zostanie zmapowanie na wartość typu \verb+text+. W~przypadku, gdy typ nie może być wywnioskowany na podstawie listy, należy podać go jawnie za pomocą parametru \verb+type+.
 
+Opis encji listy życzeń przedstawia listing~\ref{lst:omc_wishlist_definition}.
+
 \begin{verbbox}
 class Wishlist(Model):
-    userId = TextField(partition_key=True)
+    userId = UuidField(type=TimeUuid, partition_key=True)
     item = DenormalizedField(relates=Item, 
                              clustering_keys=['itemId'], 
                              fields=['name', 'price'])
@@ -136,3 +138,7 @@ class Wishlist(Model):
 	\caption{Tabela listy życzeń opisana przy pomocy OMC.}
 	\label{lst:omc_wishlist_definition}
 \end{figure}
+
+Pole \verb+DenormalizedField+ spełnia postulaty przedstawione w~sekcji~\ref{sec:om_for_cassandra_concept}. Istotny jest fakt, że na podstawie parametru \verb+clustering_keys=['itemId']+ pole \verb+itemId+ staje się częścią złożonego klucza głównego tabeli.
+
+
