@@ -141,4 +141,32 @@ class Wishlist(Model):
 
 Pole \verb+DenormalizedField+ spełnia postulaty przedstawione w~sekcji~\ref{sec:om_for_cassandra_concept}. Istotny jest fakt, że na podstawie parametru \verb+clustering_keys=['itemId']+ pole \verb+itemId+ staje się częścią złożonego klucza głównego tabeli.
 
+\section{Wsparcie dla wzorców modelowania}
 
+OMC został zaprojektowany w~taki sposób, aby dostarczać mechanizmów wspierających wzorce projektowe. W~tej sekcji Autor opisuje wszystkie wzorce, które były analizowane, modelowane, testowane i~optymalizowane w~trakcie prac implementacyjnych nad OMC.
+
+\subsection{Szereg zdarzeń}
+
+Apache Cassandra została zaprojektowana z~myślą o~wspieraniu szeregów zdarzeń. Szereg zdarzeń to uporządkowane względem czasu wystąpienia wpisy do bazy danych, które opcjonalnie mogą posiadać z~góry określony czas życia. Typowym przykładem szeregu zdarzeń są wartości odczytów z~urządzeń pomiarowych. Wartości te zwyczajowo są pobierane cyklicznie, a~do wykorzystania w~czasie rzeczywistym przydatne są tylko najnowsze odczyty. Doskonały opis modelowania szeregów zdarzeń przedstawiony jest we wpisie Patricka McFadina na portalu \textbf{Planet Cassandra}.~\cite{time_series_modeling_pattern} Artykuł analizuje przykład stacji meteorologicznych. Przedstawia trzy sposoby zapisu szeregu zdarzeń w~Apache Cassandra. 
+
+\paragraph{Odczyty dla tego samego urządzenia w~pojedynczym wierszu} 
+
+Najprostszą możliwością jest zebranie wszystkich próbek dla danego urządzenia w~jednym wierszu tabeli. Kolejne wartości zapisywane są ze śladem czasu w~nazwie kolumny. Listing~\ref{lst:time_series_modeling_one} przedstawia wzorzec zapisany jako model OMC.
+
+\begin{verbbox}
+class TimeSeriesPatternOne(Model):
+    weatherstation_id = TextField(primary_key=True)
+    event_time = TimestampField(clustering_key=True, auto_on_create=True)
+    temperature = TextField()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Modelowanie szeregu zdarzeń. Zapis kolejnych odczytów jako kolumny.}
+	\label{lst:time_series_modeling_one}
+\end{figure}
+
+Zapis śladu czasu w~nazwie kolumny można uzyskać poprzez dołączenie pola do złożonego klucza głównego tabeli jako \emph{clustering key}\footnote{Clustering key (ang. dosłownie ,,klucz klastrowania'') - część złożonego klucza głównego tabeli, która określa w~jakiej kolejności grupowane są wpisy względem klucza partycjonowania (identyfikatora wiersza).}. Dołączenie to dokonuje się poprzez ustawienie flagi \verb+clustering_key+ na \verb+True+. 
+
+Udogodnieniem dla programisty korzystającego z~OMC jest możliwość automatycznej generacji śladu czasu dla chwili obecnej. Ślad czasu może być wygenerowany w~trakcie tworzenia obiektu (\verb+auto_on_create=True+) lub w~trakcie wstawiania obiektu do bazy danych (\verb+auto_on_save=True+).  
