@@ -312,5 +312,92 @@ W~pierwszej kolejności metoda \verb+save()+ sprawdza, którą z~dwóch operacji
 
 Mechanizm aktualizacji selektywnej można wyłączyć. Można dokonać tego wywołując metodę \verb+save()+ z~parametrem \verb+selective_update=False+. Alternatywnie selektywna aktualizacja może zostać wyłączona dla całego modelu poprzez zadeklarowanie pola \verb+__selective_update__ = False+.
 
+\subsection{Indeks wartości unikalnych}
 
+Aby umożliwić wyszukiwanie po wartościach kolumny, która nie należy do klucza głównego tabeli należy użyć indeksu drugiego rzędu (\emph{secondary index}). Według dokumentacji Apache Cassandry~\cite{cassandra_indexes} indeksy drugiego stopnia powinny być używane na kolumnach, które silnie grupują wiersze encji nadrzędnej. Wynika to z~wewnętrznej implementacji indeksów drugiego stopnia. Załóżmy, że w~systemie istnieje tabela przechowująca dane użytkowników, w~której zapisane są wiersze zaprezentowane na diagramie~\ref{tab:secondary_index_example_users_table}.
 
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{|l||c|c|c|c|}
+		\hhline{|-||----|}
+		 & \textbf{name} & \textbf{surname} & \textbf{email} & \textbf{city} \\
+		\hhline{|~||====|}
+		\textbf{jturek} & Jakub & Turek & J.Turek@stud.elka.pw.edu.pl & Warsaw \\
+		\hhline{|=::====}
+		 & \textbf{name} & \textbf{surname} & \textbf{email} & \textbf{city} \\
+		\hhline{|~||====|}
+		\textbf{manisero} & Michał & Aniserowicz & M.Aniserowicz@stud.elka.pw.edu.pl & Warsaw \\
+		\hhline{|-||----|}
+	\end{tabular} 
+
+	\caption{Przykładowe wartości w~tabeli użytkownicy.}
+	\label{tab:secondary_index_example_users_table}
+\end{figure}
+
+Przykładowy wygląd danych w~tabeli, która realizuje indeks drugiego stopnia dla miasta (kolumna \verb+city+), został zaprezentowany na diagramie~\ref{tab:secondary_index_example_index_table}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{|l||c|c|}
+		\hhline{|-||--|}
+		 & \textbf{jturek} & \textbf{manisero} \\
+		\hhline{|~||==|}
+		\textbf{Warsaw} & null & null \\
+		\hhline{|-||--|}
+	\end{tabular} 
+
+	\caption{Przykładowa tabela, która mogłaby realizować indeks drugiego stopnia dla kolumny \emph{city} z~diagramu~\ref{tab:secondary_index_example_users_table}.}
+	\label{tab:secondary_index_example_index_table}
+\end{figure}
+
+Wadą rozwiązania przedstawionego na diagramie~\ref{tab:secondary_index_example_index_table} jest brak skalowalności. Przy dodawaniu użytkowników wiersz rozszerza się o~kolejne kolumny, które przechowywane są na tym samym węźle. Zajmuje to dużo miejsca na jednej partycji. Dodatkowo wszystkie zapytania o~dany indeks zawsze odwołują się do jednego węzła, co skutkuje nierównomiernym rozłożeniem obciążenia. Ze względu na wymienione wady indeksy drugiego stopnia są realizowane lokalnie. Każdy węzeł zawiera informacje o~wszystkich indeksowanych kolumnach, ale wyłącznie o~kluczach wierszy, które znajdują się na danym węźle. Oznacza to, że jeżeli użytkownicy \textbf{jturek} oraz \textbf{manisero} znajdują się na różnych węzłach, również indeks jest równomiernie dystrybuowany pomiędzy te dwa węzły.
+
+Lokalne indeksowanie wymusza odwołania do wszystkich węzłów dla każdego wyszukiwania. Zakładając, że indeksowanych wierszy (zarówno wszystkich, jak i~tych z~wyniku zapytania) jest dużo więcej niż węzłów, nadal znacząco przyspiesza to wyszukiwanie. Sytuacja zmienia się, gdy indeksowana jest wartość unikalna. Wtedy wbudowany w~Cassandrę mechanizm wymusza wykonanie wielu zapytań zamiast jednego. 
+
+Indeks wartości unikalnych można zamodelować samodzielnie w~prosty sposób.~\cite{unique_column_index} Wystarczy utworzyć nową tabelę, w~której unikalna wartość jest identyfikatorem. W~wierszu dla danej unikalnej wartości zapisany jest odpowiedni identyfikator. Przykład takiego indeksu dla adresu e-mail (kolumna \verb+email+) użytkowników przedstawiono na diagramie~\ref{tab:custom_unique_value_index_table}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{ll}
+		UserEmailIndex &
+		\begin{tabular}{|l||c|}
+			\hhline{|-||-|}
+		 	& \textbf{jturek} \\
+			\hhline{|~||=|}
+			\textbf{J.Turek@stud.elka.pw.edu.pl} & null \\
+			\hhline{|=::=}
+			 & \textbf{manisero} \\
+			\hhline{|~||=|}
+			\textbf{M.Aniserowicz@stud.elka.pw.edu.pl} & null \\
+			\hhline{|-||-|}
+		\end{tabular} 
+	\end{tabular}
+
+	\caption{Przykład tabeli przechowującej indeks dla unikalnych wartości (adres e-mail użytkownika).}
+	\label{tab:custom_unique_value_index_table}
+\end{figure}
+
+OMC wspiera automatyczne tworzenie indeksów dla wartości unikalnych. Na listingu~\ref{lst:omc_unique_index_modeling} przedstawiono sposób utworzenia indeksu dla wartości unikalnych dla pola \verb+email+.
+
+\begin{verbbox}
+class User(Model):
+    id = UuidField(type=TimeUuid, auto_generate=True, partition_key=True)
+    name = TextField()
+    surname = TextField()
+    email = TextField(searchable_unique=True)
+    city = TextField(searchable=True)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Modelowanie tabeli użytkownicy z~wykorzystaniem indeksu dla wartości unikalnych.}
+	\label{lst:omc_unique_index_modeling}
+\end{figure}
+
+Flaga \verb+searchable_unique=True+ powoduje, że dla danego pola tworzony jest indeks unikalny. Indeks jest w~całości zarządzany przez OMC. Podczas wyszukiwania metodą \verb+User.objects().find(email='J.Turek@stud.elka.pw.edu.pl')+ mechanizm wyszukuje identyfikator użytkownika w~stworzonym przez siebie indeksie. OMC aktualizuje indeksy podczas wykonywania operacji \verb+save()+ oraz \verb+delete()+.
+
+Zarówno indeks wartości unikatowych, jak również domyślny indeks drugiego stopnia (tworzony przy użyciu flagi \verb+searchable=True+) nazywane są przy użyciu tej samej konwencji. Pierwszą składową jest nazwa encji, drugą - nazwa pola, a~trzecia to słowo ,,index''. Dla przykładu \ref{lst:omc_unique_index_modeling} indeks wartości unikatowych zostanie umieszczony w~tabeli o~nazwie \verb+user_email_index+.
