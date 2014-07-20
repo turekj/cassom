@@ -404,7 +404,7 @@ Zarówno indeks wartości unikatowych, jak również domyślny indeks drugiego s
 
 \section{Przetwarzanie partiami}
 
-Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch_operations} Wykorzystując partie\footnote{Partia (ang. batch) - zgrupowany zestaw zapytań INSERT, UPDATE lub DELETE.} można wykonać zestaw operacji, z~których (cytując dokumentację) ,,jeżeli jedna się powiedzie, to wykonają się wszystkie''. Przykład atomowych operacji został zaprezentowany na diagramie~\ref{lst:batch_operation_cql_example}. Jest to zestaw dwóch zapytań, które usuwają z~bazy danych użytkownika i~właściwy mu indeks dla pola e-mail.
+Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch_operations} Wykorzystując partie\footnote{Partia (ang. batch) - zgrupowany zestaw zapytań INSERT, UPDATE lub DELETE.} można wykonać zestaw operacji, z~których (cytując dokumentację) ,,jeżeli jedna się powiedzie, to wykonają się wszystkie''. Nie jest to jednak odpowiednik transakcji znanych z~relacyjnych baz danych. Apache Cassandra nie zapewnia integralności wykonywanych w~partii zapytań: dane mogą być modyfikowane równolegle przez inne zapytania. Przykład atomowych operacji został zaprezentowany na diagramie~\ref{lst:batch_operation_cql_example}. Jest to zestaw dwóch zapytań, które usuwają z~bazy danych użytkownika i~właściwy mu indeks dla pola e-mail.
 
 \begin{verbbox}
 	BEGIN BATCH
@@ -442,3 +442,40 @@ Silnik wykorzystywany w~OCM zapewnia wsparcie dla przetwarzania partiami. Potraf
 \end{figure}
 
 Wywołanie metody \verb+Model.begin_batch()+ powoduje rozpoczęcie kolejkowania zapytań DML. Operacja wstawienia nowego przedmiotu (\verb+item.save()+) nie wykonuje się od razu, ale jest umieszczana w~kolejce. Do kolejki trafia również operacja aktualizacji listy życzeń użytkownika (\verb+wishlist.save()+). Wywołanie metody \verb+Model.apply_batch()+ powoduje, że partia dwóch zgrupowanych zapytań wykonuje się.
+
+\section{Wsparcie dla liczników}
+
+Apache Cassandra udostępnia wsparcie dla specjalnego typu danych - liczników.~\cite{cassandra_counters} Liczniki to kolumny specjalnego typu \verb+counter+, na których można wykonywać tylko dwie operacje: inkrementacja lub dekrementacja. Poza specjalnym typem zmienia się również sposób interakcji z~tabelą. Nie można wstawiać do niej wartości, a~jedynie aktualizować liczniki dla różnych kombinacji pozostałych pól. 
+
+OMC wspiera modelowanie liczników. Przykład przedstawiono na listingu~\ref{lst:ocm_counter_support}.
+
+\begin{verbbox}
+class TripCounter(Model):
+    country = TextField(partitioning_key=True)
+    visits = CounterField()
+
+sweden = TripCounter(country='Sweden')
+sweden.visits.increment(1)
+sweden.save()
+
+poland = TripCounter(country='Poland')
+poland.visits.increment(5)
+poland.visits.decrement(2)
+poland.save()
+
+s_visits = TripCounter.find(country='Sweden').get().visits    # 1
+p_visits = TripCounter.find(country='Poland').get().visits    # 3
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład użycia liczników w~OCM.}
+	\label{lst:ocm_counter_support}
+\end{figure}
+
+Obsługa modelu posiadającego licznik różni się od wykorzystania standardowego modelu. Przede wszystkim wartości wszystkich pól są ustawione w~trybie \verb+read only+, czyli nie jest możliwe wykonanie operacji \verb+sweden.country = 'Germany'+. Dzięki temu wszystkie operacje wykonywane na liczniku są zawsze odpowiednio interpretowane, gdyż nie może się zmienić ich kontekst. W~przeciwnym razie trudno byłoby ocenić intencje programisty, który najpierw inkrementuje licznik o~2, a~następnie zmienia wartość kraju dla obiektu ze zwiększonym licznikiem. Mogło być to działanie celowe (operacje wykonane w~nieintuicyjnej kolejności) lub zwykły błąd. 
+
+Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację (\verb+increment()+) oraz dekrementację (\verb+decrement()+). Metody wywołane bez podania parametru standardowo zwiększają/zmniejszają wartość licznika o~1. Obie funkcje są łączne. Oznacza to, że tak jak w~przykładzie można dokonywać wielu operacji na jednym liczniku, które przed uaktualnieniem obiektu w~bazie danych są sumowane.
+
+Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia sposób obsługi obiektu. Nowo powstały obiekt jest traktowany tak, jakby został wcześniej pobrany z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
