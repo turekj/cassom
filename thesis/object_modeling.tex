@@ -281,4 +281,36 @@ Ustawienie parametru \verb+__track_deletes__+ powoduje, że śledzona wartość 
 	\item Czas dodania do kolejki (\verb+enqueued_at+) większy od \verb+second_element.enqueued_at+ - automatycznie dodawane przez OMC.
 \end{itemize}
 
+\subsection{Selektywna aktualizacja}
+
+Apache Cassandra jest przystosowana do obsługi wielu równoległych źródeł danych. Ze względu na brak transakcyjności jednym ze sposobów na uniknięcie problemów synchronizacji jest zalecana przez Dave'a Gardnera selektywna aktualizacja.~\cite{cassandra_concepts_patterns_antipatterns} Edytując zawartość danego wiersza należy przesyłać do bazy danych wyłącznie wartości, które rzeczywiście uległy modyfikacji. Inaczej istnieje prawdopodobieństwo niecelowego nadpisania zmian wprowadzonych równolegle przez inne źródło danych. OMC domyślnie korzysta z~mechanizmu selektywnej aktualizacji, co przedstawiono na listingu~\ref{lst:selective_update_modeling}.
+
+\begin{verbbox}
+class SelectiveUpdate(Model):
+    name = TextField(partitioning_key=True)
+    description = TextField(length=1024)
+    priority = IntegerField()
+
+# find object with name 'su_test'
+su_test = SelectiveUpdate.objects().find(name='su_test').get()
+
+# update priority
+su_test.priority = 1
+
+# update object
+su_test.save()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład selektywnej aktualizacji.}
+	\label{lst:selective_update_modeling}
+\end{figure}
+
+W~pierwszej kolejności metoda \verb+save()+ sprawdza, którą z~dwóch operacji, aktualizacji czy wstawienia obiektu, należy wykonać. Przy wykonywaniu aktualizacji do bazy danych przesyłana jest tylko wartość zmienionych pól, w~danym przykładzie tylko priorytetu. Jeżeli pomiędzy pobraniem obiektu, a~aktualizacją priorytetu i~zapisaniem obiektu w~bazie danych inny węzeł dokona zmiany opisu obiektu, opis ten nie zostanie ponownie nadpisany poprzednią wartością.
+
+Mechanizm aktualizacji selektywnej można wyłączyć. Można dokonać tego wywołując metodę \verb+save()+ z~parametrem \verb+selective_update=False+. Alternatywnie selektywna aktualizacja może zostać wyłączona dla całego modelu poprzez zadeklarowanie pola \verb+__selective_update__ = False+.
+
+
 
