@@ -401,3 +401,45 @@ class User(Model):
 Flaga \verb+searchable_unique=True+ powoduje, że dla danego pola tworzony jest indeks unikalny. Indeks jest w~całości zarządzany przez OMC. Podczas wyszukiwania metodą \verb+User.objects().find(email='J.Turek@stud.elka.pw.edu.pl')+ mechanizm wyszukuje identyfikator użytkownika w~stworzonym przez siebie indeksie. OMC aktualizuje indeksy podczas wykonywania operacji \verb+save()+ oraz \verb+delete()+.
 
 Zarówno indeks wartości unikatowych, jak również domyślny indeks drugiego stopnia (tworzony przy użyciu flagi \verb+searchable=True+) nazywane są przy użyciu tej samej konwencji. Pierwszą składową jest nazwa encji, drugą - nazwa pola, a~trzecia to słowo ,,index''. Dla przykładu \ref{lst:omc_unique_index_modeling} indeks wartości unikatowych zostanie umieszczony w~tabeli o~nazwie \verb+user_email_index+.
+
+\section{Przetwarzanie partiami}
+
+Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch_operations} Wykorzystując partie\footnote{Partia (ang. batch) - zgrupowany zestaw zapytań INSERT, UPDATE lub DELETE.} można wykonać zestaw operacji, z~których (cytując dokumentację) ,,jeżeli jedna się powiedzie, to wykonają się wszystkie''. Przykład atomowych operacji został zaprezentowany na diagramie~\ref{lst:batch_operation_cql_example}. Jest to zestaw dwóch zapytań, które usuwają z~bazy danych użytkownika i~właściwy mu indeks dla pola e-mail.
+
+\begin{verbbox}
+	BEGIN BATCH
+	  DELETE FROM user WHERE userId = 'jturek'
+	  DELETE FROM user_mail_index WHERE mail = 'J.Turek@stud.elka.pw.edu.pl'
+	APPLY BATCH;
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład operacji na partii, która usuwa z~bazy danych użytkownika \emph{jturek} i~jego indeks dla pola email.}
+	\label{lst:batch_operation_cql_example}
+\end{figure}
+
+Silnik wykorzystywany w~OCM zapewnia wsparcie dla przetwarzania partiami. Potrafi kolejkować wszystkie zapytania DML\footnote{Data Modification Language (ang. język modyfikacji danych) - podzbiór zapytań obejmujących wstawianie (INSERT), aktualizację (UPDATE) oraz usuwanie (DELETE) danych.}, a~następnie wykonywać zapytania z~kolejki jako operacja atomowa. Przykład wykorzystania operacji na partiach w~OCM zaprezentowano na listingu~\ref{lst:ocm_batch_support}.
+
+\begin{verbbox}
+	# starts batch
+	Model.begin_batch()
+	# create new Item
+	item = Item(name='item', description='desc', price=12.5)
+	item.save()    # save is queued
+	user = Wishlist.objects().find(userId='jturek')
+	wishlist.add(item)
+	wishlist.save()    # save is queued
+	# executes item.save() and wishlist.save()
+	Model.apply_batch()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład wykonania operacji na partii, która wstawia do bazy nowy przedmiot i~dodaje go do listy życzeń użytkownika.}
+	\label{lst:ocm_batch_support}
+\end{figure}
+
+Wywołanie metody \verb+Model.begin_batch()+ powoduje rozpoczęcie kolejkowania zapytań DML. Operacja wstawienia nowego przedmiotu (\verb+item.save()+) nie wykonuje się od razu, ale jest umieszczana w~kolejce. Do kolejki trafia również operacja aktualizacji listy życzeń użytkownika (\verb+wishlist.save()+). Wywołanie metody \verb+Model.apply_batch()+ powoduje, że partia dwóch zgrupowanych zapytań wykonuje się.
