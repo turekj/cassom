@@ -226,3 +226,59 @@ class TimeSeriesPatternThree(Model):
 \end{figure} 
 
 Dla każdego pola, które jest częścią klucza klastrowania można ustawić odwrotną kolejność sortowania elementów. Do tego celu należy ustawić flagę \verb+descending_clustering+ na \verb+True+.
+
+\subsection{Wsparcie dla kolejek}
+
+W~sekcji~\ref{sec:patterns_and_antipatterns} został przytoczony antywzorzec kolejki. Problem został opisany przez Alekseya Yeschenko na blogu firmy DataStax.~\cite{cassandra_queue_antipattern} Wynika on ze sposobu obsługi operacji usuwania przez silnik Apache Cassandra. Usuwanie nie jest realizowane natychmiast. Zamiast tego kasowana kolumna oznaczana jest specjalnym znacznikiem \emph{tombstone} i~rezyduje w~pamięci aż do momentu, gdy nastąpi właściwe wyrzucanie. Przy dużej liczbie usunięć kolumn z~wiersza może zdarzyć się, że zapytanie filtrujące z~limitem będzie działało znacznie wolniej niż dla wiersza z~identyczną ilością kolumn, ale bez poprzedzających usunięć. Wynika to z~faktu, że stwierdzenie, że dana wartość jest ,,martwa'' wymaga pobrania kolumny i~zdeserializowania jej wartości. Jeżeli po deserializacji wykryty zostanie znacznik \emph{tombstone}, wtedy pobierana jest kolejna wartość. Proces powtarzany jest aż do skutku.
+
+Kolejka może być zamodelowana efektywniej w~przypadku, gdy możliwe jest wskazanie miejsca, w~którym rozpoczynają się nieusunięte kolumny. Przykładem może być kolejka typu FIFO\footnote{FIFO (First In, First Out) - rodzaj kolejki, w~którym elementy obsługiwane są według kolejności wstawienia.}. Wyszukując kolejny element w~kolejce można nałożyć warunek, że czas wstawienia elementu do kolejki jest późniejszy niż czas ostatnio usuniętego elementu. OMC dostarcza wsparcia dla takich kolejek, co zostało przedstawione na listingu~\ref{lst:fifo_queue_modeling}.
+
+\begin{verbbox}
+class FIFOQueue(Model):
+    __track_deletes__ = ('enqueued_at', 'ASC')
+    name = TextField(partitioning_key=True)
+    enqueued_at = UuidField(type=TimeUuid, 
+                            auto_generate=True, 
+                            clustering_key=True)
+    payload = DataField()
+
+# create three queue elements
+
+first_element = FIFOQueue(name = '1', payload = 'firstPayload')
+second_element = FIFOQueue(name = '2', payload = 'secondPayload')
+third_element = FIFOQueue(name = '3', payload = 'thirdPayload')
+
+# save elements into database
+
+first_element.save()
+second_element.save()
+third_element.save()
+
+# delete first two elements from database
+
+first_element.delete()
+second_element.delete()
+
+# get element with name '3'
+
+FIFOQueue.objects().find(name='3')[:1]
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Modelowanie kolejki typu FIFO w~OMC.}
+	\label{lst:fifo_queue_modeling}
+\end{figure}
+
+Parametr \verb+__track_deletes__+ umożliwia śledzenie operacji usuwania. Przyjmuje on parę łańcuchów znaków: nazwę pola, którego wartość jest śledzona podczas usuwania oraz warunek zapisywania śledzonej wartości. Na chwilę obecną obsługiwane jest śledzenie pól typu \verb+UuidField+ oraz \verb+TimestampField+, a~także dwa warunki śledzenia: \verb+ASC+ oraz \verb+DESC+. Warunek \emph{ascending} oznacza, że śledzona wartość jest aktualizowana tylko w~przypadku, gdy jest mniejsza od usuwanej obecnie wartości. Warunek \emph{descending} działa odwrotnie - aktualizuje śledzoną wartość tylko w~przypadku, gdy jest większa od usuwanej obecnie.
+
+Ustawienie parametru \verb+__track_deletes__+ powoduje, że śledzona wartość jest automatycznie dodawana do wszystkich zapytań wyszukujących obiekty. Oznacza to, że ostatnie wywołanie w~listingu~\ref{lst:fifo_queue_modeling} będzie miało ustawione trzy warunki filtrowania:
+
+\begin{itemize}
+	\item Nazwa elementu (\verb+name+) jest równa \verb+'3'+ - wynika z~\verb+find(name='3')+.
+	\item Wybierz maksymalnie jeden element (\verb+LIMIT 1+) - wynika z~zakresu \verb+[:1]+.
+	\item Czas dodania do kolejki (\verb+enqueued_at+) większy od \verb+second_element.enqueued_at+ - automatycznie dodawane przez OMC.
+\end{itemize}
+
+
