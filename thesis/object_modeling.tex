@@ -428,8 +428,7 @@ Silnik wykorzystywany w~OCM zapewnia wsparcie dla przetwarzania partiami. Potraf
 	# create new Item
 	item = Item(name='item', description='desc', price=12.5)
 	item.save()    # save is queued
-	user = Wishlist.objects().find(userId='jturek')
-	wishlist.add(item)
+	wishlist = Wishlist(userId='jturek', itemId=item.id)
 	wishlist.save()    # save is queued
 	# executes item.save() and wishlist.save()
 	Model.apply_batch()
