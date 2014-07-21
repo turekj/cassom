@@ -4,10 +4,10 @@ from time_uuid import TimeUUID
 
 
 def main():
-    items = 10000
+    items = 100000
     cluster = Cluster(['127.0.0.1'])
     session = cluster.connect()
-    #session.execute('DROP KEYSPACE queue_test;')
+    session.execute('DROP KEYSPACE queue_test;')
     session.execute("CREATE KEYSPACE queue_test WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 1 };")
     session.execute("USE queue_test;")
     session.execute("CREATE TABLE queue (id text, event_at timeuuid, payload text, PRIMARY KEY(id, event_at));")
@@ -20,7 +20,7 @@ def main():
         session.execute(query)
         session.execute("DELETE FROM queue WHERE id = 'queue_1' AND event_at = " + str(timeuuid) + ";")
 
-    query = "INSERT INTO queue (id, event_at, payload) VALUES ('queue_1', " + str(TimeUUID.with_utcnow()) + ", 'payload10000');"
+    query = "INSERT INTO queue (id, event_at, payload) VALUES ('queue_1', " + str(TimeUUID.with_utcnow()) + ", 'payload100000');"
     session.execute(query)
 
     before = time.time()
@@ -33,6 +33,7 @@ def main():
     print 'Enqueued executed in %s ms' % str(time.time() - before)
     print 'Result: %s' % str(result[0])
 
+    session.execute("TRUNCATE queue;")
     session.execute('DROP KEYSPACE queue_test;')
 
 if __name__ == '__main__':

@@ -281,6 +281,41 @@ Ustawienie parametru \verb+__track_deletes__+ powoduje, że śledzona wartość 
 	\item Czas dodania do kolejki (\verb+enqueued_at+) większy od \verb+second_element.enqueued_at+ - automatycznie dodawane przez OMC.
 \end{itemize}
 
+Wykorzystanie opcji \verb+__track_deletes__+ w~sposób znaczący wpływa na wydajność kolejki FIFO. Na wykresie~\ref{fig:fifo_select_time_comparison} przedstawiono porównanie szybkości działania wyszukiwania pierwszego nieusuniętego elementu kolejki przy włączonym oraz wyłączonym śledzeniu. Pomiar wydajności został przeprowadzony na lokalnej konfiguracji klastra Apache Cassandra. Czas mierzony był przez aplikację wykorzystującą mechanizm OMC. Aplikacja ta wstawiała do kolejki $y$ przedmiotów, po czym usuwała pierwsze $y-1$ przedmiotów z~tej kolejki. Mierzony był czas wyszukiwania pierwszego elementu należącego do kolejki (z~ograniczeniem \verb+LIMIT 1+, podobnie jak przy wywołaniu metody \verb+find+ w~listingu~\ref{lst:fifo_queue_modeling}). 
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas wyszukiwania ($ms$),
+				ylabel=Liczba elementów wstawionych do kolejki,
+				scaled ticks=false, 
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east}
+			]
+			\addplot[color=red] coordinates {
+				(117.231, 50000)
+				(67.193, 25000)
+				(33.204, 10000)
+			};
+			\addlegendentry{Delete tracking off}
+
+			\addplot[color=green] coordinates {
+				(33.598, 50000)
+				(22.231, 25000)
+				(16.655, 10000)
+			};
+			\addlegendentry{Delete tracking on}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasu wstawiania wielu rekordów.}
+	\label{fig:fifo_select_time_comparison}
+\end{figure}
+
+Pomimo znaczącej poprawy czasu dostępu do danych przy wykorzystaniu parametru \verb+__track_deletes__+ można zauważyć, że modelowanie nie jest optymalne. W~przypadku braku usunięć danych z~tabeli czas dostępu do pojedynczej danej powinien być w~przybliżeniu stały. Z~wykresu wynika jednak, że wyszukiwanie wydłuża się wraz ze wzrostem liczby elementów w~kolejce. Pozwala to wyciągnąć wniosek, że efektywne modelowanie w~Cassandrze powinno całkowicie eliminować lub radykalnie ograniczać ilość wykonywanych operacji usunięć.
+
 \subsection{Selektywna aktualizacja}
 
 Apache Cassandra jest przystosowana do obsługi wielu równoległych źródeł danych. Ze względu na brak transakcyjności jednym ze sposobów na uniknięcie problemów synchronizacji jest zalecana przez Dave'a Gardnera selektywna aktualizacja.~\cite{cassandra_concepts_patterns_antipatterns} Edytując zawartość danego wiersza należy przesyłać do bazy danych wyłącznie wartości, które rzeczywiście uległy modyfikacji. Inaczej istnieje prawdopodobieństwo niecelowego nadpisania zmian wprowadzonych równolegle przez inne źródło danych. OMC domyślnie korzysta z~mechanizmu selektywnej aktualizacji, co przedstawiono na listingu~\ref{lst:selective_update_modeling}.
