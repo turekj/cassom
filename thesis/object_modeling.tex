@@ -13,6 +13,34 @@ Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassand
 
 W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego dostarczona wykonana przez Autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
 
+\section{Object Modeling for Cassandra}
+
+OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowania dziedziny danych dedykowane dla bazy Apache Cassandra. Pakiet udostępnia moduły, które umożliwiają zarządzanie środowiskiem bazodanowym i~pracę z~danymi bez odwoływania się do interfejsu Thrift/CQL. Funkcjonalności pakietu obejmują:
+
+\begin{itemize}
+	\item Mapowanie obiektowe dla modelu danych Cassandry:
+		\begin{itemize}
+			\item Pobieranie, wyszukiwanie i~usuwanie danych za pomocą metod interfejsu.
+			\item Automatyczne pakowanie i~rozpakowywanie wartości do/z~postaci obiektów.
+		\end{itemize}
+	\item Wsparcie dla specyficznych mechanizmów Cassandry:
+		\begin{itemize}
+			\item Indeksy drugiego poziomu.
+			\item Liczniki.
+			\item Operacje na partiach danych.
+		\end{itemize}
+	\item Wspomaganie modelowania zależności między obiektami z~wykorzystaniem denormalizacji.
+	\item Wspomaganie tworzenia modelu danych poprzez dostarczenie/wsparcie reużywalnych struktur wysokiego poziomu:
+		\begin{itemize}
+			\item szeregów zdarzeń (ang. \emph{time series}),
+			\item indeksów wartości unikalnych,
+			\item kolejek.
+		\end{itemize}
+	\item Tworzenie i~walidacja zgodności modelu danych z~wymaganiami mapowania.
+	\item Automatyczna migracja danych pomiędzy różnymi wersjami modelu.
+	\item Narzędzia do populacji danymi testowymi i~profilowania aplikacji. 
+\end{itemize}
+
 \section{OMC - podstawowe pojęcia}
 
 Środowisko aplikacyjne OMC definiuje trzy podstawowe pojęcia: model, pole oraz silnik.
