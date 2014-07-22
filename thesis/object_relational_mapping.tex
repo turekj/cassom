@@ -24,6 +24,8 @@ O~powszechnym użyciu mechanizmów ORM w~projektach informatycznych świadczą s
 
 O~popularności mechanizmów ORM ponadto fakt powstawania oficjalnych standardów mapowania obiektowo-relacyjnego włączanych do specyfikacji języków programowania. Przykładem takiego standardu jest JPA\footnote{Java Persistence API.} dla języka Java.
 
+Mapowanie obiektowo-relacyjne nie jest pozbawione wad. Opanowanie podstaw mechanizmów ORM jest często trudniejsze niż nauka języka SQL. Wynika to ze złożoności takich mechanizmów. Przykładowo na projekt Hibernate ORM przypada ponad milion linii kodu źródłowego. Inną często przytaczaną wadą mapowania obiektowo-relacyjnego jest drastyczny spadek wydajności wynikający z~natury mechanizmów ORM. Prowadzi to do sytuacji, w~których organizacje decydują się na stworzenie własnego, dedykowanego dla danego problemu oprogramowania. Ilość projektów, które wykorzystują systemy mapowania obiektowo-relacyjnego pozwala jednak twierdzić, że wady te są akceptowalne w~obliczu licznych zalet ORM.
+
 \section{Mapowanie obiektowo-relacyjne dla Cassandry}
 
 Wraz z~pojawieniem się języka CQL pojawiła się szansa wykorzystania istniejących implementacji mechanizmów ORM do przechowywania danych z~użyciem silnika Cassandry. Motywacją do stworzenia takiego rozwiązania jest zwiększenie wydajności istniejących aplikacji bez modyfikacji ich kodu. Minimalna rekonfiguracja aplikacji i~podłączenie jej pod klaster bazodanowy skutkowałyby zwiększeniem wydajności działania aplikacji. Ponadto wykorzystanie istniejących interfejsów mogłoby umożliwić obsługę różnych typów baz danych należących do ruchu NoSQL. 
