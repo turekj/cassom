@@ -22,11 +22,69 @@ O~powszechnym użyciu mechanizmów ORM w~projektach informatycznych świadczą s
 	\item Popularnym narzędziem ORM jest biblioteka Hibernate dla języka Java. Wyszukiwanie frazy \emph{\textless artifactId \textgreater hibernate-core \textless /artifactId \textgreater}\footnote{Jest to fraza będąca częścią deklaracji biblioteki Hibernate w~popularnym narzędziu do budowania projektów w~języku Java - Maven.} w~witrynie \url{http://github.com} zwraca około 151 tysięcy wyników.
 \end{itemize}
 
-O~popularności mechanizmów ORM ponadto fakt powstawania oficjalnych standardów mapowania obiektowo-relacyjnego włączanych do specyfikacji języków programowania. Przykładem takiego standardu jest JPA\footnote{Java Persistence API.} dla języka Java.
+O~popularności mechanizmów ORM ponadto fakt powstawania oficjalnych standardów mapowania obiektowo-relacyjnego włączanych do specyfikacji języków programowania. Przykładem takiego standardu jest JPA\footnote{Java Persistence API - szerszy opis znajduje się w~sekcji~\ref{sec:jpa}.} dla języka Java.
 
 Mapowanie obiektowo-relacyjne nie jest pozbawione wad. Opanowanie podstaw mechanizmów ORM jest często trudniejsze niż nauka języka SQL. Wynika to ze złożoności takich mechanizmów. Przykładowo na projekt Hibernate ORM przypada ponad milion linii kodu źródłowego. Inną często przytaczaną wadą mapowania obiektowo-relacyjnego jest drastyczny spadek wydajności wynikający z~natury mechanizmów ORM. Prowadzi to do sytuacji, w~których organizacje decydują się na stworzenie własnego, dedykowanego dla danego problemu oprogramowania. Ilość projektów, które wykorzystują systemy mapowania obiektowo-relacyjnego pozwala jednak twierdzić, że wady te są akceptowalne w~obliczu licznych zalet ORM.
 
-\section{Mapowanie obiektowo-relacyjne dla Cassandry}
+\section{Java Persistence API}
+\label{sec:jpa}
+
+Java Persistence API to interfejs programistyczny, który ma za zadanie uprościć tworzenie, zarządzanie i~zapisywanie obiektów, które reprezentują dane z~baz relacyjnych.~\cite{jpa_documentation} Interfejs JPA operuje na POJO\footnote{Plain Old Java Object (ang. dosłownie ,,prosty, stary obiekt Java'') - termin określający zwykły obiekt języka Java, używany jako przeciwieństwo Enterprise Java Bean, czyli specjalnego obiektu, który stosował się do wielu ściśle określonych reguł.}, które dekorowane są adnotacjami umożliwiającymi konfigurację reguł mapowania. Przykład takiego obiektu prezentuje listing~\ref{lst:sample_jpa_pojo}. Adnotacja \verb+@Entity+ określa klasę, która reprezentuje encję danych. Parametr \verb+@Id+ dekoruje identyfikator encji, natomiast \verb+@GeneratedValue+ oznacza, że będzie on ustawiany automatycznie. Adnotacje \verb+@Column+ informują, że dane zmienne będą mapowane na kolumny bazodanowe. Parametr \verb+@ManyToMany+ definiuje relację wiele-do-wielu. 
+
+\begin{verbbox}
+@Entity
+public class User {
+    @Id
+    @GeneratedValue
+    private Integer id;
+
+    @Column
+    private String name;
+
+    @Column
+    private String surname;
+
+    @Column 
+    private String password;
+
+    @ManyToMany
+    private List<Item> wishlistItems;
+
+    // getters & setters
+}
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykładowy obiekt specyfikujący użytkownika w~standardzie JPA.}
+	\label{lst:sample_jpa_pojo}
+\end{figure}
+
+Definicja encji~\ref{lst:sample_jpa_pojo} nie specyfikuje kompletnego przykładu. Brakuje przede wszystkim wartości konfiguracyjnych, takich jak nazwa tabeli, z~której encja będzie mapowana, nazwy kolumn czy też sposób reprezentacji relacji wiele-do-wielu. W~rzeczywistości JPA nie jest tak czytelene jak sugeruje przedstawiony przykład. Parametry konfiguracyjne zajmują większą część definicji klasy i~zdarza się, że najważniejsza informacja - specyfikacja samego obiektu, który reprezentuje dane - jest mocno przysłonięta.
+
+Na listingu~\ref{lst:sample_jpa_entity_manager} przedstawiono przykładowy kod, który służy do zapisywania użytkownika w~bazie danych. Do obsługi operacji zapisu wykorzystywany jest zarządca encji (\verb+EntityManager+). Za jego pomocą rozpoczynana jest transakcja (\verb+beginTransaction()+), wywoływane jest żądanie utrwalenia obiektu (\verb+persist()+), a~następnie transakcja jest wykonywana (\verb+commit()+).
+
+\begin{verbbox}
+User user = new User();
+// setting field values
+EntityManager manager = managerFactory.createEntityManager();
+  manager.getTransaction().beginTransaction();
+    manager.persist(user);
+  manager.getTransaction().commit();
+manager.close();
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykładowy kod zapisujący użytkownika w~bazie danych w~standardzie JPA.}
+	\label{lst:sample_jpa_entity_manager}
+\end{figure}
+
+Do najbardziej popularnych implementacji Java Persistence API należą Hibernate ORM, OpenJPA oraz Toplink. Dużą przeszkodą jest fakt, że interfejs JPA nie jest wyczerpująco określony. Opisuje on tylko najbardziej podstawowe operacje na obiektach bazodanowych. Z~jednej strony pozostawia to twórcom bibliotek dużą elastyczność w~kwestii implementacji. Z~drugiej sprawia, że w~przypadku wykonywania operacji bardziej skomplikowanych niż zapisanie i~odczytanie mapowanego obiektu, programista często jest zmuszony sięgać do elementów specyficznych dla danej implementacji JPA. Sprawia to, że większość aplikacji wykorzystujących wymienione biblioteki jest nieprzenośna pomiędzy mechanizmami.
+
+\section{Kundera}
 
 Wraz z~pojawieniem się języka CQL pojawiła się szansa wykorzystania istniejących implementacji mechanizmów ORM do przechowywania danych z~użyciem silnika Cassandry. Motywacją do stworzenia takiego rozwiązania jest zwiększenie wydajności istniejących aplikacji bez modyfikacji ich kodu. Minimalna rekonfiguracja aplikacji i~podłączenie jej pod klaster bazodanowy skutkowałyby zwiększeniem wydajności działania aplikacji. Ponadto wykorzystanie istniejących interfejsów mogłoby umożliwić obsługę różnych typów baz danych należących do ruchu NoSQL. 
 
