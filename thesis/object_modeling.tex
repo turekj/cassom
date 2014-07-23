@@ -136,7 +136,7 @@ CREATE TABLE sample_table_model (id PRIMARY KEY, sample_field text);
 
 \section{Modelowanie zależności między danymi}
 
-\emph{Autor celowo nie używa terminu ,,relacja'', aby uniknąć nawiązać do RDBMS\footnote{Relative Database Management Systems - relacyjne systemy zarządzania bazami danych}. Jak wykazały badania przeprowadzone w~sekcji~\ref{sec:kundera_performance} tradycyjne podejście relacyjne w~Apache Cassandra jest bardzo nieefektywne i~powinno być unikane.}
+\emph{Autor celowo nie używa terminu ,,relacja'', aby uniknąć skojarzenia z~RDBMS\footnote{Relative Database Management Systems - relacyjne systemy zarządzania bazami danych}. Jak wykazały badania przeprowadzone w~sekcji~\ref{sec:kundera_performance} tradycyjne podejście relacyjne w~Apache Cassandra jest bardzo nieefektywne i~powinno być unikane.}
 
 W~przypadku relacyjnych baz danych modelowanie wymaga określenia definicji modelowanych obiektów - encji oraz zależności między nimi. Na diagramie~\ref{fig:er_user_address} zaprezentowano efekt modelowania prostej dziedziny danych, która umożliwia przechowywanie adresu dla użytkownika. Charakterystyka RDBMS pozwala na pobranie danych użytkownika i~adresu w~jednym odwołaniu do bazy danych.
 
@@ -151,6 +151,7 @@ W~przypadku relacyjnych baz danych modelowanie wymaga określenia definicji mode
 		{
 			name : varchar(255) \\
 			surname : varchar(255) \\
+			password: varchar(255) \\
 		}
 
 		\umlclass[x=4, y=0]{Address}
@@ -187,7 +188,34 @@ gdzie $t_{AC}$, ~$t'_{AC}$ to czas komunikacji (i~komunikacji zwrotnej) pomiędz
  t_{AC}, t'_{AC}, t_{CN}, t'_{CN} >> t_{HASH}, t_{GET}.
 \end{equation}
 
-Wynika stąd, że wykonanie dodatkowego zapytania wprowadza opóźnienia związane głównie z~połączeniem pomiędzy poszczególnymi maszynami. Opóźnienia te w~większości przypadków są relatywnie niskie (rzędu kilku milisekund), więc nie jest to krytyczny problem wydajnościowy. 
+Wynika stąd, że wykonanie dodatkowego zapytania wprowadza opóźnienia związane głównie z~połączeniem pomiędzy poszczególnymi maszynami. Opóźnienia te w~większości przypadków są relatywnie niskie (rzędu kilku milisekund), więc nie jest to krytyczny problem wydajnościowy. Ponieważ można ich uniknąć, należy traktować je jako błąd projektowania modelu.
+
+Ze względu na specyfikę modelu danych Apache Cassandry poprawnym podejściem do projektowania schematu danych jest wyjście od definicji encji i~wykonywanych na nich zapytań. Ponieważ zapytania najczęściej odwołują się do połączonych fragmentów wielu encji podstawowym ,,narzędziem'' modelowania Cassandry jest denormalizacja. Jest to tym bardziej zasadne, że baza oferuje bardzo wydajną obsługę zapisu danych. 
+
+Niech w~przykładzie~\ref{fig:er_user_address} omawiany będzie model danych dla strony internetowej, na której występują następujące odwołania do modelu danych:
+
+\begin{enumerate}
+	\item \label{enum:username_flag} W~głównym szablonie strony przewidziane jest miejsce na nazwę użytkownika i~flagę, które są wyświetlane po zalogowaniu się.
+	\item \label{enum:user_city_country} W~panelu administracyjnym wyświetlana jest lista użytkowników, która może być filtrowana po mieście i~kraju zamieszkania. Nie są na niej prezentowane pełne dane adresowe.
+	\item \label{enum:full_address} Pełny adres jest widoczny po kliknięciu na osobną podstronę profilu użytkownika.
+\end{enumerate}
+
+Z~punktów \ref{enum:username_flag}~i~\ref{enum:user_city_country} wynika, że w~kontekście użytkownika pobierane są tylko dwie składowe adresu: kraj i~miasto. W~przypadku punktu~\ref{enum:full_address} można wykonać osobne zapytanie, gdyż adres wyświetlany jest na podstronie. Poprawny projekt modelu danych, który umożliwia ściąganie kompletu wymaganych danych w~jednym zapytaniu, został schematycznie przedstawiony na diagramie~\ref{tab:address_denormalization_example}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{|l||c|c|c|c|c|c|}
+		\hhline{|-||------|}
+		 & \textbf{name} & \textbf{surname} & \textbf{password} & \textbf{addressId} & \textbf{city} & \textbf{country} \\
+		\hhline{|~||======|}
+		\textbf{982} & Jakub & Turek & S3cr3t! & 1842 & Warsaw & Poland \\
+		\hhline{|-||------|}
+	\end{tabular} 
+
+	\caption{Poprawne rozwiązanie problemu modelowania użytkownika i~adresu dla zadanych wymagań.}
+	\label{tab:address_denormalization_example}
+\end{figure}
 
 \section{Wsparcie dla wzorców modelowania}
 
