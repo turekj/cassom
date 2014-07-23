@@ -151,7 +151,6 @@ W~przypadku relacyjnych baz danych modelowanie wymaga określenia definicji mode
 		{
 			name : varchar(255) \\
 			surname : varchar(255) \\
-			password: varchar(255) \\
 		}
 
 		\umlclass[x=4, y=0]{Address}
@@ -190,7 +189,7 @@ gdzie $t_{AC}$, ~$t'_{AC}$ to czas komunikacji (i~komunikacji zwrotnej) pomiędz
 
 Wynika stąd, że wykonanie dodatkowego zapytania wprowadza opóźnienia związane głównie z~połączeniem pomiędzy poszczególnymi maszynami. Opóźnienia te w~większości przypadków są relatywnie niskie (rzędu kilku milisekund), więc nie jest to krytyczny problem wydajnościowy. Ponieważ można ich uniknąć, należy traktować je jako błąd projektowania modelu.
 
-Ze względu na specyfikę modelu danych Apache Cassandry poprawnym podejściem do projektowania schematu danych jest wyjście od definicji encji i~wykonywanych na nich zapytań. Ponieważ zapytania najczęściej odwołują się do połączonych fragmentów wielu encji podstawowym ,,narzędziem'' modelowania Cassandry jest denormalizacja. Jest to tym bardziej zasadne, że baza oferuje bardzo wydajną obsługę zapisu danych. 
+Ze względu na specyfikę modelu danych Apache Cassandry poprawnym podejściem do projektowania schematu danych jest wyjście od definicji encji i~wykonywanych na nich zapytań. Należy zauważyć, że zapytanie jest w~pewnym sensie nadzbiorem w~stosunku do relacji. Nie tylko zawiera ono informację, że dwa obiekty są ze sobą połączone, ale reprezentuje też sposób tego połączenia pozwalający na uzyskanie wymaganych informacji. Ponieważ zapytania najczęściej odwołują się do połączonych fragmentów wielu encji podstawowym ,,narzędziem'' modelowania Cassandry jest denormalizacja. Jest to zasadne zwłaszcza w~kontekście wydajnych operacji zapisu, które oferuje baza.
 
 Niech w~przykładzie~\ref{fig:er_user_address} omawiany będzie model danych dla strony internetowej, na której występują następujące odwołania do modelu danych:
 
@@ -205,17 +204,75 @@ Z~punktów \ref{enum:username_flag}~i~\ref{enum:user_city_country} wynika, że w
 \begin{figure}[ht!]
 	\centering
 
-	\begin{tabular}{|l||c|c|c|c|c|c|}
-		\hhline{|-||------|}
-		 & \textbf{name} & \textbf{surname} & \textbf{password} & \textbf{addressId} & \textbf{city} & \textbf{country} \\
-		\hhline{|~||======|}
-		\textbf{982} & Jakub & Turek & S3cr3t! & 1842 & Warsaw & Poland \\
-		\hhline{|-||------|}
+	\begin{tabular}{|l||c|c|c|c|c|}
+		\hhline{|-||-----|}
+		 & \textbf{name} & \textbf{surname} & \textbf{addressId} & \textbf{city} & \textbf{country} \\
+		\hhline{|~||=====|}
+		\textbf{982} & Jakub & Turek & 1842 & Warsaw & Poland \\
+		\hhline{|-||-----|}
 	\end{tabular} 
 
 	\caption{Poprawne rozwiązanie problemu modelowania użytkownika i~adresu dla zadanych wymagań.}
 	\label{tab:address_denormalization_example}
 \end{figure}
+
+OMC posiada dwa mechanizmy, które automatyzują proces denormalizacji:
+
+\begin{description}
+	\item[przez pole] umożliwia włączenie zdenormalizowanych pól do modelu,
+	\item[przez tabelę] umożliwia ekstrakcję danych do osobnej tabeli.
+\end{description}
+
+\subsection{Denormalizacja przez pole}
+
+Mechanizm denormalizacji przez pole pozwala wskazać encję, której wybrane pola zostaną automatycznie dołączone w~wybrane miejsce modelu. Po wskazaniu encji zależnej domyślnie przenoszony jest klucz partycjonowania tej encji. Jest on również dołączany do klucza klastrowania modelu. Dzięki temu możliwe jest zdefiniowanie wielu połączeń i~docieranie od obiektu nadrzędnego do obiektu zależnego. 
+
+Denormalizacja przez pole wykorzystuje typ \verb+DenormalizedField+. Jego działanie zostanie omówione na podstawie definicji danych zawartej na diagramie~\ref{tab:address_denormalization_example}. Listing~\ref{lst:denormalization_by_field_address_entity} przedstawiono definicję encji adres zapisaną w~OCM. Model użytkownika został pokazany na listingu~\ref{lst:denormalization_by_field_example}. 
+
+\begin{verbbox}
+class Address(Model):
+	address_id = UuidField(partitioning_key=True)
+	street = TextField()
+	street_no = IntegerField()
+	flat_no = IntegerField()
+	postal_code = TextField(length=32)
+	city = TextField()
+	country = TextField()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Denormalizacja przez pole - definicja encji adres.}
+	\label{lst:denormalization_by_field_address_entity}
+\end{figure}
+
+\begin{verbbox}
+class User(Model):
+    user_id = UuidField(partitioning_key=True)
+    name = TextField()
+    surname = TextField()
+    address = DenormalizedField(relates=Address, 
+                                fields=['city', 'country'])
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Denormalizacja przez pole - definicja encji użytkownik.}
+	\label{lst:denormalization_by_field_example}
+\end{figure}
+
+Pole \verb+DenormalizedField+ używa dwóch parametrów konfiguracyjnych. Opcja \verb+relates+ przechowuje nazwę modelu, który jest wskazywany przez dane pole. Parametr \verb+fields+ definiuje nazwy pól encji wskazywanej, które mają zostać włączone do definicji modelu. Ważne jest, że w~celu uniknięcia kolizji nazw dołączane pola nazywane są według specjalnego klucza łączącego nazwę pola w~modelu nadrzędnym z~polami w~encji zależnej. W~podanym przykładzie dołączane pola będą miały nazwy: \verb+address_address_id+, \verb+address_city+ oraz \verb+address_country+.
+
+W~porównaniu do ręcznej denormalizacji użycie pola \verb+DenormalizedField+ wprowadza liczne usprawnienia:
+
+\begin{itemize}
+	\item Cały klucz partycjonowania encji wskazywanej jest automatycznie włączany do modelu. Dzięki temu zawsze możliwe jest przejście od obiektu nadrzędnego do podrzędnego.
+	\item Wykorzystanie zasady DRY\footnote{Don't Repeat Yourself (ang. ,,nie powtarzaj się'') - zasada, która w~kontekście programowania zaleca powielania tych samych lub bardzo podobnych fragmentów kodu w~wielu miejscach.} przy definiowaniu denormalizowanych pól. Gdyby w~modelu Address typ pola \verb+country+ został zmieniony na \verb+IntegerField()+ (kod kraju zamiast nazwy), typ denormalizowanego pola w~modelu \verb+User+ zostałby automatycznie uaktualniony.
+	\item Generowany jest mechanizm automatycznego rozpakowywania wartości denormalizowanych z~obiektu modelu. Zakładając, że zmienna \verb+address+ przechowuje obiekt typu \verb+Address+, a~\verb+user+ obiekt typu \verb+User+, wywołanie \verb+user.address = address+ spowoduje automatyczne przypisanie wartości pól \verb+address_*+ zmiennej \verb+user+.
+	\item Generowana jest metoda do automatycznego pobierania wskazywanego wiersza danych. Wywołanie \verb+user.address.get()+ zwróci obiekt typu \verb+Address+, pod warunkiem, że klucz \verb+user.address_address_id+ jest poprawny.
+\end{itemize}
 
 \section{Wsparcie dla wzorców modelowania}
 
