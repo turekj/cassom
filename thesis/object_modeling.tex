@@ -134,6 +134,61 @@ CREATE TABLE sample_table_model (id PRIMARY KEY, sample_field text);
 	\label{lst:sample_model_create_query}
 \end{figure}
 
+\section{Modelowanie zależności między danymi}
+
+\emph{Autor celowo nie używa terminu ,,relacja'', aby uniknąć nawiązać do RDBMS\footnote{Relative Database Management Systems - relacyjne systemy zarządzania bazami danych}. Jak wykazały badania przeprowadzone w~sekcji~\ref{sec:kundera_performance} tradycyjne podejście relacyjne w~Apache Cassandra jest bardzo nieefektywne i~powinno być unikane.}
+
+W~przypadku relacyjnych baz danych modelowanie wymaga określenia definicji modelowanych obiektów - encji oraz zależności między nimi. Na diagramie~\ref{fig:er_user_address} zaprezentowano efekt modelowania prostej dziedziny danych, która umożliwia przechowywanie adresu dla użytkownika. Charakterystyka RDBMS pozwala na pobranie danych użytkownika i~adresu w~jednym odwołaniu do bazy danych.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\umlclass[x=-4, y=0]{User}
+		{
+			\umlstatic{userId : int} $<$PK$>$ \\
+			addressId : int $<$FK$>$ \\
+		}
+		{
+			name : varchar(255) \\
+			surname : varchar(255) \\
+		}
+
+		\umlclass[x=4, y=0]{Address}
+		{
+			\umlstatic{addressId : int} $<$PK$>$ \\
+			userId : int $<$FK$>$ \\
+		}
+		{
+			street : varchar(255) \\
+			streetNo : int \\
+			flatNo : int \\
+			postalCode : varchar(32) \\
+			city : varchar(128) \\
+			country: varchar(128) \\
+		}
+		\umluniassoc[mult1=1, mult2=0..1]{User}{Address}
+		\node at (0.0, 0.25) {\footnotesize has};
+	\end{tikzpicture}
+
+	\caption{Modelowanie adresu użytkownika w~relacyjnej bazie danych.}
+	\label{fig:er_user_address}
+\end{figure}
+
+Model ten można dokładnie odwzorować w~Apache Cassandra, jednakże jest to rozwiązanie niewydajne. Charakterystyka bazy sprawia, że sprawdzenie kraju zamieszkania użytkownika wymaga wykonania dwóch osobnych zapytań: pobrania użytkownika, a~następnie wskazywanego przez odpowiadający mu wiersz adresu. Czas przeznaczony na wykonanie jednego zapytania można aproksymować wzorem:
+
+\begin{equation}
+	t_{SELECT} = t_{AC} + t_{HASH} + t_{CN} + t_{GET} + t'_{CN} + t'_{AC}
+	\label{eq:select_time}
+\end{equation}
+
+gdzie $t_{AC}$, ~$t'_{AC}$ to czas komunikacji (i~komunikacji zwrotnej) pomiędzy aplikacją a~koordynatorem, $t_{CN}$, ~$t'_{CN}$ to czas komunikacji (i~komunikacji zwrotnej) pomiędzy koordynatorem a~węzłem przechowującym wyszukiwany wiersz, $t_{HASH}$ to czas obliczania funkcji skrótu dla klucza danego wiersza, a~$t_{GET}$ to właściwy czas pobrania wiersza. Pomiędzy czynnikami zachodzi zależność:
+
+\begin{equation}
+ t_{AC}, t'_{AC}, t_{CN}, t'_{CN} >> t_{HASH}, t_{GET}.
+\end{equation}
+
+Wynika stąd, że wykonanie dodatkowego zapytania wprowadza opóźnienia związane głównie z~połączeniem pomiędzy poszczególnymi maszynami. Opóźnienia te w~większości przypadków są relatywnie niskie (rzędu kilku milisekund), więc nie jest to krytyczny problem wydajnościowy. 
+
 \section{Wsparcie dla wzorców modelowania}
 
 OMC został zaprojektowany w~taki sposób, aby dostarczać mechanizmów wspierających wzorce projektowe. W~tej sekcji Autor opisuje wszystkie wzorce, które były analizowane, modelowane, testowane i~optymalizowane w~trakcie prac implementacyjnych nad OMC.
