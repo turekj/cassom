@@ -100,8 +100,8 @@ Definiowanie modelu odbywa się poprzez stworzenie nowej klasy, która dziedzicz
 
 \begin{verbbox}
 class SampleTableModel(Model):
-	id = UuidField(type=Uuid, partitioning_key=True)
-	sample_field = TextField()
+    id = UuidField(type=Uuid, partitioning_key=True)
+    sample_field = TextField()
 \end{verbbox}
 
 \begin{figure}[ht!]
@@ -216,11 +216,12 @@ Z~punktów \ref{enum:username_flag}~i~\ref{enum:user_city_country} wynika, że w
 	\label{tab:address_denormalization_example}
 \end{figure}
 
-OMC posiada dwa mechanizmy, które automatyzują proces denormalizacji:
+OMC posiada trzy wbudowane tryby, które automatyzują proces zarządzania zależnościami między danymi:
 
 \begin{description}
-	\item[przez pole] umożliwia włączenie zdenormalizowanych pól do modelu,
-	\item[przez tabelę] umożliwia ekstrakcję danych do osobnej tabeli.
+	\item[Denormalizacja przez pole] Umożliwia włączenie zdenormalizowanych pól do danego modelu. Tworzy model jednostopniowy (do pobrania kompletu informacji wymagane jest jednokrotne pobranie wiersza z~tabeli).
+	\item[Denormalizacja przez tabelę] Umożliwia ekstrahowanie wszystkich zależności do osobnej tabeli. Tworzy model dwustopniowy (do pobrania kompletu informacji wymagane jest dwukrotne pobranie wiersza - z~tabeli nadrzędnej oraz tabeli zdenormalizowanej).
+	\item[Normalizacja przez tabelę] Umożliwia wiązanie zależności poprzez osobną tabelę. Tworzy model trzystopniowy (do pobrania kompletu informacji wymagane jest trzykrotne pobranie wiersza - z~tabeli nadrzędnej, tabeli mapowania oraz tabeli wskazywanej).
 \end{description}
 
 \subsection{Denormalizacja przez pole}
@@ -231,13 +232,13 @@ Denormalizacja przez pole wykorzystuje typ \verb+DenormalizedField+. Jego dział
 
 \begin{verbbox}
 class Address(Model):
-	address_id = UuidField(partitioning_key=True)
-	street = TextField()
-	street_no = IntegerField()
-	flat_no = IntegerField()
-	postal_code = TextField(length=32)
-	city = TextField()
-	country = TextField()
+    address_id = UuidField(partitioning_key=True)
+    street = TextField()
+    street_no = IntegerField()
+    flat_no = IntegerField()
+    postal_code = TextField(length=32)
+    city = TextField()
+    country = TextField()
 \end{verbbox}
 
 \begin{figure}[ht!]
@@ -273,6 +274,27 @@ W~porównaniu do ręcznej denormalizacji użycie pola \verb+DenormalizedField+ w
 	\item Generowany jest mechanizm automatycznego rozpakowywania wartości denormalizowanych z~obiektu modelu. Zakładając, że zmienna \verb+address+ przechowuje obiekt typu \verb+Address+, a~\verb+user+ obiekt typu \verb+User+, wywołanie \verb+user.address = address+ spowoduje automatyczne przypisanie wartości pól \verb+address_*+ zmiennej \verb+user+.
 	\item Generowana jest metoda do automatycznego pobierania wskazywanego wiersza danych. Wywołanie \verb+user.address.get()+ zwróci obiekt typu \verb+Address+, pod warunkiem, że klucz \verb+user.address_address_id+ jest poprawny.
 \end{itemize}
+
+Pole \verb+DenormalizedField+ można używać również przy pustej liście parametru \verb+fields+. Wtedy dowiązywany jest wyłącznie identyfikator encji zależnej. Możliwe jest również korzystanie z~funkcji \verb+get()+, która pobierze obiekt reprezentujący zależny wiersz.
+
+\subsection{Normalizacja przez tabelę}
+
+Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów encji wzajemnie zależnych $(id_{relates}, id_{related})$ do osobnej tabeli. 
+
+\begin{verbbox}
+class User(Model):
+    user_id = UuidField(partitioning_key=True)
+    name = TextField()
+    surname = TextField()
+    address = NormalizedTable(relates=Address)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Normalizacja przez tabelę - implementacja encji użytkownik.}
+	\label{lst:normalization_by_table_example}
+\end{figure}
 
 \section{Wsparcie dla wzorców modelowania}
 
