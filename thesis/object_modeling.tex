@@ -216,11 +216,13 @@ Z~punktów \ref{enum:username_flag}~i~\ref{enum:user_city_country} wynika, że w
 	\label{tab:address_denormalization_example}
 \end{figure}
 
-OMC posiada trzy wbudowane tryby, które automatyzują proces zarządzania zależnościami między danymi:
+Silna denormalizacja pozwala na budowanie efektywnych i~bardzo szybkich modeli danych. W~zamian wymaga ona dużego nakładu planowania. Wprowadzanie zmian do modelu zdenormalizowanego jest trudne, gdyż struktura istniejących danych jest bardzo usztywniona. W~niektórych przypadkach uzysk wydajności wynikający z~wykorzystania struktury zdenormalizowanej na korzyść znormalizowanej jest niewielki, a~poniesione koszta sprawiają, że cały proces jest nieopłacalny. Z~tego względu mechanizm OMC zapewnia szerszy wybór narzędzi do modelowania zależności pomiędzy elementami modelu danych. Narzędzia te odzwierciedlają rozważania opublikowane na blogu technologicznym portalu aukcyjnego eBay - jednego z~większych użytkowników Apache Cassandry.~\cite{modeling_best_practices_pt_1}.
+
+OMC posiada trzy wbudowane tryby, które automatyzują proces zarządzania zależnościami między danymi. Różnią się one pomiędzy sobą wydajnością (mierzoną w~liczbie zapytań niezbędnych do pobrania kompletu wymaganych danych) oraz stopniem normalizacji:
 
 \begin{description}
-	\item[Denormalizacja przez pole] Umożliwia włączenie zdenormalizowanych pól do danego modelu. Tworzy model jednostopniowy (do pobrania kompletu informacji wymagane jest jednokrotne pobranie wiersza z~tabeli).
-	\item[Denormalizacja przez tabelę] Umożliwia ekstrahowanie wszystkich zależności do osobnej tabeli. Tworzy model dwustopniowy (do pobrania kompletu informacji wymagane jest dwukrotne pobranie wiersza - z~tabeli nadrzędnej oraz tabeli zdenormalizowanej).
+	\item[Denormalizacja przez pole] Umożliwia włączenie zdenormalizowanych pól do zamodelowanej encji. Tworzy model jednostopniowy (do pobrania kompletu informacji wymagane jest jednokrotne pobranie wiersza z~tabeli).
+	\item[Denormalizacja przez tabelę] Umożliwia ekstrahowanie wszystkich zdenormalizowanych zależności do osobnej tabeli. Tworzy model dwustopniowy (do pobrania kompletu informacji wymagane jest dwukrotne pobranie wiersza - z~tabeli nadrzędnej oraz tabeli zdenormalizowanej).
 	\item[Normalizacja przez tabelę] Umożliwia wiązanie zależności poprzez osobną tabelę. Tworzy model trzystopniowy (do pobrania kompletu informacji wymagane jest trzykrotne pobranie wiersza - z~tabeli nadrzędnej, tabeli mapowania oraz tabeli wskazywanej).
 \end{description}
 
@@ -273,13 +275,60 @@ W~porównaniu do ręcznej denormalizacji użycie pola \verb+DenormalizedField+ w
 	\item Wykorzystanie zasady DRY\footnote{Don't Repeat Yourself (ang. ,,nie powtarzaj się'') - zasada, która w~kontekście programowania zaleca powielania tych samych lub bardzo podobnych fragmentów kodu w~wielu miejscach.} przy definiowaniu denormalizowanych pól. Gdyby w~modelu Address typ pola \verb+country+ został zmieniony na \verb+IntegerField()+ (kod kraju zamiast nazwy), typ denormalizowanego pola w~modelu \verb+User+ zostałby automatycznie uaktualniony.
 	\item Generowany jest mechanizm automatycznego rozpakowywania wartości denormalizowanych z~obiektu modelu. Zakładając, że zmienna \verb+address+ przechowuje obiekt typu \verb+Address+, a~\verb+user+ obiekt typu \verb+User+, wywołanie \verb+user.address = address+ spowoduje automatyczne przypisanie wartości pól \verb+address_*+ zmiennej \verb+user+.
 	\item Generowana jest metoda do automatycznego pobierania wskazywanego wiersza danych. Wywołanie \verb+user.address.get()+ zwróci obiekt typu \verb+Address+, pod warunkiem, że klucz \verb+user.address_address_id+ jest poprawny.
+	\item W~przypadku aktualizacji danych encji zależnej mechanizm potrafi na życzenie zaktualizować również wszystkie zdenormalizowane wartości, które wskazują na ten obiekt. Można tego dokonać wywołując metodę \verb+update(update_related=True)+ na obiekcie modelu.
 \end{itemize}
 
 Pole \verb+DenormalizedField+ można używać również przy pustej liście parametru \verb+fields+. Wtedy dowiązywany jest wyłącznie identyfikator encji zależnej. Możliwe jest również korzystanie z~funkcji \verb+get()+, która pobierze obiekt reprezentujący zależny wiersz.
 
+Denormalizacja przez pole jest najbardziej efektywnym czasowo sposobem modelowania relacji. Wynikowy model danych jest tożsamy z~przedstawionym na diagramie~\ref{tab:address_denormalization_example}.
+
+\subsection{Denormalizacja przez tabelę}
+
+Mechanizm denormalizacji przez tabelę działa analogicznie do denormalizacji przez pola, z~następującymi różnicami:
+
+\begin{itemize}
+	\item Zdenormalizowane dane przechowywane są w~osobnej tabeli, a~nie w~obiekcie nadrzędnym. 
+	\item Zdenormalizowane dane nie są dostępne bezpośrednio jako pola obiektu, z~którego następuje odwołanie. 
+	\item Domyślnie (przy braku specyfikacji listy pól) denormalizowane są wszystkie pola obiektu zależnego.
+\end{itemize}
+
+Na listingu~\ref{lst:denormalization_by_table_example} przedstawiono przykład denormalizacji przez tabelę opisanej jako model OMC. Ze względu na brak wyspecifikowanych pól (parametr \verb+fields+) do tabeli denormalizacyjnej zostaną włączone wszystkie pola modelu \verb+Address+. Schemat tabeli denormalizacyjnej, która powstanie na skutek zadeklarowania przykładowego modelu został zaprezentowany na diagramie~\ref{tab:address_denormalization_by_table_example}.
+
+\begin{verbbox}
+class User(Model):
+    user_id = UuidField(partitioning_key=True)
+    name = TextField()
+    surname = TextField()
+    address = DenormalizedTable(relates=Address, model='UserAddress')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Denormalizacja przez tabelę - definicja encji użytkownik.}
+	\label{lst:denormalization_by_table_example}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{|l||c|c|c|c|c|c|}
+		\hhline{|-||------|}
+		 & \textbf{addressId} & \textbf{street} & \textbf{street\_no} & \textbf{postal\_code} & \textbf{city} & \textbf{country} \\
+		\hhline{|~||======|}
+		\textbf{233} & 754 & Nowowiejska & 15/19 & 00-665 & Warsaw & Poland \\
+		\hhline{|-||------|}
+	\end{tabular} 
+
+	\caption{Denormalizacja z~wykorzystaniem tabeli. Wszystkie zdenormalizowane informacje są przechowywane w~osobnej tabeli.}
+	\label{tab:address_denormalization_by_table_example}
+\end{figure}
+
+Do obsługi zdenormalizowanej tabeli generowana jest prosta klasa modelu. Opakowuje ona dostęp do zdenormalizowanych pól. Parametr \verb+model+ specyfikuje nazwę klasy tego modelu, którą następnie można wykorzystywać w~kodzie. Dostęp do wartości zdenormalizowanych dostępny jest po pobraniu obiektu zależnego. Zakładając, że zmienna \verb+user+ jest instancją klasy \verb+User+, wywołanie \verb+user.address.get()+ zwraca dane z~wiersza zdenormalizowanej tabeli. Z~wyniku wykonania metody można uzyskać później wartości pól, przykładowo \verb+user.address.get().postal_code+ dla kodu pocztowego. 
+
 \subsection{Normalizacja przez tabelę}
 
-Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów encji wzajemnie zależnych $(id_{relates}, id_{related})$ do osobnej tabeli. 
+Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów encji wzajemnie zależnych $(id_{relates}, id_{related})$ do osobnej tabeli. Na poziomie modelu danych przypomina to wykorzystanie tabeli pośredniczącej do modelowania relacji wiele-do-wielu w~relacyjnych bazach danych. Podstawową różnicą jest jednak brak zwrotności. Tabela normalizująca opisuje połączenie jednokierunkowe i~nie ma możliwości efektywnego odwrócenia tego związku bez utworzenia kolejnej tabeli normalizującej w~drugim kierunku.
 
 \begin{verbbox}
 class User(Model):
