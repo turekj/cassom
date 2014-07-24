@@ -388,7 +388,14 @@ gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrz
 
 \section{Wsparcie dla wzorców modelowania}
 
-OMC został zaprojektowany w~taki sposób, aby dostarczać mechanizmów wspierających wzorce projektowe. W~tej sekcji Autor opisuje wszystkie wzorce, które były analizowane, modelowane, testowane i~optymalizowane w~trakcie prac implementacyjnych nad OMC.
+Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowania. W~literaturze zostały zebrane i~opisane liczne przykłady efektywnych i~nieefektywnych projektów modelu danych dla Apache Cassandry. Z~przeanalizowanych opisów Autor wybrał zbiór reużywalnych wzorców. Następnie, dla każdego wzorca, przygotowany został mechanizm, który ułatwia jego modelowanie w~środowisku OMC. Dzięki temu mechanizm został wzbogacony o~obsługę:
+
+\begin{itemize}
+	\item Szeregów zdarzeń, czyli zbioru uporządkowanych względem czasu wiadomości.
+	\item Kolejek \emph{First In, First Out}, \emph{Last In, Last Out} i~podobnych.
+	\item Indeksów wartości unikalnych. 
+	\item Aktualizacji selektywnej.
+\end{itemize}
 
 \subsection{Szereg zdarzeń}
 
