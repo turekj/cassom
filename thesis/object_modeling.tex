@@ -330,7 +330,7 @@ Do obsługi zdenormalizowanej tabeli generowana jest prosta klasa modelu. Opakow
 
 Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów encji wzajemnie zależnych $(id_{relates}, id_{related})$ do osobnej tabeli. Na poziomie modelu danych przypomina to wykorzystanie tabeli pośredniczącej do modelowania relacji wiele-do-wielu w~relacyjnych bazach danych. Podstawową różnicą jest jednak brak zwrotności. Tabela normalizująca opisuje połączenie jednokierunkowe i~nie ma możliwości efektywnego odwrócenia tego związku bez utworzenia kolejnej tabeli normalizującej w~drugim kierunku.
 
-Przykład wykorzystania normalizacji przez tabelę w~modelu OMC został przedstawiony na listingu~\ref{lst:denormalization_by_table_example}. Mechanizm wykorzystuje połączenie niejawne. Tabela normalizująca nie jest mapowana jako część modelu danych. Zamiast tego, podczas wywołania metody \verb+user.address.get()+ (gdzie \verb+user+ jest obiektem klasy \verb+User+), następują dwa odwołania. Pierwsze pobiera z~tabeli normalizującej identyfikatory powiązanych obiektów, a~drugie pobiera szczegóły tych obiektów. 
+Przykład wykorzystania normalizacji przez tabelę w~modelu OMC został przedstawiony na listingu~\ref{lst:normalization_by_table_example}. Fizyczny model danych stworzony dla przykładowego opisu przedstawia diagram~\ref{tab:address_normalization_table_data_model}. Mapowanie powiązań w~OMC przy pomocy tabeli normalizacyjnej (\verb+user_address_norm_table+) zachodzi niejawnie. Wywołanie w~kodzie aplikacji metody \verb+user.address.get()+ zwracającej listę adresów użytkownika wykonuje wiele odwołań do bazy danych. Pierwsze pobiera z~tabeli normalizującej wszystkie identyfikatory powiązanych obiektów. Kolejne zapytania ściągają do pamięci szczegóły tych obiektów.
 
 \begin{verbbox}
 class User(Model):
@@ -345,6 +345,37 @@ class User(Model):
 	\theverbbox
 	\caption{Normalizacja przez tabelę - implementacja encji użytkownik.}
 	\label{lst:normalization_by_table_example}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{ll}
+		user\_address\_norm\_table &
+		\begin{tabular}{|l||c|}
+			\hhline{|-||-|}
+		 	& \textbf{addressId} \\
+			\hhline{|~||=|}
+			\textbf{583} & 678 \\
+			\hhline{|-||-|}
+		\end{tabular} 	
+	\end{tabular}
+	
+	\vspace{1em}
+
+	\begin{tabular}{ll}
+		address &
+		\begin{tabular}{|l||c|c|c|c|c|}
+			\hhline{|-||-----|}
+		 	& \textbf{street} & \textbf{street\_no} & \textbf{postal\_code} & \textbf{city} & \textbf{country} \\
+			\hhline{|~||=====|}
+			\textbf{678} & Nowowiejska & 15/19 & 00-665 & Warsaw & Poland \\
+			\hhline{|-||-----|}
+		\end{tabular} \\
+	\end{tabular}
+
+	\caption{Model danych tabeli normalizacyjnej. Identyfikatorem wiersza w~tabeli \emph{user\_address\_norm\_table} jest identyfikator użytkownika.}
+	\label{tab:address_normalization_table_data_model}
 \end{figure}
 
 Na podstawie opisu działania metody \verb+get()+ łatwo stwierdzić, że takie rozwiązanie bardzo źle skaluje się ze wzrostem gęstości połączeń. Przeciętna ilość zapytań niezbędnych do pobrania kompletu informacji z~bazy danych wynosi:
