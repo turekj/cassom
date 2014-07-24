@@ -330,6 +330,8 @@ Do obsługi zdenormalizowanej tabeli generowana jest prosta klasa modelu. Opakow
 
 Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów encji wzajemnie zależnych $(id_{relates}, id_{related})$ do osobnej tabeli. Na poziomie modelu danych przypomina to wykorzystanie tabeli pośredniczącej do modelowania relacji wiele-do-wielu w~relacyjnych bazach danych. Podstawową różnicą jest jednak brak zwrotności. Tabela normalizująca opisuje połączenie jednokierunkowe i~nie ma możliwości efektywnego odwrócenia tego związku bez utworzenia kolejnej tabeli normalizującej w~drugim kierunku.
 
+Przykład wykorzystania normalizacji przez tabelę w~modelu OMC został przedstawiony na listingu~\ref{lst:denormalization_by_table_example}. Mechanizm wykorzystuje połączenie niejawne. Tabela normalizująca nie jest mapowana jako część modelu danych. Zamiast tego, podczas wywołania metody \verb+user.address.get()+ (gdzie \verb+user+ jest obiektem klasy \verb+User+), następują dwa odwołania. Pierwsze pobiera z~tabeli normalizującej identyfikatory powiązanych obiektów, a~drugie pobiera szczegóły tych obiektów. 
+
 \begin{verbbox}
 class User(Model):
     user_id = UuidField(partitioning_key=True)
@@ -344,6 +346,14 @@ class User(Model):
 	\caption{Normalizacja przez tabelę - implementacja encji użytkownik.}
 	\label{lst:normalization_by_table_example}
 \end{figure}
+
+Na podstawie opisu działania metody \verb+get()+ łatwo stwierdzić, że takie rozwiązanie bardzo źle skaluje się ze wzrostem gęstości połączeń. Przeciętna ilość zapytań niezbędnych do pobrania kompletu informacji z~bazy danych wynosi:
+
+\begin{equation}
+|q_{avg}| = 1 + r_{avg}
+\end{equation}
+
+gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrzędną. Dla licznych, gęstych zbiorów danych oznacza to występowanie sytuacji, w~których należy $n$ osobnych zapytań dla wszystkich $n$ elementów zapytań, które znajdują się w~zbiorze.
 
 \section{Wsparcie dla wzorców modelowania}
 
