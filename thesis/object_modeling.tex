@@ -386,6 +386,48 @@ Na podstawie opisu działania metody \verb+get()+ łatwo stwierdzić, że takie 
 
 gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrzędną. Dla licznych, gęstych zbiorów danych oznacza to występowanie sytuacji, w~których należy $n$ osobnych zapytań dla wszystkich $n$ elementów zapytań, które znajdują się w~zbiorze.
 
+\subsection{Porównanie wydajności metod zarządzania zależnościami}
+
+Trzy zaprezentowane metody różnią się od siebie wydajnością poszczególnych operacji w~kontekście charakterystyki danych. Aby ułatwić wybór rodzaju modelowania w~zależności od scenariusza użytkownia Autor przeprowadził szereg testów wydajnościowych, które ukazują zalety i~wady poszczególnych typów modelowania. Wszystkie testy zostały przeprowadzone dla modelu danych użytkowników i~przypisanych do nich adresów.
+
+\paragraph{Skalowalność operacji wyszukiwania względem gęstości połączeń} 
+
+Celem pierwszego testu jest zbadanie zależności pomiędzy wydajnością operacji pobierania kompletu danych, a~gęstością połączeń pomiędzy encjami zależnymi. Gęstość połączeń to średnia ilość podzależnych elementów przypadających na jeden element nadrzędny. 
+
+W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów. W~poszczególnych iteracjach mierzone były czas pobierania wszystkich użytkowników, wraz ze wszystkimi wymaganymi informacjami adresowymi, ale dla różnej gęstości połączeń pomiędzy danymi. Wyniki testu zostały przedstawione na wykresie~\ref{fig:select_time_relation_density_comparison}.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas wyszukiwania kompletu informacji ($s$),
+				ylabel=Średnia gęstość relacji,
+				scaled ticks=false, 
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east}
+			]
+			\addplot[color=red] coordinates {
+				(33.882, 10)
+			};
+			\addlegendentry{Denormalizacja przez pola}
+
+			\addplot[color=green] coordinates {
+				(66.424, 10)
+			};
+			\addlegendentry{Denormalizacja przez tabelę}
+
+			\addplot[color=blue] coordinates {
+				(227.424, 10)
+			};
+			\addlegendentry{Normalizacja przez tabelę}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasu pobierania informacji dla różnych metod modelowania zależności.}
+	\label{fig:select_time_relation_density_comparison}
+\end{figure}
+
 \section{Wsparcie dla wzorców modelowania}
 
 Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowania. W~literaturze zostały zebrane i~opisane liczne przykłady efektywnych i~nieefektywnych projektów modelu danych dla Apache Cassandry. Z~przeanalizowanych opisów Autor wybrał zbiór reużywalnych wzorców. Następnie, dla każdego wzorca, przygotowany został mechanizm, który ułatwia jego modelowanie w~środowisku OMC. Dzięki temu mechanizm został wzbogacony o~obsługę:

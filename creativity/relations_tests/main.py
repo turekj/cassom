@@ -6,7 +6,7 @@ import time
 def main():
     master_items = 10000
     slave_items = 1000
-    density = 10
+    density = 100
     cluster = Cluster(['127.0.0.1'])
     session = cluster.connect()
     session.execute('DROP KEYSPACE relations_test;')
