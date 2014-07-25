@@ -4,12 +4,12 @@ import time
 
 
 def main():
-    master_items = 10000
-    slave_items = 1000
-    density = 100
+    master_items = 20000
+    slave_items = 2000
+    density = 10
     cluster = Cluster(['127.0.0.1'])
     session = cluster.connect()
-    session.execute('DROP KEYSPACE relations_test;')
+    #session.execute('DROP KEYSPACE relations_test;')
     session.execute("CREATE KEYSPACE relations_test WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 1 };")
     session.execute("USE relations_test;")
     session.execute("CREATE TABLE relations_users (id text, name text, surname text, item_id text, item_name text, item_price text, PRIMARY KEY(id, item_id));")
