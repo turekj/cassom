@@ -6,3 +6,10 @@ Denormalized fields execution ended in 33.8825368881 s
 Denormalized table execution ended in 66.4242498875 s
 Normalized execution ended in 227.424865961 s
 
+Users: 10000
+Items: 1000
+Density: 100
+
+Denormalized fields execution ended in 65.0500149727 s
+Denormalized table execution ended in 120.88598299 s
+Normalized execution ended in 1587.50393605 s

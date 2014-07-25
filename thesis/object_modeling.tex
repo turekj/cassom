@@ -327,6 +327,7 @@ class User(Model):
 Do obsługi zdenormalizowanej tabeli generowana jest prosta klasa modelu. Opakowuje ona dostęp do zdenormalizowanych pól. Parametr \verb+model+ specyfikuje nazwę klasy tego modelu, którą następnie można wykorzystywać w~kodzie. Dostęp do wartości zdenormalizowanych dostępny jest po pobraniu obiektu zależnego. Zakładając, że zmienna \verb+user+ jest instancją klasy \verb+User+, wywołanie \verb+user.address.get()+ zwraca dane z~wiersza zdenormalizowanej tabeli. Z~wyniku wykonania metody można uzyskać później wartości pól, przykładowo \verb+user.address.get().postal_code+ dla kodu pocztowego. 
 
 \subsection{Normalizacja przez tabelę}
+\label{sec:normalization_by_table}
 
 Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów encji wzajemnie zależnych $(id_{relates}, id_{related})$ do osobnej tabeli. Na poziomie modelu danych przypomina to wykorzystanie tabeli pośredniczącej do modelowania relacji wiele-do-wielu w~relacyjnych bazach danych. Podstawową różnicą jest jednak brak zwrotności. Tabela normalizująca opisuje połączenie jednokierunkowe i~nie ma możliwości efektywnego odwrócenia tego związku bez utworzenia kolejnej tabeli normalizującej w~drugim kierunku.
 
@@ -408,16 +409,28 @@ W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów.
 				legend style={at={(0.95,0.15)},anchor=east}
 			]
 			\addplot[color=red] coordinates {
+				(65.050, 100)
+				(58.103, 75)
+				(49.212, 50)
+				(40.119, 25)
 				(33.882, 10)
 			};
 			\addlegendentry{Denormalizacja przez pola}
 
 			\addplot[color=green] coordinates {
+				(120.885, 100)
+				(106.164, 75)
+				(99.982, 50)
+				(80.021, 25)
 				(66.424, 10)
 			};
 			\addlegendentry{Denormalizacja przez tabelę}
 
 			\addplot[color=blue] coordinates {
+				(1587.503, 100)
+				(1314.820, 75)
+				(946.212, 50)
+				(591.928, 25)
 				(227.424, 10)
 			};
 			\addlegendentry{Normalizacja przez tabelę}
@@ -427,6 +440,10 @@ W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów.
 	\caption{Porównanie czasu pobierania informacji dla różnych metod modelowania zależności.}
 	\label{fig:select_time_relation_density_comparison}
 \end{figure}
+
+Z~wykresu można odczytać ogromną przewagę modeli zdenormalizowanych nad modelem znormalizowanym przy masowym odczycie wielu rekordów. Jest to zgodne z~prognozami przedstawionymi w~sekcji~\ref{sec:normalization_by_table}. Liczba zapytań potrzebnych do pobrania kompletu informacji z~wykorzystaniem normalizacji przez tabelę rośnie wraz ze wzrostem encji w~zbiorze danych, jak również z~gęstością połączeń. Uzyskany wykres ma charakterystykę nieliniową. W~przypadku denormalizacji przez pola/tabelę uzyskane wyniki mają charakterystykę w~przybliżeniu liniową. Ilość wykonywanych zapytań zależy wyłącznie od liczby elementów w~zbiorze danych.
+
+Należy zauważyć, że wykres nie oddaje pełni różnic pomiędzy modelami. Ponieważ czas dostępu dla zależności znormalizowanej odbiega znacząco od pozostałych, skala nie odzwierciedla różnicy pomiędzy podejściami zdenormalizowanymi. Zgodnie z~przewidywaniami mechanizm denormalizacji przez pole jest dla wszystkich punktów pomiaru w~przybliżeniu dwukrotnie szybszy od denormalizacji przez tabelę, ponieważ do pobrania informacji należy wykonać dwa razy mniej zapytań.
 
 \section{Wsparcie dla wzorców modelowania}
 
