@@ -1,0 +1,8 @@
+Users: 10000
+Items: 1000
+Density: 10
+
+Denormalized fields execution ended in 33.8825368881 s
+Denormalized table execution ended in 66.4242498875 s
+Normalized execution ended in 227.424865961 s
+
