@@ -135,6 +135,7 @@ CREATE TABLE sample_table_model (id PRIMARY KEY, sample_field text);
 \end{figure}
 
 \section{Modelowanie zależności między danymi}
+\label{sec:relation_modeling}
 
 \emph{Autor celowo nie używa terminu ,,relacja'', aby uniknąć skojarzenia z~RDBMS\footnote{Relative Database Management Systems - relacyjne systemy zarządzania bazami danych}. Jak wykazały badania przeprowadzone w~sekcji~\ref{sec:kundera_performance} tradycyjne podejście relacyjne w~Apache Cassandra jest bardzo nieefektywne i~powinno być unikane.}
 
@@ -605,17 +606,28 @@ Duży problem stanowi modelowanie zależności o~dużej liczbie połączeń mię
 	\item Zaniedbania aktualizacji zdenormalizowanych danych. W~praktyce jest to bardzo kłopotliwe i~może być zastosowane jeżeli udaje się zdenormalizowanie wyłącznie danych przeznaczonych tylko do odczytu.
 	\item Poświęcenia czasu aktualizacji kosztem czasu dostępu do danych i~wyboru modelu zdenormalizowanego.
 	\item Poświęcenia czas dostępu do danych kosztem czasu aktualizacji i~wyboru modelu znormalizowanego.
-	\item Zmiany modelowania danych w~taki sposób, aby zredukować zagęszczenie zależności.
+	\item Zmiany modelowania danych. Przekształcony schemat może między innymi redukować zagęszczenie zależności lub konieczność wykonywania operacji aktualizacji.
 \end{itemize}
 
 Jeżeli żadna z~powyższych możliwości nie daje się zastosować lub nie wprowadza akceptowalnej poprawy wydajności należy rozważyć wybór innego silnika bazodanowego. Dla zbiorów o~bardzo gęstej siatce zależności naturalne zastosowanie mają grafowe bazy danych. Przykładem dojrzałego projektu silnika grafowego o~dobrych własnościach skalowania jest Neo4j\footnote{Strona domowa projektu Neo4j dostępna jest pod adresem \url{http://www.neo4j.org}.}. 
+
+W~omawianym w~sekcji~\ref{sec:relation_modeling} przykładzie można wyeliminować operacje aktualizacji danych przy specyficznych założeniach:
+
+\begin{itemize}
+	\item Żadna encja nie jest powiązana z~użytkownikiem jako encja nadrzędna.
+	\item W~trakcie aktualizacji adresu aplikacja dysponuje pełnym kompletem informacji o~użytkowniku.
+	\item Nie istnieje ryzyko konfliktów synchronizacji (nie jest możliwa równoczesna edycja tego samego profilu przez różne instancje aplikacji).
+	\item Zduplikowanie istniejącego adresu nie ma wpływu na poprawność danych.
+\end{itemize} 
+
+Jeżeli powyższe założenia są spełnione aktualizacja może być zastąpiona poprzez wstawienie nowych danych do bazy. Ta operacja jest bardziej wydajna ze względu na pominięcie etapu wyszukiwania użytkowników, którzy są przypisani do danego adresu. Porównanie szybkości aktualizacji i~wstawiania nowych danych do bazy (z~unieważnianiem poprzednich) zostało przedstawione na wykresie~\ref{fig:update_vs_insert_time_density_comparison}. Testy zostały przeprowadzone na środowisku lokalnym dla stałej liczby wierszy w~tabelach (10000 użytkowników oraz 1000 adresów). W~kolejnych iteracjach modyfikowana była średnia gęstość zależności w~modelu. Modyfikacji / wstawianiu podlegały wszystkie wiersze.
 
 \begin{figure}[ht!]
 	\centering
 	\begin{tikzpicture}
 		\begin{axis}[
 				width=.8\textwidth,
-				xlabel=Czas aktualizacji kompletu informacji ($s$),
+				xlabel=Czas przetworzenia kompletu informacji ($s$),
 				ylabel=Średnia gęstość zależności,
 				scaled ticks=false, 
 				tick label style={/pgf/number format/fixed},
@@ -643,6 +655,15 @@ Jeżeli żadna z~powyższych możliwości nie daje się zastosować lub nie wpro
 	\caption{Porównanie czasu wstawiania i~aktualizacji informacji (przy rosnącej gęstości połączeń).}
 	\label{fig:update_vs_insert_time_density_comparison}
 \end{figure}
+
+Wyniki pokazują, że dla gęstych modeli danych operacja wstawiania może być nawet dwukrotnie wydajniejsza niż aktualizacja. Zastosowanie wielowątkowej aplikacji do przeprowadzenia testów mogło dalej pogłębić te różnicę. Z~wyniku testu można wywnioskować, że odnajdywanie/nakładnie odpowiednich ograniczeń na dane i~przekształcanie modelu może znacząco poprawiać wydajność również w~przypadkach, w~których w~ogólności Cassandra nie sprawdza się zbyt dobrze.
+
+Na podstawie porównania wydajności różnych metod modelowania zależności między danymi można stwierdzić, że nie ma przypadku, w~którym denormalizacja z~wykorzystaniem tabeli ma przewagę nad pozostałymi dwoma metodami. W~każdym przypadku może być ona zastąpiona denormalizacją przez pola/modelem znormalizowanym z~uzyskaniem identycznej lub lepszej wydajności. Stosowanie tego rodzaju relacji jest uzasadnione jeżeli:
+
+\begin{itemize}
+	\item Uzyskana wydajność jest zadowalająca, a~istotne jest fizyczne uporządkowanie i~wydzielenie danych (na przykład gdy część systemu wykorzystuje wydruki w~formie surowej).
+	\item Opisywane są bardzo szerokie wiersze i~problemem jest przekroczenie dwóch miliardów kolumn\footnote{Apache Cassandra narzuca limit dwóch miliardów kolumn w~jednym wierszu.}.
+\end{itemize}
 
 \section{Wsparcie dla wzorców modelowania}
 
