@@ -445,7 +445,7 @@ Z~wykresu można odczytać ogromną przewagę modeli zdenormalizowanych nad mode
 
 Należy zauważyć, że wykres nie oddaje pełni różnic pomiędzy modelami. Ponieważ czas dostępu dla zależności znormalizowanej odbiega znacząco od pozostałych, skala nie odzwierciedla różnicy pomiędzy podejściami zdenormalizowanymi. Zgodnie z~przewidywaniami mechanizm denormalizacji przez pole jest dla wszystkich punktów pomiaru w~przybliżeniu dwukrotnie szybszy od denormalizacji przez tabelę, ponieważ do pobrania informacji należy wykonać dwa razy mniej zapytań.
 
-\paragraph{Skalowalność operacji wyszukiwania względem ilości encji zależnych}
+\paragraph{Skalowalność operacji wyszukiwania względem ilości encji}
 
 Celem tego testu jest zbadanie szybkości wyszukiwania kompletu danych, kiedy gęstość połączeń w~modelu jest stała, a~zmienia się ilość encji nadrzędnych oraz zależnych. Wszystkie badania zostały przeprowadzone dla średniej gęstości połączeń wynoszącej 10. W~kolejnych iteracjach liniowo zwiększana była ilość wierszy użytkownika i~ilość adresów. Wyniki badań zostały przedstawione na wykresie~\ref{fig:select_time_relation_quantity_comparison}.
 
@@ -494,6 +494,92 @@ Celem tego testu jest zbadanie szybkości wyszukiwania kompletu danych, kiedy g�
 \end{figure}
 
 Kolejny raz efektywność zależności znormalizowanej przez tabelę znacząco odstaje od efektywności zależności zdenormalizowanych. Jednakże w~przeciwieństwie do gęstości zależności, zwiększanie liczby wierszy powoduje liniowy wzrost czasu potrzebnego na pobranie kompletu danych. Wynika z~tego, że model zdenormalizowany dużo lepiej sprawdza się w~przypadku rzadkich zbiorów połączeń pomiędzy encjami. Podobnie jak w~przypadku poprzedniego badania, model zdenormalizowany poprzez pola okazuje się dwa razy szybszy od denormalizacji z~użyciem osobnej tabeli.
+
+\paragraph{Skalowalność operacji aktualizacji względem gęstości połączeń} 
+
+Celem testu jest porównanie szybkości aktualizacji danych zależnych w~przypadku różnych typów modelowania. W~trakcie testu zostało wygenerowanych 10000 użytkowników i~1000 adresów. Zmieniana była gęstość połączeń pomiędzy encjami danych. Aktualizacji podlegały wszystkie elementy ze zbioru zależnych danych (adresy). Wyniki testu zostały przedstawione na wykresie~\ref{fig:update_time_relation_density_comparison}.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas aktualizacji kompletu informacji ($s$),
+				ylabel=Średnia gęstość zależności,
+				scaled ticks=false, 
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east},
+				xtick = {0, 300, 600, 900, 1200, 1500, 1800, 2100}
+			]
+			\addplot[color=red] coordinates {
+				(2137.998, 100)
+				(1098.212, 50)
+				(547.172, 25)
+				(164.962, 10)
+			};
+			\addlegendentry{Denormalizacja}
+
+			\addplot[color=green] coordinates {
+				(26.434, 100)
+				(25.981, 50)
+				(26.423, 25)
+				(26.719, 10)
+			};
+			\addlegendentry{Normalizacja przez tabelę}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasu aktualizacji informacji dla różnych metod modelowania zależności (przy rosnącej gęstości połączeń).}
+	\label{fig:update_time_relation_density_comparison}
+\end{figure}
+
+Z~wykresu wynika, że czas aktualizacji rekordów znormalizowanych jest niezależny od gęstości połączeń. W~modelu znormalizowanym wystarczy zaktualizować wszystkie encje zależne, więc mierzony czas faktycznie powinien być stały względem gęstości. Aktualizacja modelu znormalizowanego jest bardzo efektywna. Czas aktualizacji 1000 przedmiotów na środowisku lokalnym (przetwarzanie jednowątkowe) wynosił niewiele poniżej 30 sekund. 
+
+Oba modele zdenormalizowane mają fatalną wydajność aktualizacji kompletu danych. Problemem jest brak możliwości efektywnego wyszukiwania identyfikatorów wszystkich użytkowników, którzy są powiązani z~danym adresem. Klauzula aktualizacji w~Apache Cassandra nie wspiera wykorzystania indeksów drugiego stopnia. Bez wykorzystania indeksów drugiego stopnia nie jest możliwe znalezienie encji nadrzędnych, które są powiązane z~daną encją zależną. Stąd wykonanie zestawu operacji \verb+UPDATE+ jest zawsze poprzedzone wyszukiwaniem \verb+SELECT+. Kolejną przeszkodą jest ilość aktualizowanych danych. W~przypadku modelu znormalizowanego wystarczyło wykonanie $|Z|$ operacji, gdzie $Z$~to zbiór elementów zależnych (adresów). Dla modelu zdenormalizowanego liczba ta jest zwielokrotniona przez średnią gęstość połączeń pomiędzy wierszami.
+
+\paragraph{Skalowalność operacji aktualizacji względem ilości encji}
+
+Celem testu jest porównanie szybkości aktualizacji danych zależnych w~przypadku stałej gęstości zależności dla różnych typów modelowania. Średnia gęstość w~trakcie wszystkich iteracji testów wynosi 10. Liniowo zmieniają się natomiast liczby wierszy w~tabelach użytkowników i~adresów. Wyniki testu zostały przedstawione na wykresie~\ref{fig:update_time_relation_quantity_comparison}.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas aktualizowania kompletu informacji ($s$),
+				ylabel=Liczba wierszy użytkowników / adresów,
+				scaled ticks=false, 
+				ytick={5000, 10000, 20000, 40000},				
+				yticklabels={5000 / 500, 10000 / 1000, 20000 / 2000, 40000 / 4000},
+				yticklabel style={text width=2.5cm, align=right, /pgf/number format/fixed},
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east}
+			]
+			\addplot[color=red] coordinates {
+				(457.816, 40000)
+				(262.216, 20000)
+				(164.962, 10000)
+				(97.575, 5000)
+			};
+			\addlegendentry{Denormalizacja}
+
+			\addplot[color=green] coordinates {
+				(109.982, 40000)
+				(54.231, 20000)
+				(26.719, 10000)
+				(13.123, 5000)
+			};
+			\addlegendentry{Normalizacja przez tabelę}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasu aktualizacji informacji dla różnych metod modelowania zależności (przy rosnącej ilości wierszy).}
+	\label{fig:update_time_relation_quantity_comparison}
+\end{figure}
+
+Podobnie jak w~poprzednim badaniu wydajności aktualizacji, efektywniejszy okazał się model znormalizowany. Mierzony czas rośnie proporcjonalnie do ilości nadpisywanych rekordów. Dla zadanego problemu jest to rozwiązanie optymalne.
+
+W~przypadku denormalizacji można zauważyć, że wzrost liczby wierszy w~tabeli ma łagodniejszy wpływ na charakterystykę wykresu czasu aktualizacji niż rosnąca gęstość połączeń. Przykładowo dwukrotny wzrost gęstości połączeń odnosi podobny skutek czasowy co ośmiokrotny wzrost ilości danych. 
 
 \section{Wsparcie dla wzorców modelowania}
 
