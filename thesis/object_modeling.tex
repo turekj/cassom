@@ -595,6 +595,21 @@ Szukając pewnego rodzaju uogólnienia Autor wprowadził pomocniczą definicję 
 
 Dla tak określonego zbioru danych zdecydowanie najlepszym wyborem jest modelowanie z~wykorzystaniem denormalizacji poprzez pola. Głównym kryterium jest tutaj znacząca przewaga w~czasie wyszukiwania danych i~akceptowalny narzut przeznaczony na aktualizację danych. Liczne artykuły prezentujące studium przypadku użycia Apache Cassandry każą sądzić, że ten rodzaj modelowania zależności jest prawdopodobnie najlepiej dostosowany do specyfiki schematu danych. 
 
+W~przypadku małych zbiorów danych (preferowana ilość wierszy w~tabelach $\leq 10000$) o~niskiej gęstości zależności warto rozważyć użycie reprezentacji znormalizowanej. Nie jest ona obarczona narzutem na aktualizację danych. Zaletą tej reprezentacji jest większa elastyczność schematu. W~przeciwieństwie do postaci zdenormalizowanej, gdzie może zdarzyć się, że przy dodaniu kolejnego zapytania trzeba rozszerzyć tabelę denormalizacji o~kolejną kolumnę, zapewnia on dostęp do kompletu danych bez konieczności wprowadzania zmian w~strukturze. 
+
+Reprezentacja zdenormalizowana jest zalecana w~przypadku, gdy wyszukiwanie danych nie jest kluczowym kryterium. Przykładem mogą być dane służące do generacji raportów, gdzie liczba aktualizacji może znacznie przewyższać liczbę wyszukiwań. 
+
+Duży problem stanowi modelowanie zależności o~dużej liczbie połączeń między danymi. Wraz ze wzrostem gęstości połączeń możliwości zawężają się do:
+
+\begin{itemize}
+	\item Zaniedbania aktualizacji zdenormalizowanych danych. W~praktyce jest to bardzo kłopotliwe i~może być zastosowane jeżeli udaje się zdenormalizowanie wyłącznie danych przeznaczonych tylko do odczytu.
+	\item Poświęcenia czasu aktualizacji kosztem czasu dostępu do danych i~wyboru modelu zdenormalizowanego.
+	\item Poświęcenia czas dostępu do danych kosztem czasu aktualizacji i~wyboru modelu znormalizowanego.
+	\item Zmiany modelowania danych w~taki sposób, aby zredukować zagęszczenie zależności.
+\end{itemize}
+
+Jeżeli żadna z~powyższych możliwości nie daje się zastosować lub nie wprowadza akceptowalnej poprawy wydajności należy rozważyć wybór innego silnika bazodanowego. Dla zbiorów o~bardzo gęstej siatce zależności naturalne zastosowanie mają grafowe bazy danych. Przykładem dojrzałego projektu silnika grafowego o~dobrych własnościach skalowania jest Neo4j\footnote{Strona domowa projektu Neo4j dostępna jest pod adresem \url{http://www.neo4j.org}.}. 
+
 \begin{figure}[ht!]
 	\centering
 	\begin{tikzpicture}
