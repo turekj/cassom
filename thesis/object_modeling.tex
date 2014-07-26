@@ -1080,6 +1080,37 @@ Możliwe jest również wypisywanie najwolniejszych zapytań. W~trybie śledzeni
 	\label{vrb:engine_slow_queries}
 \end{figure}
 
+\subsection{Zasilanie danymi}
+
+Nie da się zmierzyć wydajności modelu danych przy pustej bazie, stąd OMC udostępnia dwa narzędzia ułatwiające populację testowymi danymi:
+
+\begin{description}
+	\item[Eksport i~import] Pozwala na przenoszenie danych pomiędzy instancjami aplikacji. Przykładowym scenariuszem jest przeniesienie danych z~serwera produkcyjnego na środowisko testowe w~celu optymalizacji modelu.
+	\item[Generacja] Wygenerowanie testowego zestawu danych na podstawie automatycznych lub zdefiniowanych przez użytkownika algorytmów.
+\end{description}
+
+Eksport i~import wykorzystuje natywny mechanizm języka CQL - polecenia \verb+COPY TO+ oraz \verb+COPY FROM+. Służą one do zapisywania danych z~Cassandry w~formacie CSV\footnote{Comma Separated Values (ang. ,,wartości oddzielone przecinkami'') - format pliku, w~którym każda linia oznacza wiersz danych, a~wartości poszczególnych kolumn są rozdzielone przecinkami.}. 
+
+Mechanizm eksportu w~OMC wywołuje polecenie \verb+COPY TO+ dla wszystkich tabel, a~następnie łączy wyniki w~jeden plik, w~którym definicje tabel znajdują się w~wierszach rozpoczynających się znakiem komentarza \verb+#+. Mechanizm importu rozdziela pliki, a~następnie na każdym z~nich wywołuje zapytanie \verb+COPY FROM+. Aby mechanizm działał poprawnie obie instancje Cassandry muszą posiadać już istniejący, spójny model danych. Przykładowe wywyołanie zostało przedstawione na listingu~\ref{vrb:export_import_example}.
+
+\begin{verbbox}
+	# first Cassandra instance
+	Model.engine.export_to_csv(name='data_export')
+	# second Cassandra instance
+	Model.engine.import_from_csv(name='data_export')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład eksportowania i~importowania danych do/z~plików CSV.}
+	\label{vrb:export_import_example}
+\end{figure}
+
+Używając mechanizmu eksportu należy pamiętać, że obecna implementacja poleceń \verb+COPY ...+ jest bardzo niedopracowana.~\cite{simple_data_importing_and_exporting} Problem stanowi wykorzystanie zapytania \verb+SELECT * FROM table WITH LIMIT 99999999+, które służy do pobierania danych. Cechą charakterystyczną dla Cassandry jest ustawiany w~konfiguracji węzłów parametr \verb+read_request_timeout_in_ms+, który standardowo ma zbyt restrykcyjną wartość, aby powyższe polecenie mogło wykonać się dla jakichkolwiek danych. Przed uruchomieniem eksportu należy odpowiednio dostosować konfigurację bazy danych.
+
+Niestety, mimo zmiany konfiguracji dla ogromnych zbiorów danych nadal mogą wystąpić przekroczenia czasu żądania. Z~tego względu funkcja \verb+export_to_csv+ ma zdefiniowany parametr \verb+excludes+, który przyjmuje listę nazw modeli wyłączonych z~eksportu. W~nowej wersji CQL problemy te mają zostać rozwiązane dzięki wbudowanym w~język mechanizmom paginacji.
+
 \section{Lista życzeń użytkownika - studium przypadku}
 
 Encję użytkownika przy pomocy OMC można opisać modelem \verb+User+ zaprezentowanym na listingu~\ref{lst:omc_user_definition}. Model posiada trzy pola: identyfikator (\verb+id+), imię (\verb+name+) oraz nazwisko (\verb+surname+).
