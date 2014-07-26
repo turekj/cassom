@@ -1050,6 +1050,36 @@ Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację (\verb+i
 
 Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia sposób obsługi obiektu. Nowo powstały obiekt jest traktowany tak, jakby został wcześniej pobrany z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
 
+\section{Profilowanie i~testowanie modelu danych}
+
+OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym narzędziem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
+
+\begin{verbbox}
+	Model.engine.enable_logging(file='log.txt', longer_than=1000)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Wypisywanie do pliku log.txt wszystkich zapytań, których czas wykonania przekracza 1000 milisekund.}
+	\label{vrb:engine_logging}
+\end{figure}
+
+Możliwe jest również wypisywanie najwolniejszych zapytań. W~trybie śledzenia niewydajnych zapytań OMC zapisuje zadaną liczbę odwołań do bazy o~najdłuższym czasie wykonania, posortowanych zaczynając od najwolniejszego. Przykład wykorzystania tej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_slow_queries}.
+
+\begin{verbbox}
+	Model.engine.trace_slow_queries(amount=10)
+	# perform ORM database operations
+	Model.engine.output_slow_queries(file='slow_queries.txt')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Wypisywanie do pliku slow\_queries.txt 10 najwolniejszych odniesień do bazy danych.}
+	\label{vrb:engine_slow_queries}
+\end{figure}
+
 \section{Lista życzeń użytkownika - studium przypadku}
 
 Encję użytkownika przy pomocy OMC można opisać modelem \verb+User+ zaprezentowanym na listingu~\ref{lst:omc_user_definition}. Model posiada trzy pola: identyfikator (\verb+id+), imię (\verb+name+) oraz nazwisko (\verb+surname+).
