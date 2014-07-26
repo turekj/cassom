@@ -581,6 +581,54 @@ Podobnie jak w~poprzednim badaniu wydajności aktualizacji, efektywniejszy okaza
 
 W~przypadku denormalizacji można zauważyć, że wzrost liczby wierszy w~tabeli ma łagodniejszy wpływ na charakterystykę wykresu czasu aktualizacji niż rosnąca gęstość połączeń. Przykładowo dwukrotny wzrost gęstości połączeń odnosi podobny skutek czasowy co ośmiokrotny wzrost ilości danych. 
 
+\subsection{Wnioski z~analizy wydajności modelowania zależności}
+
+Nie ma uniwersalnego sposobu, który pozwala na uzyskanie optymalnego wyniku przy mapowaniu zależności w~Apache Cassandra. Dobór metody powinien zależeć od charakterystyki przechowywanych danych. 
+
+Szukając pewnego rodzaju uogólnienia Autor wprowadził pomocniczą definicję typowego zbioru danych. Posiada on zbiór następujących cech:
+
+\begin{itemize}
+	\item Duża liczba wierszy w~zbiorze ($> 100000$).
+	\item Operacje wyszukiwania są znacznie częstsze niż aktualizacji. Stosunek częstotliwości ich występowania wynosi $20 \div 1$ (istnieje $5\%$ szansy, że użytkownik przeglądający profil zaktualizuje dane adresowe).
+	\item Gęstość występowania zależności jest niewielka. Na jeden wiersz encji nadrzędnej przypada średnio nie więcej niż dziesięć wierszy encji zależnej. 
+\end{itemize}
+
+Dla tak określonego zbioru danych zdecydowanie najlepszym wyborem jest modelowanie z~wykorzystaniem denormalizacji poprzez pola. Głównym kryterium jest tutaj znacząca przewaga w~czasie wyszukiwania danych i~akceptowalny narzut przeznaczony na aktualizację danych. Liczne artykuły prezentujące studium przypadku użycia Apache Cassandry każą sądzić, że ten rodzaj modelowania zależności jest prawdopodobnie najlepiej dostosowany do specyfiki schematu danych. 
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas aktualizacji kompletu informacji ($s$),
+				ylabel=Średnia gęstość zależności,
+				scaled ticks=false, 
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east},
+				xtick = {0, 300, 600, 900, 1200, 1500, 1800, 2100}
+			]
+			\addplot[color=red] coordinates {
+				(2137.998, 100)
+				(1098.212, 50)
+				(547.172, 25)
+				(164.962, 10)
+			};
+			\addlegendentry{Aktualizacja}
+
+			\addplot[color=green] coordinates {
+				(1165.276, 100)
+				(640.261, 50)
+				(355.701, 25)
+				(162.771, 10)
+			};
+			\addlegendentry{Wstawianie}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasu wstawiania i~aktualizacji informacji (przy rosnącej gęstości połączeń).}
+	\label{fig:update_vs_insert_time_density_comparison}
+\end{figure}
+
 \section{Wsparcie dla wzorców modelowania}
 
 Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowania. W~literaturze zostały zebrane i~opisane liczne przykłady efektywnych i~nieefektywnych projektów modelu danych dla Apache Cassandry. Z~przeanalizowanych opisów Autor wybrał zbiór reużywalnych wzorców. Następnie, dla każdego wzorca, przygotowany został mechanizm, który ułatwia jego modelowanie w~środowisku OMC. Dzięki temu mechanizm został wzbogacony o~obsługę:

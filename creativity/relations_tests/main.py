@@ -4,76 +4,40 @@ import time
 
 
 def main():
-    master_items = 5000
-    slave_items = 500
-    density = 10
+    master_items = 10000
+    slave_items = 1000
+    density = 25
     cluster = Cluster(['127.0.0.1'])
     session = cluster.connect()
-    session.execute('DROP KEYSPACE relations_test;')
+    #session.execute('DROP KEYSPACE relations_test;')
     session.execute("CREATE KEYSPACE relations_test WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 1 };")
     session.execute("USE relations_test;")
     session.execute("CREATE TABLE relations_users (id text, name text, surname text, item_id text, item_name text, item_price text, PRIMARY KEY(id, item_id));")
     session.execute("CREATE TABLE relations_items (id text, name text, price text, PRIMARY KEY(id));")
-    session.execute("CREATE TABLE relations_join (user_id text, item_id text, PRIMARY KEY(user_id, item_id));")
-    session.execute("CREATE TABLE relations_users_items (user_id text, item_id text, item_name text, item_price text, PRIMARY KEY(user_id, item_id));")
-    session.execute("CREATE INDEX ON relations_users(item_id);")
-    session.execute("CREATE INDEX ON relations_users_items(item_id);")
+
+    item_ids_for_users = {}
 
     for i in range(0, master_items):
+        item_ids_for_users[i] = []
         relations = random.randint(0, density + 1)
 
         for j in range(0, relations):
-            item_id = random.randint(0, slave_items)
-
-            join_values = (str(i), str(item_id))
-            users_values = (str(i), 'Name: ' + str(i), 'Surname: ' + str(i), str(item_id), 'Name: ' + str(item_id), 'Price: ' + str(item_id))
-            users_items_values = (str(i), str(item_id), 'Name: ' + str(item_id), 'Price: ' + str(item_id))
-
-            session.execute("INSERT INTO relations_join (user_id, item_id) VALUES ('%s', '%s');" % join_values)
-            session.execute("INSERT INTO relations_users (id, name, surname, item_id, item_name, item_price) VALUES('%s', '%s', '%s', '%s', '%s', '%s');" % users_values)
-            session.execute("INSERT INTO relations_users_items (user_id, item_id, item_name, item_price) VALUES ('%s', '%s', '%s', '%s');" % users_items_values)
-
-    for i in range(0, slave_items):
-        session.execute("INSERT INTO relations_items (id, name, price) VALUES('%s', '%s', '%s');" % (str(i), 'Name: ' + str(i), 'Price: ' + str(i)))
-
-    before = time.time()
-
-    for i in range(0, slave_items):
-        update_items = ('Updated Name: ' + str(i), 'Updated Price: ' + str(i), str(i))
-        session.execute("UPDATE relations_items SET name = '%s', price = '%s' WHERE id = '%s';" % update_items)
-
-        user_ids = session.execute("SELECT * FROM relations_users WHERE item_id = '%s';" % str(i))
-
-        for user_id in user_ids:
-            update_users = ('Updated Name: ' + str(i), 'Updated Price: ' + str(i), user_id.id, str(i))
-            session.execute("UPDATE relations_users SET item_name = '%s', item_price = '%s' WHERE id = '%s' AND item_id = '%s';" % update_users)
-
-    print 'Denormalized fields execution ended in %s s' % str(time.time() - before)
-
-    before = time.time()
-
-    for i in range(0, slave_items):
-        update_items = ('Updated Name: ' + str(i), 'Updated Price: ' + str(i), str(i))
-        session.execute("UPDATE relations_items SET name = '%s', price = '%s' WHERE id = '%s';" % update_items)
-
-        user_ids = session.execute("SELECT * FROM relations_users_items WHERE item_id = '%s';" % str(i))
-
-        for user_id in user_ids:
-            update_users = ('Updated Name: ' + str(i), 'Updated Price: ' + str(i), user_id.user_id, str(i))
-            session.execute("UPDATE relations_users_items SET item_name = '%s', item_price = '%s' WHERE user_id = '%s' AND item_id = '%s';" % update_users)
-
-    print 'Denormalized table execution ended in %s s' % str(time.time() - before)
+            item_ids_for_users[i].append(random.randint(0, slave_items))
 
     before = time.time()
 
     for i in range(0, master_items):
-        update_items = ('Updated Name: ' + str(i), 'Updated Price: ' + str(i), str(i))
-        session.execute("UPDATE relations_items SET name = '%s', price = '%s' WHERE id = '%s';" % update_items)
+        for j in range(0, len(item_ids_for_users[i])):
+            item_id = str(item_ids_for_users[i][j])
+            users_values = (str(i), 'Name: ' + str(i), 'Surname: ' + str(i), item_id, 'Name: ' + item_id, 'Price: ' + item_id)
+            session.execute("INSERT INTO relations_users (id, name, surname, item_id, item_name, item_price) VALUES('%s', '%s', '%s', '%s', '%s', '%s');" % users_values)
 
-    print 'Normalized execution ended in %s s' % str(time.time() - before)
+    for i in range(0, slave_items):
+        items_values = (str(i), 'Name: ' + str(i), 'Price: ' + str(i))
+        session.execute("INSERT INTO relations_items (id, name, price) VALUES('%s', '%s', '%s');" % items_values)
 
-    session.execute("TRUNCATE relations_users_items;")
-    session.execute("TRUNCATE relations_join;")
+    print 'Inserting fields ended in %s s' % str(time.time() - before)
+
     session.execute("TRUNCATE relations_items;")
     session.execute("TRUNCATE relations_users;")
     session.execute('DROP KEYSPACE relations_test;')
