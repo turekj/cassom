@@ -1064,6 +1064,7 @@ Modyfikacje wprowadzane do działającego modelu zazwyczaj nie są skomplikowane
 Dzięki wbudowanemu wsparciu dla migracji OMC pozwala wykonywać takie operacje automatycznie. Dedykowany mechanizm pozwala tworzyć punkty migracyjne, czyli kolejne wersje modelu danych. Potrafi również odczytywać wersję modelu na podstawie schematu bazy danych i~aktualizować ją do najnowszej (lub wybranej) rewizji.
 
 \subsection{Wydajność migracji danych}
+\label{sec:ocm_migrations_performance}
 
 Migracja danych wymaga wykonania wielu sekwencyjnych zapytań do bazy danych. Nie jest to rozwiązanie efektywne czasowo. W~celu zbadania wydajności mechanizmu migracji Autor posłużył się modelem przedstawionym na listingu~\ref{vrb:migrations_data_model_for_tests}.
 
@@ -1182,6 +1183,12 @@ Patrząc na wyniki przedstawione na wykresie~\ref{fig:migration_performance_test
 \end{figure}
 
 Na podstawie wykresu można zauważyć, że czas dodawania kolumny do istniejącej tabeli w~Cassandrze jest niezależny od liczby wierszy. Inaczej jest w~przypadku relacyjnej bazy danych, gdzie czas dodawania kolumny rośnie liniowo wraz z~ilością rekordów w~tabeli. Z~tego względu proste migracje danych mogą być wykonywane podczas produkcyjnego działania systemu. 
+
+\subsection{Potencjalne problemy migracji}
+
+Mechanizm migracji dla Cassandry posiada pewne wady w~stosunku do analogicznych implementacji dla relacyjnych baz danych.~\cite{django_migrations} Kluczowy problem jest związany z~brakiem możliwości niezawodnego pobrania  wszystkich rekordów z~danej tabeli. Pomimo, że w~najnowszej wersji sterownika dla języka Python został wprowadzony mechanizm paginacji,~\cite{python_driver_pagination} nadal może wydarzyć się sytuacja przekroczenia czasu żądania podczas pobierania wierszy. OCM używa paginacji o~rozmiarze strony równym 10000 rekordów. W~zależności od konfiguracji klastra może być to zbyt wysokie ustawienie. Z~drugiej strony zmniejszenie rozmiaru paginacji ma zły wpływ na wydajność mechanizmu.
+
+Drugi problem wiąże się z~brakiem transakcyjności Apache Cassandry. Jeżeli migracja nie powiedzie się, podczas gdy którakolwiek ze zmian została wprowadzona do modelu danych, ponowne uruchomienie mechanizmu nie zadziała. Z~tego względu zaleca się ostrożne wykorzystanie migracji i~poprzedzanie każdej takiej operacji wykonaniem kopii zapasowej danych. 
 
 \section{Profilowanie i~testowanie modelu danych}
 
