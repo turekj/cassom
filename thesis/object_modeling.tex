@@ -1050,6 +1050,19 @@ Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację (\verb+i
 
 Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia sposób obsługi obiektu. Nowo powstały obiekt jest traktowany tak, jakby został wcześniej pobrany z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
 
+\section{Migracje pomiędzy wersjami modelu}
+
+Typowym problemem związanym z~wykorzystaniem baz danych jest aktualizacja schematu. Dotyczy on również narzędzi do mapowania obiektowego. Problem ten pojawia się, gdy udało się wdrożyć pewien schemat i~istnieją już dane na nim operujące, a~wymagana jest modyfikacja modelu. Typowe scenariusze obejmują między innymi dodawanie kolumn do istniejących tabel, dodawanie nowych modeli oraz usuwanie istniejących tabel. 
+
+Modyfikacje wprowadzane do działającego modelu zazwyczaj nie są skomplikowane i~łatwo wprowadzić je ręcznie. Dla przedstawionej propozycji mapowania obiektowego dla Cassandry można jednak znaleźć przypadki, których automatyzacja zaoszczędzi dużo pracy. Niech w~modelu danych będzie wykorzystane pole typu \verb+DenormalizedField+. Jeżeli wymagane będzie dodanie nowej zdenormalizanej danej należy:
+
+\begin{enumerate}
+	\item Rozszerzyć model danych o~nową kolumnę.
+	\item Dla każdego połączenia pobrać daną źródłową i~przepisać ją do zdenormalizowanego pola.
+\end{enumerate}
+
+Dzięki wbudowanemu wsparciu dla migracji OMC pozwala wykonywać takie operacje automatycznie. Dedykowany mechanizm pozwala tworzyć punkty migracyjne, czyli kolejne wersje modelu danych. Potrafi również odczytywać wersję modelu na podstawie schematu bazy danych i~aktualizować ją do najnowszej (lub wybranej) rewizji.
+
 \section{Profilowanie i~testowanie modelu danych}
 
 OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym narzędziem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
