@@ -1111,6 +1111,51 @@ Używając mechanizmu eksportu należy pamiętać, że obecna implementacja pole
 
 Niestety, mimo zmiany konfiguracji dla ogromnych zbiorów danych nadal mogą wystąpić przekroczenia czasu żądania. Z~tego względu funkcja \verb+export_to_csv+ ma zdefiniowany parametr \verb+excludes+, który przyjmuje listę nazw modeli wyłączonych z~eksportu. W~nowej wersji CQL problemy te mają zostać rozwiązane dzięki wbudowanym w~język mechanizmom paginacji.
 
+Mechanizm generacji danych testowych umożliwia definiowanie reguł, według których zostaną stworzone dane. Dzięki temu użytkownik może w~łatwy sposób przygotować skrypty zasilające bazę danych w~sposób odwzorowujący realne wymagania: długość i~objętość danych, gęstość i~charakterystykę relacji i~tym podobne. 
+
+Na listingu~\ref{vrb:test_data_populatiuon} przedstawiono sposób uruchamiania generacji danych testowych. Parametrem funkcji \verb+populate_test_data+ jest słownik, który definiuje nazwy modelu i~ilość przypadających mu wierszy. W~przypadku pominięcia modelu w~słowniku dane dla niego nie zostaną wygenerowane.
+
+\begin{verbbox}
+	Model.engine.populate_test_data({'User': 10000, 'Address': 1000})
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Uruchamianie generacji danych testowych.}
+	\label{vrb:test_data_populatiuon}
+\end{figure}
+
+Domyślnie używany jest naiwny algorytm generacji danych testowych. Pola zastępowane są wartościami domyślnymi. Przykładowo pola tekstowe uzupełniane są frazą \verb+lorem ipsum+, pola typu \verb+timestamp+ lub \verb+timeuuid+ wypełniane są czasem obecnym, natomiast zależności generowane są przy założeniu, że istnieje $0.5\%$ szansy na sformułowanie związku. 
+
+Dane wygenerowane przy naiwnym podejściu nie nadają się dobrze do testów wydajnościowych. Dlatego użytkownik OMC ma możliwość zdefiniowania własnych algorytmów generacji danych testowych. Wymaga to zdefiniowania klasy wewnętrznej modelu o~nazwie \verb+Generator+, a~w niej metody \verb+generate()+. Przykład wykorzystania generatora przedstawia listing~\ref{vrb:test_data_generator}.
+
+\begin{verbbox}
+	class User(Model):
+	    username = TextField(partitioning_key=True)
+	    age = IntegerField()
+
+	    class Generator(object):
+	        def generate(item_no):
+	            username = 'User: ' + str(item_no)
+	            age = random.randrange(18, 55)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykład wykorzystania generatora danych testowych.}
+	\label{vrb:test_data_generator}
+\end{figure}
+
+Zarówno generatory, jak również mechanizm importu/eksportu posiadają wiele zastosowań, które nie muszą być ograniczone do badania wydajności. Przykładowe wykorzystania to:
+
+\begin{itemize}
+	\item Migracja danych z~innego systemu.
+	\item Synchronizacja danych pomiędzy różnymi środowiskami.
+	\item Zarządzanie kopiami zapasowymi danych.
+\end{itemize}
+
 \section{Lista życzeń użytkownika - studium przypadku}
 
 Encję użytkownika przy pomocy OMC można opisać modelem \verb+User+ zaprezentowanym na listingu~\ref{lst:omc_user_definition}. Model posiada trzy pola: identyfikator (\verb+id+), imię (\verb+name+) oraz nazwisko (\verb+surname+).
