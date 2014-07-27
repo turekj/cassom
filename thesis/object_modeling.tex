@@ -1063,6 +1063,126 @@ Modyfikacje wprowadzane do działającego modelu zazwyczaj nie są skomplikowane
 
 Dzięki wbudowanemu wsparciu dla migracji OMC pozwala wykonywać takie operacje automatycznie. Dedykowany mechanizm pozwala tworzyć punkty migracyjne, czyli kolejne wersje modelu danych. Potrafi również odczytywać wersję modelu na podstawie schematu bazy danych i~aktualizować ją do najnowszej (lub wybranej) rewizji.
 
+\subsection{Wydajność migracji danych}
+
+Migracja danych wymaga wykonania wielu sekwencyjnych zapytań do bazy danych. Nie jest to rozwiązanie efektywne czasowo. W~celu zbadania wydajności mechanizmu migracji Autor posłużył się modelem przedstawionym na listingu~\ref{vrb:migrations_data_model_for_tests}.
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{p{7cm} p{7cm}}
+		\begin{verbbox}
+			class User(Model):
+			    id = TextField(key=True)
+			    name = TextField()
+			    item = DenormalizedField(
+			        relates=Item,
+			        fields=['name', 'price'])
+		\end{verbbox}
+
+		\theverbbox & 
+
+		\begin{verbbox}
+			class Item(Model):
+			    id = TextField(key=True)
+			    name = TextField()
+			    price = TextField()
+			    # color = TextField(
+			    	default='Black')
+		\end{verbbox}
+
+		\theverbbox \\
+	\end{tabular}
+
+	\caption{Definicja modelu danych do testów mechanizmu migracji.}
+	\label{vrb:migrations_data_model_for_tests}
+\end{figure}
+
+Model składa się z~dwóch encji - przedmiotu i~użytkownika, który przez zdenormalizowane pola jest związany z~przedmiotem. W~drugiej wersji modelu do encji \verb+Item+ zostało dodane pole \verb+color+. Dodatkowo pole to zostało włączone do zdenormalizowanych pól modelu \verb+User+. W~skrypcie migracyjnym ustawiono, że dla istniejących przedmiotów pole \verb+color+ ma być uzupełniane losową wartością ze zbioru: czerwony, zielony lub niebieski. Dla tak zdefiniowanego problemu w~trakcie migracji muszą zostać wykonane następujące czynności:
+
+\begin{enumerate}
+	\item Do tabeli \verb+item+ dodawana jest kolumna \verb+color+ typu \verb+text+.
+	\item Wybierane są wszystkie przedmioty. Dla każdego przedmiotu aktualizowana jest wartość pola \verb+color+.
+	\item Do tabeli \verb+user+ dodawana jest kolumna \verb+item_color+ typu \verb+text+.
+	\item Dla każdego użytkownika pobierane są wszystkie przedmioty. Dla każdego przedmiotu aktualizowana jest wartość zdenormalizowanego pola \verb+item_color+.
+\end{enumerate}
+
+Badanie wydajności migracji zostało przeprowadzone na środowisku lokalnym. Zmianie podlegała liczba użytkowników i~przedmiotów. Testy przeprowadzone były dla dwóch średnych gęstości zależności: 5~oraz 10. Wyniki badania zostały przedstawione na wykresie~\ref{fig:migration_performance_test}.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas migracji danych ($s$),
+				ylabel=Liczba wierszy użytkowników / przedmiotów,
+				scaled ticks=false, 
+				ytick={5000, 10000, 20000, 40000},				
+				yticklabels={5000 / 500, 10000 / 1000, 20000 / 2000, 40000 / 4000},
+				yticklabel style={text width=2.5cm, align=right, /pgf/number format/fixed},
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east}
+			]
+			\addplot[color=red] coordinates {
+				(1458.982, 40000)
+				(699.112, 20000)
+				(349.196, 10000)
+				(177.926, 5000)
+			};
+			\addlegendentry{Średnia gęstość 10}
+
+			\addplot[color=green] coordinates {
+				(907.231, 40000)
+				(449.423, 20000)
+				(210.842, 10000)
+				(102.974, 5000)
+			};
+			\addlegendentry{Średnia gęstość 5}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasów migracji danych dla różnej ilości rekordów.}
+	\label{fig:migration_performance_test}
+\end{figure}
+
+Z~wykresu widać, że migracja danych denormalizacyjnych jest procesem czasochłonnym. Przetworzenie pojedynczej zmiany, dla relatywnie niewielu wierszy ($< 500000$), zajmuje 23 minuty. Z~tego względu zdecydowanie odradza się wykonywanie tego typu migracji w~trakcie produkcyjnego działania systemu.
+
+Patrząc na wyniki przedstawione na wykresie~\ref{fig:migration_performance_test} należy pamiętać, aby nie utożsamiać ich z~wydajnością bazy danych dla operacji przekształcających schemat danych. Ze względu na charakterystykę modelu, Apache Cassandra dużo szybciej niż relacyjne bazy danych dokonuje przekształceń takich jak dodawnie lub usuwanie kolumn. Na wykresie~\ref{fig:simple_migration_performance_test} przedstawiono porównanie wydajności operacji \verb+ALTER TABLE ... ADD ...+ w~bazach MySQL oraz Cassandra.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=.8\textwidth,
+				xlabel=Czas dodawnia kolumny ($ms$),
+				ylabel=Liczba rekordów w~tabeli,
+				scaled ticks=false, 
+				yticklabel style={text width=2.5cm, align=right, /pgf/number format/fixed},
+				tick label style={/pgf/number format/fixed},
+				legend style={at={(0.95,0.15)},anchor=east}
+			]
+			\addplot[color=red] coordinates {
+				(166, 1000000)
+				(169, 100000)
+				(162, 10000)
+			};
+			\addlegendentry{Apache Cassandra}
+
+			\addplot[color=green] coordinates {
+				(2681, 1000000)
+				(274, 100000)
+				(26, 10000)
+			};
+			\addlegendentry{MySQL}
+		\end{axis}
+	\end{tikzpicture}
+
+	\caption{Porównanie czasów dodawania kolumny do istniejącej tabeli dla bazy relacyjnej oraz Cassandry.}
+	\label{fig:simple_migration_performance_test}
+\end{figure}
+
+Na podstawie wykresu można zauważyć, że czas dodawania kolumny do istniejącej tabeli w~Cassandrze jest niezależny od liczby wierszy. Inaczej jest w~przypadku relacyjnej bazy danych, gdzie czas dodawania kolumny rośnie liniowo wraz z~ilością rekordów w~tabeli. Z~tego względu proste migracje danych mogą być wykonywane podczas produkcyjnego działania systemu. 
+
 \section{Profilowanie i~testowanie modelu danych}
 
 OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym narzędziem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
