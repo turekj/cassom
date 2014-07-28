@@ -1,6 +1,7 @@
 % -*- root: main.tex -*-
 
 \chapter{Apache Cassandra}
+\label{chap:apache_cassandra}
 
 Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza danych typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych.}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do których dążyli twórcy Cassandry była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
 
@@ -9,6 +10,7 @@ Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najba
 W~przeciwieństwie do relacyjnych baz danych, Apache Cassandra nie zapewnia wsparcia dla reguły ACID\footnote{ACID (ang. Atomic, Consistency, Isolation, Durability) - zasada atomowości, spójności, izolacji i~trwałości, które gwarantują poprawne przetwarzanie transakcji w~bazach danych.}. Zamiast tego zostały zrealizowane postulaty twierdzenia CAP: ,,we współdzielonym systemie plików można zachować maksymalnie dwie z~trzech właściwości: spójności, dostępności oraz podatności na partycjonowanie''. \cite{cap_theorem} Apache Cassandra priorytetyzuje właściwości dostępności oraz partycjonowania. Spójność danych jest odwrotnie proporcjonalna i~może być regulowana w~zależności od czasu odpowiedzi. Wysoka spójność danych oznacza wolniejszą odpowiedź bazy.
 
 \section{Model danych}
+\label{sec:cassandra_data_model}
 
 Model danych Apache Cassandra jest analogiczny do BigTable. \cite{official_bigtable} Można przedstawić go jako dwuwymiarowa mapa trójek wartości:
 
@@ -38,6 +40,7 @@ gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator 
 \end{figure}
 
 \section{Dystrybucja danych}
+\label{sec:cassandra_data_distribution}
 
 Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kolejność elementów. Węzły są przedstawiane na w~topologii pierścienia. Algorytm dystrybucji zostanie omówiony na przykładzie ze schematu~\ref{fig:data_distribution}: 
 
@@ -77,6 +80,7 @@ Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kole
 \end{enumerate}
 
 \section{Konsekwencje dla modelowania dziedziny}
+\label{sec:relative_vs_cassandra_model}
 
 Wewnętrzna struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandra zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
 
@@ -244,6 +248,7 @@ Poprawiony model można poddać dalszej optymalizacji. Wyświetlenie listy życz
 \end{figure}
 
 \section{CQL}
+\label{sec:about_cql}
 
 Efektywne modelowanie i~obsługa danych w~Apache Cassandra wymaga dobrej znajomości wewnętrznej struktury bazy danych. Dodatkowym utrudnieniem przy korzystaniu z~początkowych wersji Cassandry była konieczność wykorzystania skomplikowanego interfejsu programistycznego opartego o~wywoływanie zdalnych procedur Thrift\footnote{Dokumentacja interfejsu dostępna jest pod adresem \url{https://wiki.apache.org/cassandra/API10}.}. Thrift jest platformą pozwalającą budować aplikacje przenośne między różnymi językami programowania. Dzięki temu rozwiązaniu baza danych dostępna była dla wszystkich platform. Niestety, skutkiem ubocznym było skomplikowanie interfejsu dostępowego.
 

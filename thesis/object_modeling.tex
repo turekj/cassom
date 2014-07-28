@@ -1,6 +1,7 @@
 % -*- root: main.tex -*-
 
 \chapter{Modelowanie obiektowe dla Cassandry}
+\label{chap:cassandra_object_modeling}
 
 Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassandra_orm_performance_summary} Autor zaproponował odmienną koncepcję mechanizmu mapowania obiektowego dla bazy danych Cassandra. Aby uwypuklić różnice pomiędzy przedstawioną propozycją i~tradycyjnymi mechanizmami ORM Autor postuluje stosowanie odmiennego nazewnictwa. Omówiona w~sekcji~\ref{sec:om_for_cassandra_concept} koncepcja, która będzie rozwijana w~dalszej części pracy, nazywana będzie \textbf{modelowaniem obiektowym}:
 
@@ -14,6 +15,7 @@ Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassand
 W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego dostarczona wykonana przez Autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
 
 \section{Object Modeling for Cassandra}
+\label{sec:ocm_library_description}
 
 OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowania dziedziny danych dedykowane dla bazy Apache Cassandra. Pakiet udostępnia moduły, które umożliwiają zarządzanie środowiskiem bazodanowym i~pracę z~danymi bez odwoływania się do interfejsu Thrift/CQL. Funkcjonalności pakietu obejmują:
 
@@ -42,6 +44,7 @@ OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowa
 \end{itemize}
 
 \section{OMC - podstawowe pojęcia}
+\label{sec:ocm_basics}
 
 Środowisko aplikacyjne OMC definiuje trzy podstawowe pojęcia: model, pole oraz silnik.
 
@@ -95,6 +98,7 @@ Do utworzenia silnika służy metoda \verb+Engine.create_engine(connection_strin
 \end{figure} 
 
 \section{Definiowanie modelu}
+\label{sec:ocm_model_definition}
 
 Definiowanie modelu odbywa się poprzez stworzenie nowej klasy, która dziedziczy po klasie bazowej \verb+Model+. Podstawowy model opisuje zawartość jednej tabeli, jego pola zaś odpowiadają kolumnom tej tabeli. Przykładowy model został przedstawiony na listingu~\ref{lst:sample_model}.
 
@@ -666,6 +670,7 @@ Na podstawie porównania wydajności różnych metod modelowania zależności mi
 \end{itemize}
 
 \section{Wsparcie dla wzorców modelowania}
+\label{sec:ocm_data_modeling_support}
 
 Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowania. W~literaturze zostały zebrane i~opisane liczne przykłady efektywnych i~nieefektywnych projektów modelu danych dla Apache Cassandry. Z~przeanalizowanych opisów Autor wybrał zbiór reużywalnych wzorców. Następnie, dla każdego wzorca, przygotowany został mechanizm, który ułatwia jego modelowanie w~środowisku OMC. Dzięki temu mechanizm został wzbogacony o~obsługę:
 
@@ -973,6 +978,7 @@ Flaga \verb+searchable_unique=True+ powoduje, że dla danego pola tworzony jest 
 Zarówno indeks wartości unikatowych, jak również domyślny indeks drugiego stopnia (tworzony przy użyciu flagi \verb+searchable=True+) nazywane są przy użyciu tej samej konwencji. Pierwszą składową jest nazwa encji, drugą - nazwa pola, a~trzecia to słowo ,,index''. Dla przykładu \ref{lst:omc_unique_index_modeling} indeks wartości unikatowych zostanie umieszczony w~tabeli o~nazwie \verb+user_email_index+.
 
 \section{Przetwarzanie partiami}
+\label{sec:batch_processing}
 
 Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch_operations} Wykorzystując partie\footnote{Partia (ang. batch) - zgrupowany zestaw zapytań INSERT, UPDATE lub DELETE.} można wykonać zestaw operacji, z~których (cytując dokumentację) ,,jeżeli jedna się powiedzie, to wykonają się wszystkie''. Nie jest to jednak odpowiednik transakcji znanych z~relacyjnych baz danych. Apache Cassandra nie zapewnia integralności wykonywanych w~partii zapytań: dane mogą być modyfikowane równolegle przez inne zapytania. Przykład atomowych operacji został zaprezentowany na diagramie~\ref{lst:batch_operation_cql_example}. Jest to zestaw dwóch zapytań, które usuwają z~bazy danych użytkownika i~właściwy mu indeks dla pola e-mail.
 
@@ -1014,6 +1020,7 @@ Silnik wykorzystywany w~OCM zapewnia wsparcie dla przetwarzania partiami. Potraf
 Wywołanie metody \verb+Model.begin_batch()+ powoduje rozpoczęcie kolejkowania zapytań DML. Operacja wstawienia nowego przedmiotu (\verb+item.save()+) nie wykonuje się od razu, ale jest umieszczana w~kolejce. Do kolejki trafia również operacja aktualizacji listy życzeń użytkownika (\verb+wishlist.save()+). Wywołanie metody \verb+Model.apply_batch()+ powoduje, że partia dwóch zgrupowanych zapytań wykonuje się.
 
 \section{Wsparcie dla liczników}
+\label{sec:ocm_counters}
 
 Apache Cassandra udostępnia wsparcie dla specjalnego typu danych - liczników.~\cite{cassandra_counters} Liczniki to kolumny specjalnego typu \verb+counter+, na których można wykonywać tylko dwie operacje: inkrementacja lub dekrementacja. Poza specjalnym typem zmienia się również sposób interakcji z~tabelą. Nie można wstawiać do niej wartości, a~jedynie aktualizować liczniki dla różnych kombinacji pozostałych pól. 
 
@@ -1051,6 +1058,7 @@ Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację (\verb+i
 Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia sposób obsługi obiektu. Nowo powstały obiekt jest traktowany tak, jakby został wcześniej pobrany z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
 
 \section{Migracje pomiędzy wersjami modelu}
+\label{sec:ocm_migrations}
 
 Typowym problemem związanym z~wykorzystaniem baz danych jest aktualizacja schematu. Dotyczy on również narzędzi do mapowania obiektowego. Problem ten pojawia się, gdy udało się wdrożyć pewien schemat i~istnieją już dane na nim operujące, a~wymagana jest modyfikacja modelu. Typowe scenariusze obejmują między innymi dodawanie kolumn do istniejących tabel, dodawanie nowych modeli oraz usuwanie istniejących tabel. 
 
@@ -1267,6 +1275,7 @@ Mechanizm migracji dla Cassandry posiada pewne wady w~stosunku do analogicznych 
 Drugi problem wiąże się z~brakiem transakcyjności Apache Cassandry. Jeżeli migracja nie powiedzie się, podczas gdy którakolwiek ze zmian została wprowadzona do modelu danych, ponowne uruchomienie mechanizmu nie zadziała. Z~tego względu zaleca się ostrożne wykorzystanie migracji i~poprzedzanie każdej takiej operacji wykonaniem kopii zapasowej danych. 
 
 \section{Profilowanie i~testowanie modelu danych}
+\label{sec:ocm_profiling}
 
 OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym narzędziem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
 

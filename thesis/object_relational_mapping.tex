@@ -1,6 +1,7 @@
 % -*- root: main.tex -*-
 
 \chapter{Mapowanie obiektowo-relacyjne}
+\label{chap:object_relational_mapping}
 
 Mapowanie obiektowo-relacyjne (zwyczajowo określane skrótem ORM od angielskiego terminu \emph{object-relational mapping}) to technologia, która pozwala automatyzować połączenie pomiędzy relacyjnym modelem baz danych, a~paradygmatem programowania zorientowanego obiektowo.~\cite{orm_definition} W~szerokiej perspektywie mapowanie obiektowo-relacyjne może być postrzegane jako próba przełożenia tabelarycznej reprezentacji danych umieszczonej w~pamięci masowej na dowolną reprezentację danych w~pamięci operacyjnej.~\cite{fowler_orm_hate} 
 
@@ -85,6 +86,7 @@ manager.close();
 Do najbardziej popularnych implementacji Java Persistence API należą Hibernate ORM, OpenJPA oraz Toplink. Dużą przeszkodą jest fakt, że interfejs JPA nie jest wyczerpująco określony. Opisuje on tylko najbardziej podstawowe operacje na obiektach bazodanowych. Z~jednej strony pozostawia to twórcom bibliotek dużą elastyczność w~kwestii implementacji. Z~drugiej sprawia, że w~przypadku wykonywania operacji bardziej skomplikowanych niż zapisanie i~odczytanie mapowanego obiektu, programista często jest zmuszony sięgać do elementów specyficznych dla danej implementacji JPA. Sprawia to, że większość aplikacji wykorzystujących wymienione biblioteki jest nieprzenośna pomiędzy mechanizmami.
 
 \section{Kundera}
+\label{sec:kundera}
 
 Wraz z~pojawieniem się języka CQL pojawiła się szansa wykorzystania istniejących implementacji mechanizmów ORM do przechowywania danych z~użyciem silnika Cassandry. Motywacją do stworzenia takiego rozwiązania jest zwiększenie wydajności istniejących aplikacji bez modyfikacji ich kodu. Minimalna rekonfiguracja aplikacji i~podłączenie jej pod klaster bazodanowy skutkowałyby zwiększeniem wydajności działania aplikacji. Ponadto wykorzystanie istniejących interfejsów mogłoby umożliwić obsługę różnych typów baz danych należących do ruchu NoSQL. 
 
@@ -245,6 +247,7 @@ Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowe
 \end{figure}
 
 \section{Hibernate OGM}
+\label{sec:hibernate_ogm}
 
 Alternatywnym rozwiązaniem, które dostarcza implementacji Java Persistence API dla baz NoSQL jest Hibernate Object/Grid Mapper (OGM). Hibernate OGM wykorzystuje silnik projektu ORM o~tej samej nazwie. Niestety, aktualne wydanie (wersja \textbf{4.1.0.Beta5}) wspiera wyłącznie silniki Infispan, Ehcache, MongoDB oraz Neo4j. 
 
