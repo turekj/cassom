@@ -2,7 +2,24 @@
 
 \chapter{Wstęp}
 
-Tematem pracy jest zbadanie możliwości stworzenia systemu mapowania obiektowego dla bazy danych Apache Cassandra. Celem pracy jest zweryfikowanie możliwości wykorzystania interfejsów analogicznych mechanizmów stworzonych dla relacyjnych baz danych. Podstawowym wymaganiem jest możliwość wykorzystania wysokiej wydajności zapisu, która wyróżnia Cassandrę na tle innych systemów bazodanowych. Niniejsza praca prezentuje zbiór rozważań teoretycznych, badań oraz doświadczeń z~użytkowania, które przyczyniły się do powstania takiego mechanizmu. W~skład pracy wchodzi także implementacja mechanizmu.
+Tematem pracy jest zbadanie możliwości stworzenia systemu mapowania obiektowego dla bazy danych Apache Cassandra. Celem pracy jest zweryfikowanie możliwości wykorzystania interfejsów analogicznych mechanizmów stworzonych dla relacyjnych baz danych. Podstawowym wymaganiem jest zachowanie wysokiej wydajności zapisu, która wyróżnia Cassandrę na tle innych systemów bazodanowych, a~także możliwość czerpania z~praktyk zwiększających efektywność modelowania opisanych przez użytkowników Cassandry. Niniejsza praca prezentuje zbiór rozważań teoretycznych, badań oraz doświadczeń z~użytkowania, które przyczyniły się do powstania takiego mechanizmu. W~skład pracy wchodzi także implementacja mechanizmu.
 
+\section{Zakres pracy}
 
+Zakres pracy obejmuje następujące elementy:
+
+\begin{enumerate}
+	\item Badanie możliwości wykorzystania interfejsów mapowania obiektowo-relacyjnego dla bazy danych Cassandra:
+		\begin{itemize}
+			\item Wyszukanie istniejących implementacji.
+			\item Pomiary wydajności ze szczególnym naciskiem na różnice w~stosunku do relacyjnych baz danych oraz modelowania i~komunikacji z~wykorzystaniem języka zapytań Apache Cassandry.
+		\end{itemize}
+	\item Zaproponowanie własnego interfejsu zorientowanego na wysoką wydajność oraz wsparcie w~modelowaniu danych z~wykorzystaniem najlepszych praktyk:
+		\begin{itemize}
+			\item Zebranie i~opisanie sposobów modelowania zależności między danymi oraz porównanie ich wydajności w~różnych przypadkach użycia.
+			\item Zebranie i~opisanie zbioru najlepszych wzorców modelowania oraz możliwości wspierania ich w~mechanizmie.
+			\item Wykonanie referencyjnej implementacji zaproponowanego interfejsu.
+			\item Przeprowadzenie badań wydajnościowych implementacji.
+		\end{itemize}
+\end{enumerate}
 
