@@ -62,7 +62,7 @@ Silnik jest to obiekt, który odpowiada za nawiązywanie połączenia z~bazą da
 
 Utworzenie silnika wymaga podania adresu URL opisującego połączenie, nazwanego z~języka angielskiego \emph{connection string}. Strukturę tego adresu przedstawia listing~\ref{lst:connection_string}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	cassandra://{ip}:{port}/{keyspace}?rf={rf}&strategy={strategy}
 \end{verbbox}
 
@@ -85,7 +85,7 @@ Wszystkie elementy ujęte w~znaki \textbf{\{\}} w~adresie~\ref{lst:connection_st
 
 Do utworzenia silnika służy metoda \verb+Engine.create_engine(connection_string)+. Aby przypisać silnik do modelu należy użyć metody \verb+Model.bind(engine)+. Przykład wywołania przypisującego modelowi silnik dla serwera lokalnego i~przestrzeni nazw \verb+test+ został zaprezentowany na listingu~\ref{lst:engine_creation}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	engine = Engine.create_engine('cassandra://127.0.0.1/test')
 	Model.bind(engine)
 \end{verbbox}
@@ -102,7 +102,7 @@ Do utworzenia silnika służy metoda \verb+Engine.create_engine(connection_strin
 
 Definiowanie modelu odbywa się poprzez stworzenie nowej klasy, która dziedziczy po klasie bazowej \verb+Model+. Podstawowy model opisuje zawartość jednej tabeli, jego pola zaś odpowiadają kolumnom tej tabeli. Przykładowy model został przedstawiony na listingu~\ref{lst:sample_model}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class SampleTableModel(Model):
     id = UuidField(type=Uuid, partitioning_key=True)
     sample_field = TextField()
@@ -127,7 +127,7 @@ Po zdefiniowaniu klasy modelu oraz utworzeniu i~przypisaniu silnika jak na listi
 
 W~wyniku działania algorytmu zostanie utworzona tabela z~wykorzystaniem zapytania przedstawionego na listingu~\ref{lst:sample_model_create_query}. Należy zauważyć, że OCM w~schemacie bazodanowym wykorzystuje notację z~podkreśleniami\footnote{Underscore notation - zapis, w~którym używane są wyłącznie małe litery, a~poszczególne wyrazy są oddzielone znakiem~\_, na przykład: underscore\_notation\_example.}. Gdyby klucz główny nie został zdefiniowany jawnie, mechanizm utworzyłby go sztucznie jako autogenerowane pole o~nazwie \verb+id+ i~typie \verb+timeuuid+.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 CREATE TABLE sample_table_model (id PRIMARY KEY, sample_field text);
 \end{verbbox}
 
@@ -237,7 +237,7 @@ Mechanizm denormalizacji przez pole pozwala wskazać encję, której wybrane pol
 
 Denormalizacja przez pole wykorzystuje typ \verb+DenormalizedField+. Jego działanie zostanie omówione na podstawie definicji danych zawartej na diagramie~\ref{tab:address_denormalization_example}. Listing~\ref{lst:denormalization_by_field_address_entity} przedstawiono definicję encji adres zapisaną w~OCM. Model użytkownika został pokazany na listingu~\ref{lst:denormalization_by_field_example}. 
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class Address(Model):
     address_id = UuidField(partitioning_key=True)
     street = TextField()
@@ -255,7 +255,7 @@ class Address(Model):
 	\label{lst:denormalization_by_field_address_entity}
 \end{figure}
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class User(Model):
     user_id = UuidField(partitioning_key=True)
     name = TextField()
@@ -299,7 +299,7 @@ Mechanizm denormalizacji przez tabelę działa analogicznie do denormalizacji pr
 
 Na listingu~\ref{lst:denormalization_by_table_example} przedstawiono przykład denormalizacji przez tabelę opisanej jako model OMC. Ze względu na brak wyspecifikowanych pól (parametr \verb+fields+) do tabeli denormalizacyjnej zostaną włączone wszystkie pola modelu \verb+Address+. Schemat tabeli denormalizacyjnej, która powstanie na skutek zadeklarowania przykładowego modelu został zaprezentowany na diagramie~\ref{tab:address_denormalization_by_table_example}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class User(Model):
     user_id = UuidField(partitioning_key=True)
     name = TextField()
@@ -338,7 +338,7 @@ Normalizacja przez tabelę polega na wyekstrahowaniu mapowania identyfikatorów 
 
 Przykład wykorzystania normalizacji przez tabelę w~modelu OMC został przedstawiony na listingu~\ref{lst:normalization_by_table_example}. Fizyczny model danych stworzony dla przykładowego opisu przedstawia diagram~\ref{tab:address_normalization_table_data_model}. Mapowanie powiązań w~OMC przy pomocy tabeli normalizacyjnej (\verb+user_address_norm_table+) zachodzi niejawnie. Wywołanie w~kodzie aplikacji metody \verb+user.address.get()+ zwracającej listę adresów użytkownika wykonuje wiele odwołań do bazy danych. Pierwsze pobiera z~tabeli normalizującej wszystkie identyfikatory powiązanych obiektów. Kolejne zapytania ściągają do pamięci szczegóły tych obiektów.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class User(Model):
     user_id = UuidField(partitioning_key=True)
     name = TextField()
@@ -689,7 +689,7 @@ Apache Cassandra została zaprojektowana z~myślą o~wspieraniu szeregów zdarze
 
 Najprostszą możliwością jest zebranie wszystkich próbek dla danego urządzenia w~jednym wierszu tabeli. Kolejne wartości zapisywane są ze śladem czasu w~nazwie kolumny. Listing~\ref{lst:time_series_modeling_one} przedstawia wzorzec zapisany jako model OMC.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class TimeSeriesPatternOne(Model):
     weatherstation_id = TextField(partitioning_key=True)
     event_time = TimestampField(clustering_key=True, auto_on_create=True)
@@ -713,7 +713,7 @@ W~przypadku gdy odczytów jest zbyt dużo by mieściły się w~jednym wierszu su
 
 OMC posiada mechanizm partycjonowania dat po komponencie. W~modelu znajduje się tylko jedna dana - faktyczny ślad czasu. OMC na jej podstawie automatycznie tworzy i~formatuje klucz partycjonowania. Dzięki temu programista nie musi dbać o~ręczne wyznaczanie komponentu daty. Listing~\ref{lst:time_series_modeling_two} przedstawia opis modelu z~partycjonowaniem względem dnia.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class TimeSeriesPatternTwo(Model):
     weatherstation_id = TextField(partitioning_key=True)
     event_time = TimestampField(clustering_key=True, 
@@ -744,7 +744,7 @@ Korzystając z~wbudowanego mechanizmu Cassandry możliwe jest tworzenie automaty
 
 OMC zapewnia dwa rodzaje wsparcia dla czasu życia wartości. Czas życia może być ustawiany dla indywidualnych obiektów. Przy zapisywaniu obiektu należy na jego instancji wywołać metodę \verb+save(ttl=20)+. Parametr \verb+ttl+ definiuje czas życia wartości w~sekundach. Czas życia można również ustawić globalnie dla wszystkich instancji modelu. Wykorzystuje się do tego pole \verb+__ttl__+ klasy. Zaprezentowano to na listingu~\ref{lst:time_series_modeling_three}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class TimeSeriesPatternThree(Model):
     __ttl__ = 20
     weatherstation_id = TextField(partitioning_key=True)
@@ -769,7 +769,7 @@ W~sekcji~\ref{sec:patterns_and_antipatterns} został przytoczony antywzorzec kol
 
 Kolejka może być zamodelowana efektywniej w~przypadku, gdy możliwe jest wskazanie miejsca, w~którym rozpoczynają się nieusunięte kolumny. Przykładem może być kolejka typu FIFO\footnote{FIFO (First In, First Out) - rodzaj kolejki, w~którym elementy obsługiwane są według kolejności wstawienia.}. Wyszukując kolejny element w~kolejce można nałożyć warunek, że czas wstawienia elementu do kolejki jest późniejszy niż czas ostatnio usuniętego elementu. OMC dostarcza wsparcia dla takich kolejek, co zostało przedstawione na listingu~\ref{lst:fifo_queue_modeling}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class FIFOQueue(Model):
     __track_deletes__ = ('enqueued_at', 'ASC')
     name = TextField(partitioning_key=True)
@@ -860,7 +860,7 @@ Pomimo znaczącej poprawy czasu dostępu do danych przy wykorzystaniu parametru 
 
 Apache Cassandra jest przystosowana do obsługi wielu równoległych źródeł danych. Ze względu na brak transakcyjności jednym ze sposobów na uniknięcie problemów synchronizacji jest zalecana przez Dave'a Gardnera selektywna aktualizacja.~\cite{cassandra_concepts_patterns_antipatterns} Edytując zawartość danego wiersza należy przesyłać do bazy danych wyłącznie wartości, które rzeczywiście uległy modyfikacji. Inaczej istnieje prawdopodobieństwo niecelowego nadpisania zmian wprowadzonych równolegle przez inne źródło danych. OMC domyślnie korzysta z~mechanizmu selektywnej aktualizacji, co przedstawiono na listingu~\ref{lst:selective_update_modeling}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class SelectiveUpdate(Model):
     name = TextField(partitioning_key=True)
     description = TextField(length=1024)
@@ -957,7 +957,7 @@ Indeks wartości unikalnych można zamodelować samodzielnie w~prosty sposób.~\
 
 OMC wspiera automatyczne tworzenie indeksów dla wartości unikalnych. Na listingu~\ref{lst:omc_unique_index_modeling} przedstawiono sposób utworzenia indeksu dla wartości unikalnych dla pola \verb+email+.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class User(Model):
     id = UuidField(type=TimeUuid, auto_generate=True, partition_key=True)
     name = TextField()
@@ -982,7 +982,7 @@ Zarówno indeks wartości unikatowych, jak również domyślny indeks drugiego s
 
 Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch_operations} Wykorzystując partie\footnote{Partia (ang. batch) - zgrupowany zestaw zapytań INSERT, UPDATE lub DELETE.} można wykonać zestaw operacji, z~których (cytując dokumentację) ,,jeżeli jedna się powiedzie, to wykonają się wszystkie''. Nie jest to jednak odpowiednik transakcji znanych z~relacyjnych baz danych. Apache Cassandra nie zapewnia integralności wykonywanych w~partii zapytań: dane mogą być modyfikowane równolegle przez inne zapytania. Przykład atomowych operacji został zaprezentowany na diagramie~\ref{lst:batch_operation_cql_example}. Jest to zestaw dwóch zapytań, które usuwają z~bazy danych użytkownika i~właściwy mu indeks dla pola e-mail.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	BEGIN BATCH
 	  DELETE FROM user WHERE userId = 'jturek'
 	  DELETE FROM user_mail_index WHERE mail = 'J.Turek@stud.elka.pw.edu.pl'
@@ -998,7 +998,7 @@ Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch
 
 Silnik wykorzystywany w~OCM zapewnia wsparcie dla przetwarzania partiami. Potrafi kolejkować wszystkie zapytania DML\footnote{Data Modification Language (ang. język modyfikacji danych) - podzbiór zapytań obejmujących wstawianie (INSERT), aktualizację (UPDATE) oraz usuwanie (DELETE) danych.}, a~następnie wykonywać zapytania z~kolejki jako operacja atomowa. Przykład wykorzystania operacji na partiach w~OCM zaprezentowano na listingu~\ref{lst:ocm_batch_support}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	# starts batch
 	Model.begin_batch()
 	# create new Item
@@ -1026,7 +1026,7 @@ Apache Cassandra udostępnia wsparcie dla specjalnego typu danych - liczników.~
 
 OMC wspiera modelowanie liczników. Przykład przedstawiono na listingu~\ref{lst:ocm_counter_support}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class TripCounter(Model):
     country = TextField(partitioning_key=True)
     visits = CounterField()
@@ -1082,7 +1082,7 @@ Niech dany będzie model użytkownika przedstawiony na listingu~\ref{vrb:user_fo
 
 Pierwszym krokiem jest stworzenie początkowej migracji. Odpowiada za to metoda \verb+Model.migrations().make(initial=True)+. Wynikiem będzie powstanie nowego pliku \verb+migration_initial.py+. Zakładając, że polecenie zostało wywołane dla pierwszej wersji modelu, zawartość tego pliku jest przedstawiona na listingu~\ref{vrb:initial_migration}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class User(Model):
     id = TextField(partitioning_key=True)
     # id = UuidField(type=TimeUuid, partitioning_key=True)
@@ -1097,7 +1097,7 @@ class User(Model):
 	\label{vrb:user_for_migrations}
 \end{figure}
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class MigrationDescription(Migration):
     dependencies = ['__first__']
     operations = [
@@ -1118,7 +1118,7 @@ class MigrationDescription(Migration):
 
 Po utworzeniu migracji początkowej i~zmianie modelu danych należy utworzyć kolejny punkt migracji. Wywołanie metody \verb+make()+ utworzy plik \verb+migration_0001.py+, którego treść jest przedstawiona na listingu~\ref{vrb:first_migration}. Aby zaktualizować bazę danych do nowego schematu należy uruchomić polecenie \verb+Model.migrations().migrate()+. OMC spróbuje wykonać migrację, ale nie uda się to. Apache Cassandra nie potrafi zrzutować wartości pól tekstowych na typ \verb+timeuuid+.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class MigrationDescription(Migration):
     dependencies = ['initial']
     operations = [
@@ -1156,7 +1156,7 @@ Migracja danych wymaga wykonania wielu sekwencyjnych zapytań do bazy danych. Ni
 	\centering
 
 	\begin{tabular}{p{7cm} p{7cm}}
-		\begin{verbbox}
+		\begin{verbbox}[\footnotesize]
 			class User(Model):
 			    id = TextField(key=True)
 			    name = TextField()
@@ -1167,7 +1167,7 @@ Migracja danych wymaga wykonania wielu sekwencyjnych zapytań do bazy danych. Ni
 
 		\theverbbox & 
 
-		\begin{verbbox}
+		\begin{verbbox}[\footnotesize]
 			class Item(Model):
 			    id = TextField(key=True)
 			    name = TextField()
@@ -1279,7 +1279,7 @@ Drugi problem wiąże się z~brakiem transakcyjności Apache Cassandry. Jeżeli 
 
 OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym narzędziem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	Model.engine.enable_logging(file='log.txt', longer_than=1000)
 \end{verbbox}
 
@@ -1292,7 +1292,7 @@ OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wy
 
 Możliwe jest również wypisywanie najwolniejszych zapytań. W~trybie śledzenia niewydajnych zapytań OMC zapisuje zadaną liczbę odwołań do bazy o~najdłuższym czasie wykonania, posortowanych zaczynając od najwolniejszego. Przykład wykorzystania tej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_slow_queries}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	Model.engine.trace_slow_queries(amount=10)
 	# perform ORM database operations
 	Model.engine.output_slow_queries(file='slow_queries.txt')
@@ -1318,7 +1318,7 @@ Eksport i~import wykorzystuje natywny mechanizm języka CQL - polecenia \verb+CO
 
 Mechanizm eksportu w~OMC wywołuje polecenie \verb+COPY TO+ dla wszystkich tabel, a~następnie łączy wyniki w~jeden plik, w~którym definicje tabel znajdują się w~wierszach rozpoczynających się znakiem komentarza \verb+#+. Mechanizm importu rozdziela pliki, a~następnie na każdym z~nich wywołuje zapytanie \verb+COPY FROM+. Aby mechanizm działał poprawnie obie instancje Cassandry muszą posiadać już istniejący, spójny model danych. Przykładowe wywyołanie zostało przedstawione na listingu~\ref{vrb:export_import_example}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	# first Cassandra instance
 	Model.engine.export_to_csv(name='data_export')
 	# second Cassandra instance
@@ -1340,7 +1340,7 @@ Mechanizm generacji danych testowych umożliwia definiowanie reguł, według kt�
 
 Na listingu~\ref{vrb:test_data_populatiuon} przedstawiono sposób uruchamiania generacji danych testowych. Parametrem funkcji \verb+populate_test_data+ jest słownik, który definiuje nazwy modelu i~ilość przypadających mu wierszy. W~przypadku pominięcia modelu w~słowniku dane dla niego nie zostaną wygenerowane.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	Model.engine.populate_test_data({'User': 10000, 'Address': 1000})
 \end{verbbox}
 
@@ -1355,7 +1355,7 @@ Domyślnie używany jest naiwny algorytm generacji danych testowych. Pola zastę
 
 Dane wygenerowane przy naiwnym podejściu nie nadają się dobrze do testów wydajnościowych. Dlatego użytkownik OMC ma możliwość zdefiniowania własnych algorytmów generacji danych testowych. Wymaga to zdefiniowania klasy wewnętrznej modelu o~nazwie \verb+Generator+, a~w niej metody \verb+generate()+. Przykład wykorzystania generatora przedstawia listing~\ref{vrb:test_data_generator}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	class User(Model):
 	    username = TextField(partitioning_key=True)
 	    age = IntegerField()
@@ -1385,7 +1385,7 @@ Zarówno generatory, jak również mechanizm importu/eksportu posiadają wiele z
 
 Encję użytkownika przy pomocy OMC można opisać modelem \verb+User+ zaprezentowanym na listingu~\ref{lst:omc_user_definition}. Model posiada trzy pola: identyfikator (\verb+id+), imię (\verb+name+) oraz nazwisko (\verb+surname+).
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class User(Model):
     id = UuidField(type=TimeUuid, auto_generate=True, partition_key=True)
     name = TextField(selectable=True)
@@ -1403,7 +1403,7 @@ Identyfikator jest opisany polem typu \verb+UuidField+. Ze względu na zadeklaro
 
 Imię i~nazwisko opisane są polem typu \verb+TextField+. Jest ono mapowane na bazodanowy typ \verb+text+. Deklaracja \verb+selectable=True+ oznacza, że na polu zostanie utworzony indeks drugiego stopnia. Dzięki temu możliwe jest przeszukiwanie tabeli po wartości tego pola. Na listingu~\ref{lst:user_search_by_name_surname} przedstawiono odwołanie do OCM, dzięki któremu można wyszukać wszystkich użytkowników o~imieniu Jakub i~nazwisko Turek.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	User.objects().find(name='Jakub', surname='Turek')
 \end{verbbox}
 
@@ -1416,7 +1416,7 @@ Imię i~nazwisko opisane są polem typu \verb+TextField+. Jest ono mapowane na b
 
 Opis encji przedmiotu w~OMC został zaprezentowany na listingu~\ref{lst:omc_item_definition}. 
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class Item(Model):
     id = UuidField(type=TimeUuid, auto_generate=True, partition_key=True)
     name = TextField(searchable=True, length=255)
@@ -1439,7 +1439,7 @@ Pole \verb+DictionaryField+ dostarcza wsparcia dla słowników jednokrotnego wyb
 
 Opis encji listy życzeń przedstawia listing~\ref{lst:omc_wishlist_definition}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 class Wishlist(Model):
     userId = UuidField(type=TimeUuid, partition_key=True)
     item = DenormalizedField(relates=Item, 

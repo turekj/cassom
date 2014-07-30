@@ -32,7 +32,7 @@ Mapowanie obiektowo-relacyjne nie jest pozbawione wad. Opanowanie podstaw mechan
 
 Java Persistence API to interfejs programistyczny, który ma za zadanie uprościć tworzenie, zarządzanie i~zapisywanie obiektów, które reprezentują dane z~baz relacyjnych.~\cite{jpa_documentation} Interfejs JPA operuje na POJO\footnote{Plain Old Java Object (ang. dosłownie ,,prosty, stary obiekt Java'') - termin określający zwykły obiekt języka Java, używany jako przeciwieństwo Enterprise Java Bean, czyli specjalnego obiektu, który stosował się do wielu ściśle określonych reguł.}, które dekorowane są adnotacjami umożliwiającymi konfigurację reguł mapowania. Przykład takiego obiektu prezentuje listing~\ref{lst:sample_jpa_pojo}. Adnotacja \verb+@Entity+ określa klasę, która reprezentuje encję danych. Parametr \verb+@Id+ dekoruje identyfikator encji, natomiast \verb+@GeneratedValue+ oznacza, że będzie on ustawiany automatycznie. Adnotacje \verb+@Column+ informują, że dane zmienne będą mapowane na kolumny bazodanowe. Parametr \verb+@ManyToMany+ definiuje relację wiele-do-wielu. 
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 @Entity
 public class User {
     @Id
@@ -66,7 +66,7 @@ Definicja encji~\ref{lst:sample_jpa_pojo} nie specyfikuje kompletnego przykładu
 
 Na listingu~\ref{lst:sample_jpa_entity_manager} przedstawiono przykładowy kod, który służy do zapisywania użytkownika w~bazie danych. Do obsługi operacji zapisu wykorzystywany jest zarządca encji (\verb+EntityManager+). Za jego pomocą rozpoczynana jest transakcja (\verb+beginTransaction()+), wywoływane jest żądanie utrwalenia obiektu (\verb+persist()+), a~następnie transakcja jest wykonywana (\verb+commit()+).
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 User user = new User();
 // setting field values
 EntityManager manager = managerFactory.createEntityManager();
@@ -225,7 +225,7 @@ Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowe
 	\item Mapowanie obiektowe dla Cassandry powinno być proste. Język CQL, w~porównaniu do SQL, ma prostą składnię i~nie udostępnia wielu operacji. Ponadto skomplikowany mechanizm mapowania mógłby niekorzystnie kontrastować z~wydajną bazą danych. Przykładem nieczytelnego mapowania z~dużą liczbą opcji konfiguracyjnych może być pole encji opisane w~JPA przedstawione na listingu~\ref{vrb:awful_orm}.
 \end{itemize}
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	@ManyToMany
 	@JoinTable(name = "wishlist", 
 	           joinColumns = {
@@ -253,12 +253,12 @@ Alternatywnym rozwiązaniem, które dostarcza implementacji Java Persistence API
 
 Rozwiązanie to jest jednak interesujące z~punktu widzenia dalszego rozwoju pracy. Według mapy przyszłych wydań Hibernate OGM w~wersji 4.2 wprowadzi wsparcie dla silnika bazy danych Apache Cassandra.~\cite{hibernate_ogm_roadmap} 
 
-\section{Mapowanie obiektowe dla Cassandry - koncepcja}
+\section{Koncepcja mapowania dla Cassandry}
 \label{sec:om_for_cassandra_concept}
 
 W~większości rozwiązań ORM encja modelu danych jest opisywana jako definicja klasy, której obiekty reprezentować będą instancję tej encji. Rozważmy listing~\ref{vrb:jpa_denormalization_theory}, który przedstawia hipotetyczne dostosowanie standardu JPA do denormalizacji dla modelu~\ref{tab:denormalized_wishlist}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	@Table(name = "wishlist")
 	class Wishlist {
 	    @Id(type = IdType.PARTITION_KEY) 
@@ -278,7 +278,7 @@ W~większości rozwiązań ORM encja modelu danych jest opisywana jako definicja
 
 W~powyższym przykładzie denormalizacja jest modelowana jako zdegenerowany przypadek relacji jeden-do-jednego. Przypisanie zmiennej \emph{item} do obiektu klasy \emph{Wishlist} i~utrwalenie tego obiektu w~bazie danych spowoduje uzupełnienie wartości kolumn \emph{itemId}, \emph{name} oraz \emph{price} w~tabeli \emph{wishlist}. Po pobraniu obiektu klasy \emph{Wishlist} z~bazy danych przechowywany reprezentant klasy \emph{Item} posiada tylko część informacji. Takie rozwiązanie posiada istotną wadę. Podczas korzystania z~mechanizmu nie można jednoznacznie stwierdzić czy brak uzupełnienia pola \emph{desc} w~obiekcie klasy \emph{Item} jest spowodowany tym, że opisu faktycznie brakuje, czy też operacje dokonywane są na niekompletnym (zdenormalizowanym) obiekcie. Rozwiązaniem pozbawionym tej wady jest denormalizacja jawna przedstawiona na listingu~\ref{vrb:jpa_explicit_denormalization_theory}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	@Table(name = "wishlist")
 	class Wishlist {
 	    @Id(type = IdType.PARTITION_KEY) 
@@ -306,7 +306,7 @@ Denormalizacja jawna posiada jednak inne wady. Przede wszystkim model nie podaje
 
 Ze względu na mechanizm metaklas w~Pythonie stworzono eleganckie i~proste implementacje ORM dla relacyjnych baz danych. Dwa najpopularniejsze mechanizmy to Django ORM\footnote{Django ORM - część platformy Django, która odpowiada za operacje bazodanowe. Dokumentacja jest dostępna pod adresem \url{https://docs.djangoproject.com/en/dev/topics/db/}.} oraz SQLAlchemy\footnote{Strona domowa projektu jest dostępna pod adresem \url{http://www.sqlalchemy.org}.}. Wykorzystując metaklasy osiągalne jest stworzenie mapowania o~interfejsie wymienionych mechanizmów, który rozwiązuje problem zasygnalizowany w~przypadku języka Java. Ilustruje to listing~\ref{vrb:sql_alchemy_like_denormalization}.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	class Wishlist(Model):
 	    userId = TextField(partition_key=True)
 	    item = DenormalizedField(relates=Item, 
