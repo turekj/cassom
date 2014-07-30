@@ -83,7 +83,7 @@ Wszystkie elementy ujęte w~znaki \textbf{\{\}} w~adresie~\ref{lst:connection_st
 	\item[strategy] nazwa strategii replikacji podawanej przy tworzeniu przestrzeni nazw, jeśli ta nie istnieje (parametr jest opcjonalny).
 \end{description}
 
-Do utworzenia silnika służy metoda \verb+Engine.create_engine(connection_string)+. Aby przypisać silnik do modelu należy użyć metody \verb+Model.bind(engine)+. Przykład wywołania przypisującego modelowi silnik dla serwera lokalnego i~przestrzeni nazw \verb+test+ został zaprezentowany na listingu~\ref{lst:engine_creation}.
+Do utworzenia silnika należy wykorzysać metodę klasy \verb+Engine+ o~nagłówku \verb+create_engine(connection_string)+. Aby przypisać silnik do modelu należy użyć metody \verb+Model.bind(engine)+. Przykład wywołania przypisującego modelowi silnik dla serwera lokalnego i~przestrzeni nazw \verb+test+ został zaprezentowany na listingu~\ref{lst:engine_creation}.
 
 \begin{verbbox}[\footnotesize]
 	engine = Engine.create_engine('cassandra://127.0.0.1/test')
@@ -277,7 +277,7 @@ W~porównaniu do ręcznej denormalizacji użycie pola \verb+DenormalizedField+ w
 
 \begin{itemize}
 	\item Cały klucz partycjonowania encji wskazywanej jest automatycznie włączany do modelu. Dzięki temu zawsze możliwe jest przejście od obiektu nadrzędnego do podrzędnego.
-	\item Wykorzystanie zasady DRY\footnote{Don't Repeat Yourself (ang. ,,nie powtarzaj się'') - zasada, która w~kontekście programowania zaleca powielania tych samych lub bardzo podobnych fragmentów kodu w~wielu miejscach.} przy definiowaniu denormalizowanych pól. Gdyby w~modelu Address typ pola \verb+country+ został zmieniony na \verb+IntegerField()+ (kod kraju zamiast nazwy), typ denormalizowanego pola w~modelu \verb+User+ zostałby automatycznie uaktualniony.
+	\item Wykorzystanie zasady DRY\footnote{Don't Repeat Yourself (ang. ,,nie powtarzaj się'') - zasada, która w~kontekście programowania zaleca powielania tych samych lub bardzo podobnych fragmentów kodu w~wielu miejscach.} przy definiowaniu denormalizowanych pól. Gdyby w~modelu Address deklaracja typu pola \verb+country+ została zmieniona na \verb+IntegerField()+ (kod kraju zamiast nazwy), typ denormalizowanego pola w~modelu \verb+User+ zostałby automatycznie uaktualniony.
 	\item Generowany jest mechanizm automatycznego rozpakowywania wartości denormalizowanych z~obiektu modelu. Zakładając, że zmienna \verb+address+ przechowuje obiekt typu \verb+Address+, a~\verb+user+ obiekt typu \verb+User+, wywołanie \verb+user.address = address+ spowoduje automatyczne przypisanie wartości pól \verb+address_*+ zmiennej \verb+user+.
 	\item Generowana jest metoda do automatycznego pobierania wskazywanego wiersza danych. Wywołanie \verb+user.address.get()+ zwróci obiekt typu \verb+Address+, pod warunkiem, że klucz \verb+user.address_address_id+ jest poprawny.
 	\item W~przypadku aktualizacji danych encji zależnej mechanizm potrafi na życzenie zaktualizować również wszystkie zdenormalizowane wartości, które wskazują na ten obiekt. Można tego dokonać wywołując metodę \verb+update(update_related=True)+ na obiekcie modelu.
@@ -319,7 +319,7 @@ class User(Model):
 
 	\begin{tabular}{|l||c|c|c|c|c|c|}
 		\hhline{|-||------|}
-		 & \textbf{addressId} & \textbf{street} & \textbf{street\_no} & \textbf{postal\_code} & \textbf{city} & \textbf{country} \\
+		 & \textbf{addressId} & \textbf{street} & \textbf{no} & \textbf{code} & \textbf{city} & \textbf{country} \\
 		\hhline{|~||======|}
 		\textbf{233} & 754 & Nowowiejska & 15/19 & 00-665 & Warsaw & Poland \\
 		\hhline{|-||------|}
@@ -373,7 +373,7 @@ class User(Model):
 		address &
 		\begin{tabular}{|l||c|c|c|c|c|}
 			\hhline{|-||-----|}
-		 	& \textbf{street} & \textbf{street\_no} & \textbf{postal\_code} & \textbf{city} & \textbf{country} \\
+		 	& \textbf{street} & \textbf{no} & \textbf{code} & \textbf{city} & \textbf{country} \\
 			\hhline{|~||=====|}
 			\textbf{678} & Nowowiejska & 15/19 & 00-665 & Warsaw & Poland \\
 			\hhline{|-||-----|}
@@ -731,12 +731,12 @@ class TimeSeriesPatternTwo(Model):
 Pole \verb+event_time+ modelu \verb+TimeSeriesPatternTwo+ jest kluczem klastrowania. Dodatkowo posiada ono ustawioną flagę \verb+partitioning_by_day=True+, która spełnia trzy zadania:
 
 \begin{itemize}
-	\item Przy tworzeniu schematu tabeli dodaje dodatkową kolumnę \verb+event_time_day+\footnote{Nazwa jest tworzona z~nazwy pola oraz nazwy komponentu daty.} o~typie tekstowym. Pole to jest automatycznie włączane do klucza partycjonowania.
+	\item Przy tworzeniu schematu tabeli dodaje automatycznie nową kolumnę \verb+event_time_day+\footnote{Nazwa jest tworzona z~nazwy pola oraz nazwy komponentu daty.} o~typie tekstowym. Pole to jest automatycznie włączane do klucza partycjonowania.
 	\item Przy zapisywaniu obiektu do bazy danych automatycznie wypełnia wartość dodatkowego pola o~ślad czasu obcięty do z~dokładnością do dnia.
 	\item Przy wyszukiwaniu obiektów po dacie automatycznie filtruje dane zarówno po wartości pola \verb+event_time_day+, jak i~\verb+event_time+.
 \end{itemize}
 
-Dostępne jest kilka rodzajów komponentów daty, po których można dokonać partycjonowania. Różnią się one ostatnim członem nazwy parametru. Wybór obejmuje partycjonowanie po latach (\verb+_year+), miesiącach (\verb+_month+), dniach (\verb+_day+), godzinach (\verb+_hour+), minutach (\verb+_minute+) oraz sekundach (\verb+_second+).
+Dostępne jest kilka rodzajów komponentów daty, po których można dokonać partycjonowania. Różnią się one ostatnim członem nazwy parametru. Wybór obejmuje partycjonowanie po latach (\verb+_year+), miesiącach (\verb+_month+), dniach (\verb+_day+), godzinach (\verb+_hour+), minutach (\verb+_minute+), a~także sekundach (\verb+_second+).
 
 \paragraph{Odczyty z~ograniczoną pamięcią}
 
@@ -807,14 +807,14 @@ FIFOQueue.objects().find(name='3')[:1]
 	\label{lst:fifo_queue_modeling}
 \end{figure}
 
-Parametr \verb+__track_deletes__+ umożliwia śledzenie operacji usuwania. Przyjmuje on parę łańcuchów znaków: nazwę pola, którego wartość jest śledzona podczas usuwania oraz warunek zapisywania śledzonej wartości. Na chwilę obecną obsługiwane jest śledzenie pól typu \verb+UuidField+ oraz \verb+TimestampField+, a~także dwa warunki śledzenia: \verb+ASC+ oraz \verb+DESC+. Warunek \emph{ascending} oznacza, że śledzona wartość jest aktualizowana tylko w~przypadku, gdy jest mniejsza od usuwanej obecnie wartości. Warunek \emph{descending} działa odwrotnie - aktualizuje śledzoną wartość tylko w~przypadku, gdy jest większa od usuwanej obecnie.
+Parametr \verb+__track_deletes__+ umożliwia śledzenie operacji usuwania. Przyjmuje on parę łańcuchów znaków: nazwę pola, którego wartość jest śledzona podczas usuwania oraz warunek zapisywania śledzonej wartości. Na chwilę obecną obsługiwane jest śledzenie pól typu \verb+UuidField+ (w~trybie \verb+timeuuid+) oraz \verb+TimestampField+, a~także dwa warunki śledzenia: \verb+ASC+ oraz \verb+DESC+. Warunek \emph{ascending} oznacza, że śledzona wartość jest aktualizowana tylko w~przypadku, gdy jest mniejsza od usuwanej obecnie wartości. Warunek \emph{descending} działa odwrotnie - aktualizuje śledzoną wartość tylko w~przypadku, gdy jest większa od usuwanej obecnie.
 
 Ustawienie parametru \verb+__track_deletes__+ powoduje, że śledzona wartość jest automatycznie dodawana do wszystkich zapytań wyszukujących obiekty. Oznacza to, że ostatnie wywołanie w~listingu~\ref{lst:fifo_queue_modeling} będzie miało ustawione trzy warunki filtrowania:
 
 \begin{itemize}
 	\item Nazwa elementu (\verb+name+) jest równa \verb+'3'+ - wynika z~\verb+find(name='3')+.
 	\item Wybierz maksymalnie jeden element (\verb+LIMIT 1+) - wynika z~zakresu \verb+[:1]+.
-	\item Czas dodania do kolejki (\verb+enqueued_at+) większy od \verb+second_element.enqueued_at+ - automatycznie dodawane przez OMC.
+	\item Czas dodania do kolejki (\verb+enqueued_at+) jest większy bądź równy wartości \verb+second_element.enqueued_at+ - automatycznie dodawane przez OMC.
 \end{itemize}
 
 Wykorzystanie opcji \verb+__track_deletes__+ w~sposób znaczący wpływa na wydajność kolejki FIFO. Na wykresie~\ref{fig:fifo_select_time_comparison} przedstawiono porównanie szybkości działania wyszukiwania pierwszego nieusuniętego elementu kolejki przy włączonym oraz wyłączonym śledzeniu. Pomiar wydajności został przeprowadzony na lokalnej konfiguracji klastra Apache Cassandra. Czas mierzony był przez aplikację wykorzystującą mechanizm OMC. Aplikacja ta wstawiała do kolejki $y$ przedmiotów, po czym usuwała pierwsze $y-1$ przedmiotów z~tej kolejki. Mierzony był czas wyszukiwania pierwszego elementu należącego do kolejki (z~ograniczeniem \verb+LIMIT 1+, podobnie jak przy wywołaniu metody \verb+find+ w~listingu~\ref{lst:fifo_queue_modeling}). 
@@ -898,11 +898,11 @@ Aby umożliwić wyszukiwanie po wartościach kolumny, która nie należy do kluc
 		\hhline{|-||----|}
 		 & \textbf{name} & \textbf{surname} & \textbf{email} & \textbf{city} \\
 		\hhline{|~||====|}
-		\textbf{jturek} & Jakub & Turek & J.Turek@stud.elka.pw.edu.pl & Warsaw \\
+		\textbf{jturek} & Jakub & Turek & J.Turek@pw.edu.pl & Warsaw \\
 		\hhline{|=::====}
 		 & \textbf{name} & \textbf{surname} & \textbf{email} & \textbf{city} \\
 		\hhline{|~||====|}
-		\textbf{manisero} & Michał & Aniserowicz & M.Aniserowicz@stud.elka.pw.edu.pl & Warsaw \\
+		\textbf{manisero} & Michał & Aniserowicz & M.Aniserowicz@pw.edu.pl & Warsaw \\
 		\hhline{|-||----|}
 	\end{tabular} 
 
@@ -973,7 +973,7 @@ class User(Model):
 	\label{lst:omc_unique_index_modeling}
 \end{figure}
 
-Flaga \verb+searchable_unique=True+ powoduje, że dla danego pola tworzony jest indeks unikalny. Indeks jest w~całości zarządzany przez OMC. Podczas wyszukiwania metodą \verb+User.objects().find(email='J.Turek@stud.elka.pw.edu.pl')+ mechanizm wyszukuje identyfikator użytkownika w~stworzonym przez siebie indeksie. OMC aktualizuje indeksy podczas wykonywania operacji \verb+save()+ oraz \verb+delete()+.
+Flaga \verb+searchable_unique=True+ powoduje, że dla danego pola tworzony jest indeks unikalny. Indeks jest w~całości zarządzany przez OMC. Podczas wywołania \verb+User.objects().find(email='J.Turek@pw.edu.pl')+ mechanizm wyszukuje identyfikator użytkownika w~stworzonym przez siebie indeksie. OMC aktualizuje indeksy podczas wykonywania operacji \verb+save()+ oraz \verb+delete()+.
 
 Zarówno indeks wartości unikatowych, jak również domyślny indeks drugiego stopnia (tworzony przy użyciu flagi \verb+searchable=True+) nazywane są przy użyciu tej samej konwencji. Pierwszą składową jest nazwa encji, drugą - nazwa pola, a~trzecia to słowo ,,index''. Dla przykładu \ref{lst:omc_unique_index_modeling} indeks wartości unikatowych zostanie umieszczony w~tabeli o~nazwie \verb+user_email_index+.
 
@@ -985,7 +985,7 @@ Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch
 \begin{verbbox}[\footnotesize]
 	BEGIN BATCH
 	  DELETE FROM user WHERE userId = 'jturek'
-	  DELETE FROM user_mail_index WHERE mail = 'J.Turek@stud.elka.pw.edu.pl'
+	  DELETE FROM user_mail_index WHERE mail = 'J.Turek@pw.edu.pl'
 	APPLY BATCH;
 \end{verbbox}
 
@@ -1051,9 +1051,9 @@ p_visits = TripCounter.find(country='Poland').get().visits    # 3
 	\label{lst:ocm_counter_support}
 \end{figure}
 
-Obsługa modelu posiadającego licznik różni się od wykorzystania standardowego modelu. Przede wszystkim wartości wszystkich pól są ustawione w~trybie \verb+read only+, czyli nie jest możliwe wykonanie operacji \verb+sweden.country = 'Germany'+. Dzięki temu wszystkie operacje wykonywane na liczniku są zawsze odpowiednio interpretowane, gdyż nie może się zmienić ich kontekst. W~przeciwnym razie trudno byłoby ocenić intencje programisty, który najpierw inkrementuje licznik o~2, a~następnie zmienia wartość kraju dla obiektu ze zwiększonym licznikiem. Mogło być to działanie celowe (operacje wykonane w~nieintuicyjnej kolejności) lub zwykły błąd. 
+Obsługa modelu posiadającego licznik różni się od wykorzystania standardowego modelu. Przede wszystkim wartości wszystkich pól są ustawione w~trybie \verb+read only+, czyli nie jest możliwe wykonanie operacji podstawienia \verb+sweden.country = 'Germany'+. Dzięki temu wszystkie operacje wykonywane na liczniku są zawsze odpowiednio interpretowane, gdyż nie może się zmienić ich kontekst. W~przeciwnym razie trudno byłoby ocenić intencje programisty, który najpierw inkrementuje licznik o~2, a~następnie zmienia wartość kraju dla obiektu ze zwiększonym licznikiem. Mogło być to działanie celowe (operacje wykonane w~nieintuicyjnej kolejności) lub zwykły błąd. 
 
-Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację (\verb+increment()+) oraz dekrementację (\verb+decrement()+). Metody wywołane bez podania parametru standardowo zwiększają/zmniejszają wartość licznika o~1. Obie funkcje są łączne. Oznacza to, że tak jak w~przykładzie można dokonywać wielu operacji na jednym liczniku, które przed uaktualnieniem obiektu w~bazie danych są sumowane.
+Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację wartości licznika (\verb+increment()+) oraz dekrementację (\verb+decrement()+). Metody wywołane bez podania parametru standardowo zwiększają/zmniejszają wartość o~1. Obie funkcje są łączne. Oznacza to, że tak jak w~przykładzie można dokonywać wielu operacji na jednym liczniku, które przed uaktualnieniem obiektu w~bazie danych są sumowane.
 
 Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia sposób obsługi obiektu. Nowo powstały obiekt jest traktowany tak, jakby został wcześniej pobrany z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
 
