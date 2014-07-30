@@ -5,9 +5,9 @@
 
 Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza danych typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych.}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do których dążyli twórcy Cassandry była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
 
-Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najbardziej znaczące przykłady użycia produkcyjnego to eBay\footnote{eBay - największy portal z~aukcjami internetowymi na świecie}, Instagram\footnote{Instagram - portal pozwalający na umieszczanie fotografii.} oraz GitHub\footnote{GitHub - usługa pozwalająca na przechowywanie i~wersjonowanie kodu źródłowego aplikacji.}. Największa światowa instalacja Cassandry obejmuje około 15000 węzłów, na których przechowywane jest łącznie ponad 4 petabajty danych. \cite{official_cassandra}
+Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najbardziej znaczące przykłady użycia produkcyjnego to eBay, Instagram oraz GitHub\footnote{eBay, Instagram, Github - przykłady dużych portali internetowych. eBay to serwis aukcyjny, Instagram to portal społecznościowy oparty o~publikację zdjęć wykonanych telefonami komórkowymi, a~Github to usługa pozwalająca na przechowywanie i~wersjonowanie kodu źródłowego aplikacji.}. Największa światowa instalacja Cassandry obejmuje około 15000 węzłów, na których przechowywane jest łącznie ponad 4 petabajty danych. \cite{official_cassandra}
 
-W~przeciwieństwie do relacyjnych baz danych, Apache Cassandra nie zapewnia wsparcia dla reguły ACID\footnote{ACID (ang. Atomic, Consistency, Isolation, Durability) - zasada atomowości, spójności, izolacji i~trwałości, które gwarantują poprawne przetwarzanie transakcji w~bazach danych.}. Zamiast tego zostały zrealizowane postulaty twierdzenia CAP: ,,we współdzielonym systemie plików można zachować maksymalnie dwie z~trzech właściwości: spójności, dostępności oraz podatności na partycjonowanie''. \cite{cap_theorem} Apache Cassandra priorytetyzuje właściwości dostępności oraz partycjonowania. Spójność danych jest odwrotnie proporcjonalna i~może być regulowana w~zależności od czasu odpowiedzi. Wysoka spójność danych oznacza wolniejszą odpowiedź bazy.
+W~przeciwieństwie do relacyjnych baz danych, Apache Cassandra nie zapewnia wsparcia dla reguły ACID\footnote{ACID (ang. Atomic, Consistency, Isolation, Durability) - zasada atomowości, spójności, izolacji i~trwałości. Wymienione cechy gwarantują poprawne przetwarzanie transakcji w~bazach danych.}. Zamiast tego zostały zrealizowane postulaty twierdzenia CAP: ,,we współdzielonym systemie plików można zachować maksymalnie dwie z~trzech właściwości: spójności, dostępności oraz podatności na partycjonowanie''. \cite{cap_theorem} Apache Cassandra priorytetyzuje właściwości dostępności oraz partycjonowania. Spójność danych jest odwrotnie proporcjonalna i~może być regulowana w~zależności od czasu odpowiedzi. Wysoka spójność danych oznacza wolniejszą odpowiedź bazy.
 
 \section{Model danych}
 \label{sec:cassandra_data_model}
@@ -42,7 +42,7 @@ gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator 
 \section{Dystrybucja danych}
 \label{sec:cassandra_data_distribution}
 
-Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kolejność elementów. Węzły są przedstawiane na w~topologii pierścienia. Algorytm dystrybucji zostanie omówiony na przykładzie ze schematu~\ref{fig:data_distribution}: 
+Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kolejność elementów. Węzły są rozmieszczone w~topologii pierścienia. Algorytm dystrybucji zostanie omówiony na przykładzie ze schematu~\ref{fig:data_distribution}: 
 
 \begin{figure}[ht!]
 	\centering
@@ -82,47 +82,49 @@ Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kole
 \section{Konsekwencje dla modelowania dziedziny}
 \label{sec:relative_vs_cassandra_model}
 
-Wewnętrzna struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandra zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
+Struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandrze zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
 
 Załóżmy, że celem jest modelowanie danych dla sklepu internetowego. Zakupów dokonują użytkownicy, którzy mogą wstawić wiele przedmiotów z~oferty sklepu na listę życzeń. W~przypadku baz opartych o~język SQL jest to klasyczny problem relacji typu wiele-do-wielu, do modelowania których wykorzystywana jest najczęściej tabela pośrednia. 
 
 \begin{figure}[ht!]
 	\centering
-	\begin{tikzpicture}
-		\umlclass[x=-5.7, y=0]{User}
-		{
-			\umlstatic{userId : int} $<$PK$>$ \\
-		}
-		{
-			name : varchar(255) \\
-			surname : varchar(255) \\
-		}
+	\scalebox{0.85}{
+		\begin{tikzpicture}
+			\umlclass[x=-5.7, y=0]{User}
+			{
+				\umlstatic{userId : int} $<$PK$>$ \\
+			}
+			{
+				name : varchar(255) \\
+				surname : varchar(255) \\
+			}
 
-		\umlclass[x=0, y=0]{Wishlist}
-		{
-			\umlstatic{wishlistId : int} $<$PK$>$ \\
-		}
-		{
-			userId : int $<$FK$>$ \\
-			itemId: int $<$FK$>$ \\
-		}
+			\umlclass[x=0, y=0]{Wishlist}
+			{
+				\umlstatic{wishlistId : int} $<$PK$>$ \\
+			}
+			{
+				userId : int $<$FK$>$ \\
+				itemId: int $<$FK$>$ \\
+			}
 
-		\umlclass[x=5.5, y=0]{Item}
-		{
-			\umlstatic{itemId : int} $<$PK$>$
-		}
-		{
-			name : varchar(255) \\
-			price : number(10, 2) \\
-			desc : varchar(1024) \\
-			category : varchar(255) \\
-			weight : number(10, 2) \\
-		}
-		\umluniassoc[mult1=1, mult2=*]{User}{Wishlist}
-		\umluniassoc[mult1=1, mult2=*]{Item}{Wishlist}
-		\node at (-2.8, 0.25) {\footnotesize wants};
-		\node at (2.7, -0.25) {\footnotesize is on};
-	\end{tikzpicture}
+			\umlclass[x=5.5, y=0]{Item}
+			{
+				\umlstatic{itemId : int} $<$PK$>$
+			}
+			{
+				name : varchar(255) \\
+				price : number(10, 2) \\
+				desc : varchar(1024) \\
+				category : varchar(255) \\
+				weight : number(10, 2) \\
+			}
+			\umluniassoc[mult1=1, mult2=*]{User}{Wishlist}
+			\umluniassoc[mult1=1, mult2=*]{Item}{Wishlist}
+			\node at (-2.8, 0.25) {\footnotesize wants};
+			\node at (2.7, -0.25) {\footnotesize is on};
+		\end{tikzpicture}
+	}
 
 	\caption{Modelowanie listy życzeń w~relacyjnej bazie danych.}
 	\label{fig:er_wishlist}
@@ -132,7 +134,7 @@ Diagram prezentujący zamodelowaną relację dla listy życzeń jest przedstawio
 
 Powyższy model jest wykorzystywany w~widoku listy życzeń na profilu użytkownika. Na liście życzeń prezentowane są informacje o~nazwie przedmiotu oraz jego cenie. Po kliknięciu nazwy użytkownik przenoszony jest do strony przedmiotu. Na listingu~\ref{lst:sql_wishlist} zaprezentowano zapytanie, które wyświetla listę życzeń.
 
-\begin{verbbox}
+\begin{verbbox}[\footnotesize]
 	SELECT item.name, item.price
 	FROM Item item, Wishlist wishlist
 	WHERE wishlist.userId = 202;
@@ -186,11 +188,11 @@ Cassandra umożliwia utworzenie dokładnej repliki relacyjnego modelu danych. Zo
 			\hhline{|-||-----|}
 			& \textbf{name} & \textbf{price} & \textbf{desc} & \textbf{category} & \textbf{weight} \\
 			\hhline{|~||=====|}
-			\textbf{232} & Master Chef & 20.34 & Cooking recipes & BOOKS & 0.2 \\
+			\textbf{232} & Master Chef & 20.34 & Recipes & BOOKS & 0.2 \\
 			\hhline{=::=====}
 			& \textbf{name} & \textbf{price} & \textbf{desc} & \textbf{category} & \textbf{weight} \\
 			\hhline{|~||=====|}
-			\textbf{579} & Seat Hit & 159.99 & Wooden armchair & FURNITURE & 10.8  \\
+			\textbf{579} & Seat Hit & 159.99 & Armchair & FURNITURE & 10.8  \\
 			\hhline{|-||-----|}
 		\end{tabular} \\
 	\end{tabular}
@@ -290,7 +292,7 @@ Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu
 \section{Modelowanie - wzorce i~antywzorce}
 \label{sec:patterns_and_antipatterns}
 
-Pomimo, że CQL znacząco upraszcza modelowanie w~Cassandrze stworzenie efektywnego schematu danych nie jest zadaniem prostym. Aby ułatwić ten proces twórcy i~użytkownicy Cassandry zaczęli opisywać wzorce i~antywzorce modelowania oraz dostępu do danych. Pełnią one analogiczną role do wzorców i~antywzorców projektowych znanych z~programowania. Na ich opis składa się możliwie ogólna definicja problemu, a~także poprawny (lub niepoprawny) sposób jego rozwiązania. 
+Pomimo, że CQL znacząco upraszcza modelowanie w~Cassandrze stworzenie efektywnego schematu danych nie jest zadaniem prostym. Aby ułatwić ten proces twórcy i~użytkownicy Cassandry zaczęli opisywać wzorce i~antywzorce modelowania oraz dostępu do danych. Pełnią one analogiczną role do wzorców i~antywzorców projektowych znanych z~inżynierii oprogramowania. Na ich opis składa się możliwie ogólna definicja problemu, a~także poprawny (lub niepoprawny) sposób jego rozwiązania. 
 
 Przykładem antywzorca modelowania jest kolejka oparta na kolumnach.~\cite{cassandra_queue_antipattern} Kolejka to struktura danych, w~której ilości wykonywanych operacji wstawiania, usuwania i~odczytu są do siebie zbliżone. W~przypadku Cassandry usuwanie kolumn z~wiersza nie jest wykonywane natychmiast po odebraniu żądania. Zamiast tego usunięta kolumna jest oznaczana specjalnym znacznikiem \emph{tombstone} i~fizycznie usuwana dopiero po upłynięciu pewnego czasu. Takie działanie przyspiesza znacząco operację usuwania kosztem operacji odczytu. Kiedy w~wierszu występuje wiele znaczników \emph{tombstone} operacje filtrowania zakresu kolumn wykonywane są znacznie wolniej.
 

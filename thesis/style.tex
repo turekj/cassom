@@ -19,6 +19,7 @@
 \usepackage{textcomp}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{listings}
 \usepackage{pgfplots}
 \usepackage{tikz, calc}
 \usetikzlibrary{arrows,shadows}
@@ -28,6 +29,7 @@
 \usepackage{tikz-uml}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
+\usepackage{etex}
 
 \linespread{1.3}								% 1.3 do interlinii 1.5
 
@@ -101,3 +103,37 @@
 }
 
 %===============================================================================
+
+% kolor listingu
+\definecolor{ListingBackground}{rgb}{0.97,0.97,0.97}
+
+% ustawienia otoczenia
+\lstset
+{
+language=Python,                % choose the language of the code
+basicstyle=\footnotesize,       % the size of the fonts
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts for the line-numbers
+stepnumber=1,                   % the step between two line-numbers.
+numbersep=8pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color.
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings
+frame=none,                     % adds a frame around the code
+tabsize=3,                      % sets default tabsize to 2 spaces
+captionpos=b,                   % sets the caption-position to bottom
+breaklines=true,                % sets automatic line breaking
+breakatwhitespace=false,        % sets if automatic breaks only at whitespace
+escapeinside={(*@}{@*)},        % if you want to add a comment within your code
+xleftmargin=1cm,
+xrightmargin=0.5cm,
+keywordstyle={\bf\footnotesize\color{blue}},
+backgroundcolor={\color{ListingBackground}},
+framexleftmargin=3pt,
+framexbottommargin=3pt,
+framextopmargin=3pt,
+framexrightmargin=3pt,
+frame=tb,
+framerule=0.1pt
+}
