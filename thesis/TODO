@@ -1,0 +1,7 @@
+TODO:
+=====
+
+1) Porównanie wydajności bare-CQL vs OMC
+2) Odnaleźć przykład implementacji modelu danych dla C* i zestawić go w OMC
+3) Opisać implementację systemu
+4) Opisać integrację z Django
