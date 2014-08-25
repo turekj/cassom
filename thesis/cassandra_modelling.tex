@@ -79,7 +79,119 @@ Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kole
 	\item Dane replikowane są na $n$ węzłach, gdzie $n$ to wartość konfigurowalnego współczynnika replikacji. Poza węzłem macierzystym (wyznaczanym w~punkcie \ref{en:master_node} algorytmu) dane są replikowane na $n - 1$ kolejnych (zgodnie z~ruchem wskazówek zegara) węzłach. W~omawianym przykładzie dane zostaną zreplikowane na węzłach~$C$~i~$D$.
 \end{enumerate}
 
-\section{Konsekwencje dla modelowania dziedziny}
+\section{Algorytmy zapisu/usuwania danych}
+\label{sec:data_storage_delete_algorithm}
+
+Algorytm zapisu danych w~Apache Cassandra został schematycznie przedstawiony na diagramie~\ref{fig:cassandra_data_store_diagram}.~\cite{cassandra_write_internals} Składa się on z~następujących kroków:
+
+\begin{figure}[ht!]
+	\centering	
+	\begin{tikzpicture}
+		\node(stored-data)[draw, circle, text width=2cm, align=center] at (-2.0, 0.0) {Zapisywane dane};
+		\node(memtable) [draw, rectangle, minimum width=2cm, minimum height=2cm] at (8.0, 0.0) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.25, 0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.25, 0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.25, -0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.25, -0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.75, 0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.75, 0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.75, -0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (7.75, -0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.25, 0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.25, 0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.25, -0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.25, -0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.75, 0.75) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.75, 0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.75, -0.25) {};
+		\node[draw, rectangle, minimum width=0.5cm, minimum height=0.5cm] at (8.75, -0.75) {};
+		\node[below of=memtable, yshift=-0.5cm] {$memtable$};
+		\draw [-triangle 45] (stored-data) -- (memtable);
+		\node(commitlog)[cylinder, draw, shape aspect=0.3, shape border rotate=90, minimum height=1cm] at (1.0, -5.0) {$commit$ $log$};
+		\draw [-triangle 90] (1.0, 0.0) -- (commitlog);
+		\node(sstable)[draw, rectangle, rounded corners, minimum height=2cm, minimum width=5cm] at (7.0, -4.5) {};
+		\draw [-] (6.5, -5.5) -- (6.5, -3.5);
+		\node[text width=2.5cm, align=center] at (8, -4.5) {$SSTable$};
+		\node[text width=1cm, align=center] at (5.15, -4) {$INDEX$};
+		\draw [-, dashed] (memtable) -- (10.0, 0.0);
+		\draw [-, dashed] (10.0, 0.0) -- (10.0, -4.5);
+		\draw [-triangle 45, dashed] (10.0, -4.5) -- (sstable);
+		\draw[-, dashed, thick] (-3.25, -2.4) -- (10.25, -2.4);
+		\node[align=center] at (-1.65, -2) {\footnotesize Pamięć operacyjna};
+		\node[align=center] at (-2, -2.75) {\footnotesize Pamięć trwała};
+	\end{tikzpicture}
+
+	\caption{Schematyczna ilustracja algorytmu zapisu danych dla Cassandry.}
+	\label{fig:cassandra_data_store_diagram}
+\end{figure}
+
+\begin{enumerate}
+	\item Do węzła przesyłane są dane, które mają zostać na nim zapisane. 
+	\item Dane kopiowane są do dwóch struktur:
+		\begin{itemize}
+			\item \emph{memtable} - przechowuje wiersze w~pamięci operacyjnej,
+			\item \emph{commit log} - przechowuje informacje o~kolejnych zapisach wykonywanych do bazy danych.
+		\end{itemize}
+	\item Podstawową strukturą do pobierania danych jest \emph{memtable}. Jest ona umieszczona w~szybkiej pamięci, zapewnia więc krótki czas dostępu do danych. Wykorzystanie trwałej struktury \emph{commit log} pozwala na odtworzenie zawartości \emph{memtable} w~przypadku awarii wymagającej nagłego restartu maszyny, na przykład braku zasilania. Przy ponownym uruchomieniu węzła Cassandry odtwarza on kolejno wszystkie zapisy, które znajdują się w~\emph{commit logu}.
+	\item W~przypadku przepełnienia \emph{memtable} wykonywane jest ,,spłukiwanie'' zawartości pamięci na dysk do struktury nazywanej \emph{SSTable}. Poza danymi zawiera ona indeks, który pozwala na szybki dostęp do danych wierszy. Jej charakterystyczną cechą jest niezmienność. Po przepisaniu danych z~\emph{memtable} do \emph{SSTable} druga z~nich nie jest już modyfikowana. Z~tego względu wiersze o~tym samym kluczu są często podzielone pomiędzy wiele takich struktur. ,,Spłukiwanie'' może zostać uruchomione manualnie z~wykorzystaniem polecenia \verb+nodetool flush+.
+	\item Ostatnim etapem zapisu danych jest kompresja. Aktualizacja danych nie może nadpisywać istniejących wierszy, bo struktura \emph{SSTable} jest niezmienna. Zamiast tego wstawia ona rekordy z~późniejszym ,,odciskiem czasu''. Powoduje to nadmiarowe zużycie przestrzeni dyskowej. Kompresja pozwala usunąć nieaktualne wierwsze poprzez przepisanie istniejących \emph{SSTable} na nowe, uporządkowane struktury. Kompresja może być wywoływana automatycznie w~zależności od wybranej strategii lub manualnie, z~wykorzystaniem polecenia \verb+nodetool compact+.
+\end{enumerate}
+
+Niemodyfikowalność struktur \emph{SSTable} ma swoje konsekwencje także w~przypadku usuwania danych. Wiersz nie może zostać fizycznie skasowany. Zamiast tego oznacza się go specjalnym znacznikiem \emph{tombstone}. Wiersze oznaczone tą flagą są usuwane na etapie kompresji danych.
+
+\section{Obszary zastosowania Cassandry}
+\label{sec:cassandra_usage_areas}
+
+Specyficzny schemat danych Apache Cassandry i~brak wielu mechanizmów znanych z~relacyjnych systemów bazodanowych powodują, że nie jest ona najlepszym wyborem do przechowywania uniwersalnych danych:
+
+\begin{itemize}
+	\item Brak wsparcia dla transakcji znacząco utrudnia wykorzystanie Cassandry w~dziedzinach, dla których spójność danych jest kwestią kluczową. Przykładem może być obszar finansowy. W~systemach relacyjnych spójność jest zapewniona poprzez mechanizmy bazy danych. W~przypadku Apache Cassandry odpowiedzialność zostaje przeniesiona na aplikacje dostępowe, co znacząco zwiększa ilość pracy koncepcyjnej i~zwiększa ryzyko błędów.
+	\item Brak możliwości złączania powoduje, że model danych musi być projektowany w~oparciu o~wykonywane do niego odwołania. Utrudnia to rozbudowę aplikacji. Przykładowo dla relacji jeden do wielu modelowanej poprzez tabelę, w~której identyfikatorem wiersza jest identyfikator obiektu nadrzędnego, a~w~kolumnach wpisywane są identyfikatory obiektów podrzędnych, nie jest możliwe zwrócenie wszystkich obiektów nadrzędnych wskazujących na danych obiekt podrzędny bez modyfikacji schematu.
+	\item Brak złączeń implikuje denormalizację modelu danych. Wprowadza to problemy z~zachowaniem spójności. Aby zaktualizować adres, który jest przechowywany w~formie zdenormalizowanej w~tabeli użytkownika oraz zamówienia należy znaleźć wszystkie rekordy, które wskazują na ten adres. Odpowiedzialność za spójność danych ponownie zostaje przeniesiona na aplikację, która wykorzystuje bazę.
+\end{itemize}
+
+W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono porównanie różnych aspektów Apache Cassandry i~relacyjnych systemów bazodanowych. 
+
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tabular}{|p{3cm}|p{4.5cm}|p{4.5cm}|}
+		\hline
+		& {\small \textbf{Apache Cassandra}} & {\small \textbf{RDBMS}} \\
+		\hline
+		{\small \textbf{Skalowalność horyzontalna}} &
+		Liniowa skalowalność horyzontalna. &
+		Brak skalowalności horyzontalnej lub wykorzystanie specjalnych narzędzi i/lub technik, na przykład \emph{shardingu}\footnotemark{}. \\
+		\hline
+		{\small \textbf{Mechanizmy zachowywania spójności}} &
+		Brak mechanizmów zachowywania spójności danych. &
+		Mechanizmy i~model zapewniające wysoką spójność danych. Wsparcie dla transakcyjności; znormalizowany model. \\
+		\hline
+		{\small \textbf{Odporność na awarie}} &
+		Wysoka odporność na awarie zapewniona między innymi przez replikację danych pomiędzy węzłami. &
+		Niska odporność na defekty. Pojedynczy punkt awarii. \\
+		\hline
+		{\small \textbf{Optymalizacja operacji}} &
+		Optymalizacja pod kątem szybkości zapisu. &
+		Optymalizacja pod kątem szybkości wykonywania zapytań. \\
+		\hline
+		{\small \textbf{Koncepcja}} &
+		Projekt z~myślą o~opisywaniu szeregu chronologicznego danych.~\cite{why_should_i_use_cassandra} &
+		Projekt do opisu uniwersalnych, ustrukturyzowanych danych. \\
+		\hline
+		{\small \textbf{Przystosowanie modelu danych}} &
+		Model odpowiedni dla dynamicznych struktur danych zmieniających się w~trakcie działania systemu.~\cite{consider_cassandra} &
+		Model odpowiedni dla niezmiennych struktur danych. \\
+		\hline
+	\end{tabular}
+
+	\caption{Porównanie Apache Cassandry z~relacyjnymi bazami danych.}
+	\label{tab:cassanda_relationship_database_comparison}
+\end{figure}
+
+\footnotetext{Sharding (od \emph{shard} - ang. kawałek) - technika polegająca na podziale zbioru danych na niezależne partycje w~zależności od ich cech, na przykład grupując użytkowników po lokalizacji geograficznej.}
+
+\section{Struktura danych a~modelowanie}
 \label{sec:relative_vs_cassandra_model}
 
 Struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandrze zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}

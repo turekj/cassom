@@ -1,7 +1,7 @@
 TODO:
 =====
 
-1) Porównanie wydajności bare-CQL vs OMC
-2) Odnaleźć przykład implementacji modelu danych dla C* i zestawić go w OMC
-3) Opisać implementację systemu
-4) Opisać integrację z Django
+1) Opisać dlaczego i kiedy stosuję się bazę danych Apache Cassandra (we wstępie do Cassandry)
+2) W sekcji o Apache Cassandra przedstawić przykłady poprawnego modelu danych (use-case)
+3) Zrobić rozdział z case-study na podstawie 2.
+4) Dodać diagram klas, komponentów do rozdziału o OMC
