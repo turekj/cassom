@@ -204,15 +204,25 @@ W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono poró
 		\end{itemize}
 \end{itemize}
 
-Według twórców Cassandry~\cite{why_migrate_from_mysql} typowymi obszarami jej zastosowań są:
-	\begin{itemize}
-		\item Aplikacje wykonujące OLTP\footnote{On-Line Transaction Processing - przetwarzanie transakcji sieciowych.}, a~więc transakcje charakteryzujące się wysoką współbieżnością, krótkim czasem odpowiedzi, małymi zapytaniami oraz pracą na dużych zbiorach danych.~\cite{oltp_definition}
-		\item Zarządzanie danymi uszeregowanymi w~czasie.
-		\item Pobieranie i~analiza danych z~urządzeń o~wysokiej częstotliwości odświeżania informacji.
-		\item Aplikacje typu SaaS\footnote{Software as a Service (ang. oprogramowanie jako usługa sieciowa) - aplikacje, które mogą być wykorzystywane przez sieć bez pobierania i~instalacji na stacji roboczej.~\cite{saas_definition} Przykładem takiej aplikacji jest Google Docs (\url{https://docs.google.com/}), który umożliwia edycję dokumentów, arkuszy kalkulacyjnych oraz prezentacji z~wykorzystaniem przeglądarki internetowej.} oparte o~intensywne wykorzystanie usług sieciowych.
-		\item Zarządzanie mediami strumieniowymi (muzyka, filmy) oraz nieustrukturyzowanymi danymi (dobrym przykładem są portale społecznościowe).
-		\item Systemy ,,zapisochłonne''.
-	\end{itemize}
+\noindent Według twórców Cassandry~\cite{why_migrate_from_mysql} typowymi obszarami jej zastosowań są:
+
+\begin{itemize}
+	\item Aplikacje wykonujące OLTP\footnote{On-Line Transaction Processing - przetwarzanie transakcji sieciowych.}, a~więc transakcje charakteryzujące się wysoką współbieżnością, krótkim czasem odpowiedzi, małymi zapytaniami oraz pracą na dużych zbiorach danych.~\cite{oltp_definition}
+	\item Zarządzanie danymi uszeregowanymi w~czasie.
+	\item Pobieranie i~analiza danych z~urządzeń o~wysokiej częstotliwości odświeżania informacji.
+	\item Aplikacje typu SaaS\footnote{Software as a Service (ang. oprogramowanie jako usługa sieciowa) - aplikacje, które mogą być wykorzystywane przez sieć bez pobierania i~instalacji na stacji roboczej.~\cite{saas_definition} Przykładem takiej aplikacji jest Google Docs (\url{https://docs.google.com/}), który umożliwia edycję dokumentów, arkuszy kalkulacyjnych oraz prezentacji z~wykorzystaniem przeglądarki internetowej.} oparte o~intensywne wykorzystanie usług sieciowych.
+	\item Zarządzanie mediami strumieniowymi (muzyka, filmy) oraz nieustrukturyzowanymi danymi (dobrym przykładem są portale społecznościowe).
+	\item \textbf{Systemy ,,zapisochłonne''}.
+\end{itemize}
+
+Z~przedstawionych scenariuszy Autor zdecydował się wyróżnić ostatni. Istotnym zagadnieniem w~przypadku wielkich danych jest operacja zapisu, która musi być wykonywana w~czasie rzeczywistym. Aby omówić problem należy przedstawić typową architekturę wykorzystywaną dla relacyjnych bazach danych do przechowywania wielkich danych.~\cite{sharding_in_mysql} Przedstawia ją diagram~\ref{fig:sharding}.
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=.8\textwidth]{figures/sharding.eps}
+	\caption{Schematyczna ilustracja partycjonowania relacyjnej bazy danych (nazywanego angielskim terminem \emph{sharding}).}
+	\label{fig:sharding}
+\end{figure}
 
 \section{Struktura danych a~modelowanie}
 \label{sec:relative_vs_cassandra_model}
