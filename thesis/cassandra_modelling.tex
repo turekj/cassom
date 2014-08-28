@@ -220,9 +220,24 @@ Z~przedstawionych scenariuszy Autor zdecydował się wyróżnić ostatni. Istotn
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=.8\textwidth]{figures/sharding.eps}
-	\caption{Schematyczna ilustracja partycjonowania relacyjnej bazy danych (nazywanego angielskim terminem \emph{sharding}).}
+	\caption{Schematyczna ilustracja partycjonowania relacyjnej bazy danych (określanego angielskim terminem \emph{sharding}).}
 	\label{fig:sharding}
 \end{figure}
+
+Na diagramie przedstawiono aplikację, który odwołuje się do relacyjnej bazy danych. Została ona podzielona na dwie partycje względem identyfikatora wiersza (mniejszy lub większy od 100000). Każda partycja zawiera jeden węzeł, który wykonuje operacje zapisu (\verb+DB Zapis+). Do niego odwołuje się aplikacja z~żądaniem zapisu danych. W~każdej partycji znajdują się również trzy węzły, które pozwalają na odczyt danych (\verb+DB Odczyt+). Aplikacja zwraca się o~odczyt danych kolejno do różnych węzłów. Pozwala to zbalansować obciążenie. Należy zauważyć, że w~przedstawionej architekturze aplikacja musi wiedzieć, do której partycji należy się odwołać dla wyszukiwanych danych.
+
+Proces skalowania systemu o~przedstawionej architekturze jest dwustopniowy:
+
+\begin{enumerate}
+	\item Skalowanie operacji odczytu. Może zostać przeprowadzone dla każdej partycji osobno. Polega na dodaniu nowego węzła, który służy do odczytu danych. Jest to stosunkowo proste, należy jednak uwzględnić dodany punkt dostępu w~puli serwerów, do których odwołuje się aplikacja.
+	\item Skalowanie operacji zapisu. W~tym przypadku nie wystarczy dodanie drugiego węzła odpowiedzialnego za zapis, gdyż dane i~tak muszą zostać zreplikowane pomiędzy węzłami. Z~tego względu obciążenie obu serwerów pozostałoby bez zmian. Skalowanie operacji zapisu to skomplikowany proces wymagający stworzenia nowej partycji i~modyfikacji reguł przydzielania rekordów do poszczególnych fragmentów. 
+\end{enumerate}
+
+Podobna architektura wykorzystywana jest w~komercyjnych rozwiązaniach, takich jak \verb+MySQL Cluster CGE+\footnote{Strona domowa projektu - \url{http://www.mysql.com/products/cluster/}.}. Występują tam dodatkowe warstwy pośredniczące, które ukrywają szczegóły wykonywania zapytań przed aplikacją. Sama zasad działania pozostaje jednak analogiczna.
+
+Problemem w~tej architekturze pozostaje skalowanie operacji zapisu. Może ono zostać wykonane poprawnie tylko pod warunkiem, że istnieje funkcja partycjonująca dla danego natężenia operacji zapisu, która dzieli całość danych na dostatecznie wydajne (a~więc małe) fragmenty. Okazuje się, że w~praktyce nie zawsze jest to możliwe. Właśnie ten problem przyczynił się do powstania projektu Apache Cassandra w~Facebooku. 
+
+Wszystkie przypadki użycia wymienione przez twórców Cassandry pokrywają scenariusze, w~których ich system bazodanowy sprawdza się lepiej niż podejście relacyjne w~subiektywnym odczuciu. Omówiony szerzej przypadek z~zapisem jest jednak jedynym, który z~przyczyn technologicznych może być nierealizowalny w~świecie SQL-owych baz danych.
 
 \section{Struktura danych a~modelowanie}
 \label{sec:relative_vs_cassandra_model}
