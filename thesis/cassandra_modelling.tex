@@ -150,46 +150,69 @@ Specyficzny schemat danych Apache Cassandry i~brak wielu mechanizmów znanych z~
 	\item Brak złączeń implikuje denormalizację modelu danych. Wprowadza to problemy z~zachowaniem spójności. Aby zaktualizować adres, który jest przechowywany w~formie zdenormalizowanej w~tabeli użytkownika oraz zamówienia należy znaleźć wszystkie rekordy, które wskazują na ten adres. Odpowiedzialność za spójność danych ponownie zostaje przeniesiona na aplikację, która wykorzystuje bazę.
 \end{itemize}
 
-W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono porównanie różnych aspektów Apache Cassandry i~relacyjnych systemów bazodanowych. 
+W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono porównanie różnych aspektów Apache Cassandry i~relacyjnych systemów bazodanowych. Analizując informacje zebrane w~tabeli i~przedstawione wcześniej w~rozdziale można wyciągnąć następujące wnioski:
 
 \begin{figure}[ht!]
-	\centering
+	\begin{minipage}{\textwidth}
+		\setcounter{mpfootnote}{6}
+		\centering
 
-	\begin{tabular}{|p{3cm}|p{4.5cm}|p{4.5cm}|}
-		\hline
-		& {\small \textbf{Apache Cassandra}} & {\small \textbf{RDBMS}} \\
-		\hline
-		{\small \textbf{Skalowalność horyzontalna}} &
-		Liniowa skalowalność horyzontalna. &
-		Brak skalowalności horyzontalnej lub wykorzystanie specjalnych narzędzi i/lub technik, na przykład \emph{shardingu}\footnotemark{}. \\
-		\hline
-		{\small \textbf{Mechanizmy zachowywania spójności}} &
-		Brak mechanizmów zachowywania spójności danych. &
-		Mechanizmy i~model zapewniające wysoką spójność danych. Wsparcie dla transakcyjności; znormalizowany model. \\
-		\hline
-		{\small \textbf{Odporność na awarie}} &
-		Wysoka odporność na awarie zapewniona między innymi przez replikację danych pomiędzy węzłami. &
-		Niska odporność na defekty. Pojedynczy punkt awarii. \\
-		\hline
-		{\small \textbf{Optymalizacja operacji}} &
-		Optymalizacja pod kątem szybkości zapisu. &
-		Optymalizacja pod kątem szybkości wykonywania zapytań. \\
-		\hline
-		{\small \textbf{Koncepcja}} &
-		Projekt z~myślą o~opisywaniu szeregu chronologicznego danych.~\cite{why_should_i_use_cassandra} &
-		Projekt do opisu uniwersalnych, ustrukturyzowanych danych. \\
-		\hline
-		{\small \textbf{Przystosowanie modelu danych}} &
-		Model odpowiedni dla dynamicznych struktur danych zmieniających się w~trakcie działania systemu.~\cite{consider_cassandra} &
-		Model odpowiedni dla niezmiennych struktur danych. \\
-		\hline
-	\end{tabular}
+		\begin{tabular}{|p{3cm}|p{4.5cm}|p{4.5cm}|}
+			\hline
+			& {\small \textbf{Apache Cassandra}} & {\small \textbf{RDBMS}} \\
+			\hline
+			{\small \textbf{Skalowalność horyzontalna}} &
+			Liniowa skalowalność horyzontalna. &
+			Pod warunkiem wykorzystania specjalnych narzędzi i/lub technik, na przykład \emph{shardingu}\footnotemark{}. \\
+			\hline
+			{\small \textbf{Mechanizmy zachowywania spójności}} &
+			Brak mechanizmów zachowywania spójności danych. &
+			Mechanizmy i~model zapewniające wysoką spójność danych. Wsparcie dla transakcyjności; znormalizowany model. \\
+			\hline
+			{\small \textbf{Odporność na awarie}} &
+			Wysoka odporność na awarie zapewniona między innymi przez replikację danych pomiędzy węzłami. &
+			Niska odporność na defekty. Pojedynczy punkt awarii. \\
+			\hline
+			{\small \textbf{Optymalizacja operacji}} &
+			Optymalizacja pod kątem szybkości zapisu. &
+			Optymalizacja pod kątem szybkości wykonywania zapytań. \\
+			\hline
+			{\small \textbf{Koncepcja}} &
+			Projekt z~myślą o~opisywaniu szeregu chronologicznego danych.~\cite{why_should_i_use_cassandra} &
+			Projekt do opisu uniwersalnych, ustrukturyzowanych danych. \\
+			\hline
+			{\small \textbf{Przystosowanie modelu danych}} &
+			Model odpowiedni dla dynamicznych struktur danych zmieniających się w~trakcie działania systemu.~\cite{consider_cassandra} &
+			Model odpowiedni dla niezmiennych struktur danych. \\
+			\hline
+		\end{tabular}
 
-	\caption{Porównanie Apache Cassandry z~relacyjnymi bazami danych.}
-	\label{tab:cassanda_relationship_database_comparison}
+		\footnotetext{Sharding (od \emph{shard} - ang. kawałek) - technika polegająca na podziale zbioru danych na niezależne partycje w~zależności od ich cech, na przykład grupując użytkowników po lokalizacji geograficznej.}
+
+		\caption{Porównanie Apache Cassandry z~relacyjnymi bazami danych.}
+		\label{tab:cassanda_relationship_database_comparison}
+	\end{minipage}
 \end{figure}
 
-\footnotetext{Sharding (od \emph{shard} - ang. kawałek) - technika polegająca na podziale zbioru danych na niezależne partycje w~zależności od ich cech, na przykład grupując użytkowników po lokalizacji geograficznej.}
+\begin{itemize}
+	\item Modelowanie dziedziny danych jest znacznie prostsze w~przypadku systemów relacyjnych. Na etapie projektowania nie trzeba brać pod uwagę wykonywanych odwołań, potencjalnych problemów niespójności, a~także możliwych kierunków rozbudowy aplikacji.
+	\item Apache Cassandra najlepiej sprawdza się w~zastosowaniu do \emph{big data}. Do poszczególnych fragmentów definicji wielkich zbiorów danych, która została przytoczona w~sekcji~\ref{sec:motivation}, można przyporządkować cechy charakteryzujące Cassandrę:
+		\begin{itemize}
+			\item ,,dużych rozmiarów'' - liniowa skalowalność horyzontalna pozwala na obsługę informacji o~dowolnej wielkości, pod warunkiem zapewnienia odpowiedniej liczby węzłów,
+			\item ,,różnorodnych'' - model danych nie jest sztywny, może być dostosowany do zmieniających się danych w~trakcie działania aplikacji,
+			\item ,,często zmieniających się'' - wbudowana obsługa szeregu chronologicznego oraz optymalizacja czasu zapisu zostały zaprojektowane pod kątem dynamicznie zmieniających się danych. 
+		\end{itemize}
+\end{itemize}
+
+Według twórców Cassandry~\cite{why_migrate_from_mysql} typowymi obszarami jej zastosowań są:
+	\begin{itemize}
+		\item Aplikacje wykonujące OLTP\footnote{On-Line Transaction Processing - przetwarzanie transakcji sieciowych.}, a~więc transakcje charakteryzujące się wysoką współbieżnością, krótkim czasem odpowiedzi, małymi zapytaniami oraz pracą na dużych zbiorach danych.~\cite{oltp_definition}
+		\item Zarządzanie danymi uszeregowanymi w~czasie.
+		\item Pobieranie i~analiza danych z~urządzeń o~wysokiej częstotliwości odświeżania informacji.
+		\item Aplikacje typu SaaS\footnote{Software as a Service (ang. oprogramowanie jako usługa sieciowa) - aplikacje, które mogą być wykorzystywane przez sieć bez pobierania i~instalacji na stacji roboczej.~\cite{saas_definition} Przykładem takiej aplikacji jest Google Docs (\url{https://docs.google.com/}), który umożliwia edycję dokumentów, arkuszy kalkulacyjnych oraz prezentacji z~wykorzystaniem przeglądarki internetowej.} oparte o~intensywne wykorzystanie usług sieciowych.
+		\item Zarządzanie mediami strumieniowymi (muzyka, filmy) oraz nieustrukturyzowanymi danymi (dobrym przykładem są portale społecznościowe).
+		\item Systemy ,,zapisochłonne''.
+	\end{itemize}
 
 \section{Struktura danych a~modelowanie}
 \label{sec:relative_vs_cassandra_model}
