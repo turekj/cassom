@@ -449,6 +449,154 @@ Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu
 	\label{tab:cql_example_query_result}
 \end{figure}
 
+\section{Przykład modelowania dziedziny danych}
+\label{sec:cassandra_modelling_examples}
+
+W~Internecie znajdują się przykładowe modele danych stworzone przez użytkowników Apache Cassandry. Zapewniają one materiał do nauki dla nowych użytkowników bazy. Prezentują sprawdzone sposoby rozwiązania zadanego problemu koncentrując się na omówieniu decyzji projektowych, które należy podjąć aby zbudować efektywny schemat. Proces tworzenia wydajnych modeli danych zostanie przez Autora przedstawiony z~wykorzystaniem takiego przykładu. Do modelowania zostanie wykorzystany język CQL, gdyż począwszy od wersji CQL3 jest on oficjalnym standardem zalecanym przez autorów Cassandry. 
+
+\subsection{Twissandra}
+\label{sec:twissandra}
+
+Projekt Twissandra został stworzony przez Tylera Hobbsa i~opublikowany pod adresem \url{https://github.com/twissandra/twissandra}. Według informacji na stronie ,,Twissandra jest przykładowym projektem stworzonym do nauki i~zaprezentowania jak używać Cassandry. Po uruchomieniu projektu zaprezentowana zostanie strona internetowa, która posiada funkcjonalność podobną do serwisu Twitter''.~\cite{twissandra} 
+
+Serwis Twitter\footnote{Dostępny pod adresem \url{https://twitter.com}.} pozwala na publikację krótkich wiadomości tekstowych o~długości maksymalnie 160 znaków. Jego funkcjonalność jest wzorowana na SMS\footnote{Short Message Service (ang. usługa krótkich wiadomości) - usługa pozwalająca na przesyłanie pomiędzy telefonami komórkowymi krótkich (do 160 znaków) wiadomości.~\cite{sms_definition}}. Różnica polega na tym, że wiadomość nie jest kierowana do konkretnego adresata (adresatów), ale publicznie dostępna dla wszystkich odwiedzających profil danego użytkownika.
+
+Głównym widokiem w~Twitterze jest oś czasu. Znajdują się na niej wpisy ułożone w~odwrotnym porządku chronologicznym. Istnieją trzy typy osi czasu:
+
+\begin{description}
+	\item[Publiczna] przedstawia wpisy wszystkich użytkowników.
+	\item[Użytkownika] przedstawia wpisy danego użytkownika oraz wszystkich śledzonych przez niego osób.
+	\item[Profilowa] przedstawia wyłącznie wpisy danego użytkownika.
+\end{description}
+
+Pierwszym krokiem jest zdefiniowanie modelu użytkownika. Dla uproszczenia encja posiadać będzie wyłącznie dwa parametry - nazwę oraz hasło - oba zapisywane jako tekst. Istotną kwestią jest wybór klucza głównego. W~przypadku relacyjnych baz danych identyfikatory najczęściej tworzone są w~sposób sztuczny, a~odpowiednie wiersze wybierane są z~zastosowaniem zapytań. W~przypadku Cassandry wybór klucza głównego jest dużo bardziej istotny:
+
+\begin{itemize}
+	\item Cassandra nie posiada mechanizmu generacji unikatowego klucza głównego. Zamiast tego wykorzystywane są typy \verb+uuid+ lub \verb+timeuuid+,~\cite{uuid_timeuuid} które są obliczane przez aplikację kliencką. 
+	\item Ze względu na architekturę Cassandra nie potrafi efektywnie pobrać wszystkich wierszy należących do danej tabeli. Oznacza to, że bez używania indeksów (co wiąże się z~tworzeniem kolejnych tabel) \textbf{jedyną możliwością odwołania się do wiersza jest podanie jego identyfikatora}. Wybór losowo/sekwencyjnie generowanego klucza może sprawić, że pobieranie danego wiersza będzie bardzo utrudnione.
+\end{itemize}
+
+Dla modelu użytkownika dobrym identyfikatorem jest nazwa (zakładając jej unikatowość). Jest to dana, która będzie znana w~dowolnym kontekście odwołania. Na listingu~\ref{lst:creating_inserting_users} przedstawiono zapytanie, które pozwala utworzyć i~wstawić użytkownika do bazy danych. W~wyniku tego zapytania zostanie utworzona tabela o~strukturze przedstawionej na diagramie~\ref{tab:creating_inserting_users_structure}. 
+
+\begin{verbbox}
+CREATE TABLE users (
+    username text PRIMARY KEY,
+    password text)
+
+INSERT INTO users (username, password) VALUES (
+    'jturek',
+    'UnsafePassword')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Tworzenie i~wstawianie użytkownika w~Twissandrze.}
+	\label{lst:creating_inserting_users}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|l||c|}
+		\hhline{|-||-|}
+		& \textbf{password} \\
+		\hhline{|~||=|}
+		\textbf{jturek} & UnsafePassword \\
+		\hhline{|-||-|}
+	\end{tabular} 
+
+	\caption{Poglądowy wynik struktury uzyskanej po wykonaniu zapytań~\ref{lst:creating_inserting_users}.}
+	\label{tab:creating_inserting_users_structure}
+\end{figure}
+
+Kolejnym krokiem jest umożliwienie śledzenia użytkowników. W~relacyjnym modelu danych do przechowywania takiej informacji można użyć tabeli \verb+followers+, która posiada trzy kolumny: sztuczny klucz główny, identyfikator śledzonego użytkownika oraz identyfikator śledzącego. Ta sama architektura w~Cassandrze będzie błędna, gdyż nie da się zadać zapytania, które zwróci wszystkich użytkowników śledzących profil o~zadanej nazwie:
+
+\begin{itemize}
+	\item Nie ma możliwości efektywnego pobrania wszystkich wpisów z~tabeli \verb+followers+, a~więc nie da się ich filtrować po nazwie śledzonego użytkownika.
+	\item Istnieje możliwość stworzenia indeksu na kolumnie z~identyfikatorem śledzonego użytkownika. Dzięki temu możliwe będzie wybranie zadanych wpisów w~tabeli \verb+followers+.
+	\item Indeks tworzy niewidoczną tabelę, w~której kluczem głównym wiersza jest jedna z~unikalnych wartości komórki (w~podanym przypadku identyfikator śledzonego użytkownika), a~w~kolumnach przechowywane są identyfikatory wszystkich wierwszy, które posiadają taką wartość komórki.
+\end{itemize}
+
+Analizując opis metody tworzenia indeksów łatwo dojść do wniosku, że można przekształcić model tabeli \verb+followers+ w~taki sposób, aby ich używanie nie było potrzebne. Przyjmując identyfikator śledzonego użytkownika jako klucz wiersza, a~informację o~nazwach profili śledzących przechowując w~kolejnych kolumnach, możliwe jest pobranie kompletu informacji w~jednym zapytaniu. 
+
+CQL3 umożliwia wykorzystanie dwóch typów kluczy do dwuwymiarowego podziału wierszy~\cite{compound_keys_and_clustering}:
+
+\begin{description}
+	\item[Partition key] określa, na którym węźle znajduje się dany wiersz. W~niskopoziomowym schemacie danych jest implementowany na kluczu wiersza.
+	\item[Clustering key] określa kolumny, względem których porządkowane są wiersze dla danej partycji. W~niskopoziomowym schemacie danych jest implementowany na kolumnach.
+\end{description}
+
+Dzięki wykorzystaniu dwóch rodzajów kluczy można zdefiniować efektywny schemat dla tabeli \verb+followers+. Odpowiednie zapytanie zostało przedstawione na listingu~\ref{lst:following_users}. Poglądowy wygląd fizycznego schematu danych uzyskanego dla omawianego zapytania został zaprezentowany na diagramie~\ref{tab:following_users_structure}.
+
+\begin{verbbox}
+CREATE TABLE followers (
+    username text,
+    follower text,
+    since timestamp,
+    PRIMARY KEY (username, follower))
+
+INSERT INTO followers (username, follower, since) VALUES (
+    'jturek',
+    'jkowalski',
+    1412020800)
+
+INSERT INTO followers (username, follower, since) VALUES (
+    'jturek',
+    'mnowak',
+    1409601600)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Śledzenie użytkowników w~Twissandrze.}
+	\label{lst:following_users}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|l||c|c|}
+		\hhline{|-||--|}
+		& \textbf{follower:jkowalski} & \textbf{follower:mnowak} \\
+		\hhline{|~||==|}
+		\textbf{jturek} & 1412020800 & 1409601600 \\
+		\hhline{|-||--|}
+	\end{tabular} 
+
+	\caption{Poglądowy wynik struktury uzyskanej po wykonaniu zapytań~\ref{lst:following_users}.}
+	\label{tab:following_users_structure}
+\end{figure}
+
+W~zaprezentowanym przykładzie kolumna \verb+username+ pełni rolę klucza \verb+partition+, natomiast \verb+follower+ to klucz typu \verb+clustering+. Dla powyższego przypadku można wypisać wszystkie wiersze tabeli \verb+followers+ dla użytkownika o~kluczu \verb+jturek+. Odpowiednie zapytanie zostało zaprezentowane na listingu~\ref{lst:all_jturek_followers}. Wynik tego zapytania przedstawia tabela~\ref{tab:all_jturek_followers}.
+
+\begin{verbbox}
+	SELECT * FROM followers WHERE username = 'jturek';
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Zapytanie, które wybiera wszystkie elementy tabeli \emph{follower} dla użytkownika \emph{jturek}.}
+	\label{lst:all_jturek_followers}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hhline{|---|}
+		\textbf{username} & \textbf{follower} & \textbf{since} \\
+		\hhline{|===|}
+		jturek & jkowalski & 1412020800 \\
+		jturek & mnowak & 1409601600 \\
+		\hhline{|---|}
+	\end{tabular} 
+
+	\caption{Wybór wszystkich wpisów tabeli \emph{follower} dla użytkownika \emph{jturek}.}
+	\label{tab:all_jturek_followers}
+\end{figure}
+
+Usunięcie kolumny \verb+follower+ z~klucza utworzonej tabeli spowodowałby, że dany użytkownik mógłby być śledzony tylko przez jedną osobę. Z~kolei przesunięcie tej kolumny do klucza typu \verb+partition+ pozwoliłoby pobierać wiersze wyłącznie przy podaniu kombinacji wartości \verb+username+ oraz \verb+follower+, co nie jest intencją omawianego modelu.
+
 \section{Modelowanie - wzorce i~antywzorce}
 \label{sec:patterns_and_antipatterns}
 
