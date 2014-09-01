@@ -570,7 +570,7 @@ INSERT INTO followers (username, follower, since) VALUES (
 W~zaprezentowanym przykładzie kolumna \verb+username+ pełni rolę klucza \verb+partition+, natomiast \verb+follower+ to klucz typu \verb+clustering+. Dla powyższego przypadku można wypisać wszystkie wiersze tabeli \verb+followers+ dla użytkownika o~kluczu \verb+jturek+. Odpowiednie zapytanie zostało zaprezentowane na listingu~\ref{lst:all_jturek_followers}. Wynik tego zapytania przedstawia tabela~\ref{tab:all_jturek_followers}.
 
 \begin{verbbox}
-	SELECT * FROM followers WHERE username = 'jturek';
+	SELECT * FROM followers WHERE username = 'jturek'
 \end{verbbox}
 
 \begin{figure}[ht!]
@@ -596,6 +596,151 @@ W~zaprezentowanym przykładzie kolumna \verb+username+ pełni rolę klucza \verb
 \end{figure}
 
 Usunięcie kolumny \verb+follower+ z~klucza utworzonej tabeli spowodowałby, że dany użytkownik mógłby być śledzony tylko przez jedną osobę. Z~kolei przesunięcie tej kolumny do klucza typu \verb+partition+ pozwoliłoby pobierać wiersze wyłącznie przy podaniu kombinacji wartości \verb+username+ oraz \verb+follower+, co nie jest intencją omawianego modelu.
+
+Tabela \verb+followers+ umożliwia reprezentację relacji śledzenia tylko w~jedną stronę. Do realizacji widoku, na którym będą wyświetlone wszystkie wpisy osób śledzonych przez użytkownika wymagana jest informacja odwrotna. Autor Twissandry sugeruje stworzenie komplementarnej tabeli \verb+friends+, w~której zapisane będą nazwy osób śledzonych przez dany profil. W~omawianym przypadku równie wydajnym rozwiązaniem jest wykorzystanie indeksów zaimplementowanych w~CQL. Stworzenie indeksu na kolumnie \verb+follower+ w~tabeli \verb+followers+ przy pomocy zapytania przedstawionego na listingu~\ref{lst:all_followed_by_jkowalski_index} umożliwia wyszukanie wszystkich użytkowników śledzonych przez danego. Przykładowe zapytanie realizujące takie wyszukanie zostało zaprezentowane na listingu~\ref{lst:all_followed_by_jkowalski_select}.
+
+\begin{verbbox}
+	CREATE INDEX ON followers (follower)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Zapytanie, które tworzy indeks na kolumnie \emph{follower} w~tabeli \emph{followers}.}
+	\label{lst:all_followed_by_jkowalski_index}
+\end{figure}
+
+\begin{verbbox}
+	SELECT * FROM followers WHERE follower = 'jkowalski'
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Zapytanie, które wybiera wszystkie osoby śledzone przez użytkownika \emph{jkowalski} dzięki indeksowi.}
+	\label{lst:all_followed_by_jkowalski_select}
+\end{figure}
+
+Kolejnym elementem modelu jest definicja tabeli, która umożliwia przechowywanie wpisów. Pełni ona rolę normalizacyjną i~nie będzie wykorzystywana w~widokach osi czasu. W~tym przypadku można posłużyć się sztucznym identyfikatorem, gdyż pobieranie wierszy następować będzie wyłącznie w~kontekście znanego klucza wpisu. Zapytania pozwalające stworzyć strukturę tabeli oraz wstawić do niej przykładowy wpis zostały zaprezentowane na listingu~\ref{lst:tweets}. Poglądową strukturę fizyczną uzyskaną w~wyniku ich wykonania prezentuje natomiast diagram~\ref{tab:tweets_structure}.
+
+\begin{verbbox}
+CREATE TABLE tweets (
+    tweet_id uuid PRIMARY KEY,
+    user text,
+    body text)
+
+INSERT INTO tweets (tweet_id, user, body) VALUES (
+    f8122d00-2f99-11e4-babf-0002a5d5c51b,
+    'jturek',
+    'Sample')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Tabela wpisów w~Twissandrze.}
+	\label{lst:tweets}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|l||c|c|}
+		\hhline{|-||--|}
+		& \textbf{user} & \textbf{body} \\
+		\hhline{|~||==|}
+		\textbf{f8122d00-2f99-11e4-babf-0002a5d5c51b} & 'jturek' & 'Sample' \\
+		\hhline{|-||--|}
+	\end{tabular} 
+
+	\caption{Poglądowy wynik struktury uzyskanej po wykonaniu zapytań~\ref{lst:tweets}.}
+	\label{tab:tweets_structure}
+\end{figure}
+
+Tabela \verb+tweets+ nie może być wykorzystania do konstrukcji widoków osi czasu. Aby wyświetlić wszystkie wpisy użytkownika i~śledzonych przez niego osób należałoby złączyć trzy tabele - \verb+tweets+, \verb+users+ oraz \verb+followers+. Apache Cassandra nie umożliwia jednak wykonywania złączeń. Możliwe jest manualne scalanie tabel w~aplikacji, ale podobnie jak dla relacyjnych baz danych jest to rozwiązanie skrajnie niewydajne. W~celu uniknięcia złączeń należy zbudować widok osi czasu w~osobnej tabeli. Jej zawartość będzie uzupełniana podczas dodawania nowych wpisów przez użytkowników. Na osi czasu wyświetlane będą dwie informacje - nazwa użytkownika publikującego oraz treść wpisu. 
+
+Autor Twissandry sugeruje, aby w~tabeli osi czasu umieścić trzy informacje - nazwę użytkownika, a~także czas publikacji oraz identyfikator wpisu. Przy tak zdefiniowanym schemacie na etapie budowy widoku dla każdego wpisu osobno pobierana jest jego treść z~tabeli \verb+tweets+. Nie jest to kluczowy problem wydajnościowy, jednakże dzięki denormalizacji dodatkowe pobranie może być łatwo wyeliminowane. Wystarczy uwzględnić treść wpisu w~tabeli osi czasu. Zapytanie, które tworzy schemat \verb+timeline+ zostało zaprezentowane na listingu~\ref{lst:timeline}. Poglądowy kształt wynikowej struktury danych przedstwia diagram~\ref{tab:timeline_structure}.
+
+\begin{verbbox}
+CREATE TABLE timeline (
+    username text,
+    time timeuuid,
+    tweet_id uuid,
+    body text,
+    PRIMARY KEY (username, time)
+) WITH CLUSTERING ORDER BY (time DESC)
+
+INSERT INTO timeline (username, time, tweet_id, body) VALUES (
+    'jturek',
+    915d6810-308c-11e4-95de-f9043d8d556b,
+    f8122d00-2f99-11e4-babf-0002a5d5c51b,
+    'Sample')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Oś czasu w~Twissandrze z~modyfikacją wprowadzającą denormalizację treści wpisu.}
+	\label{lst:timeline}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|l||c|c|}
+		\hhline{|-||--|}
+		& \multicolumn{2}{|c|}{\textbf{time: 915d6810-308c-11e4-95de-f9043d8d556b}} \\
+		\hhline{|~||==|}
+		& \textbf{tweet\_id} & \textbf{body} \\
+		\hhline{|~||==|}
+		\textbf{'jturek'} & f8122d00-2f99-11e4-babf-0002a5d5c51b & 'Sample' \\
+		\hhline{|-||--|}
+	\end{tabular} 
+
+	\caption{Poglądowy wynik struktury uzyskanej po wykonaniu zapytań~\ref{lst:timeline}.}
+	\label{tab:timeline_structure}
+\end{figure}
+
+W~zapytaniu tworzącym tabelę \verb+timeline+ wykorzystano klauzulę sortowania \verb+WITH CLUSTERING ORDER BY+. Pozwala ona na układanie kolejności wierszy względem wartości klucza typu \verb+clustering+. W~przykładzie~\ref{lst:timeline} sortowanie wykonywane jest względem wartości kolumny \verb+time+, w~porządku malejącym\footnote{Świadczy o~tym słowo kluczowe \emph{DESC} - od angielskiego \emph{descending} - malejąco.}. Oznacza to, że wiersze pobrane dla danej nazwy użytkownika będą posortowane w~odwrotnym porządku chronologicznym (od najnowszych).
+
+Należy zauważyć, że w~Cassandrze możliwe jest sortowanie wierszy tylko i~wyłącznie po wartości klucza typu \verb+clustering+. Wynika to z~reprezentacji wewnętrznej danych. Klucz typu \verb+partition+ jest tłumaczony na identyfikator wiersza w~Cassandrze. Wiersze są rozdzielane w~architekturze pierścienia, w~zależności od wartości skrótu identyfikatora. Zmiana ich sortowania nie jest możliwa, gdyż zaprzecza to pryncypiom architektonicznym Cassandry. Sortowanie klucza typu \verb+clustering+ jest możliwe i~polega na szeregowaniu kolumn w~wewnętrznej reprezentacji danych.
+
+W~powyższym schemacie kluczowym problemem jest reprezentacja publicznej osi czasu. Autor Twissandry wykorzystuje do tego celu zdefiniowaną wcześniej tabelę \verb+timeline+ używając specjalnego identyfikatora użytkownika (\verb+!PUBLIC!+). Rozwiązanie to nie jest jednak poprawne:
+
+\begin{itemize}
+	\item Cassandra może przechowywać maksymalnie miliard kolumn w~jednym wierszu (przy założeniu, że cały węzeł wypełnia pojedynczy wiersz).~\cite{cassandra_limitations} Oznacza to, że w~tabeli \verb+timeline+ dla klucza \verb+!PUBLIC!+ można umieścić ograniczoną liczbę wpisów. Istnieje realne ryzyko, że liczba ta okaże się zbyt mała.
+	\item Architektura w~istotny sposób degraduje dobrą skalowalność horyzontalną, którą cechuje się Cassandra. Wiersz z~publiczną osią czasu będzie znacznie dłuższy niż przeciętny wiersz z~osią czasu użytkownika, gdyż znajdują się w~nim wszystkie wpisy utworzone w~serwisie. W~zaprezentowanym schemacie publiczna oś czasu będzie umieszczona w~jednym fizycznym wierszu Cassandry\footnote{Należy pamiętać, że wiersze w~fizycznym modelu danych są niepodzielne.}, a~więc węzły przechowujące ją będą nieproporcjonalnie obciążone w~porównaniu do pozostałych.
+\end{itemize}
+
+Rozwiązaniem tego problemu jest wprowadzenie większej granulacji publicznej osi czasu. Można to osiągnąć rozbudowując klucz typu \verb+partition+ o~kolejną składową. Sugerowanym przez Autora rozbiciem osi czasu jest podział względem dnia publikacji wpisu. Przykładowo aplikacja może odwoływać się do klucza \verb+!PUBLIC!2014-07-01+ dla wpisów opublikowanych pierwszego lipca 2014 roku, natomiast do pobrania danych z~kolejnego dnia wykorzystywać identyfikator \verb+!PUBLIC!2014-07-02+. 
+
+Dużym ułatwieniem jest fakt, że aplikacja nie musi samodzielnie budować i~zarządzać skomplikowanymi identyfikatorami. Język CQL umożliwia wykorzystanie złożonego klucza typu \verb+partition+.~\cite{create_table_cassandra_reference} Listing~\ref{lst:timeline_day_partitioned} prezentuje w~jaki sposób zdefiniować oś czasu z~dodatkowym podziałem względem dnia publikacji. Zmiana obejmuje dodanie kolumny tekstowej \verb+day+ oraz uwzględnienie jej w~klauzuli \verb+PRIMARY KEY+. W~fizycznym modelu danych wpisy o~jednakowych wartościach nazwy użytkownika i~dnia zostaną pogrupowane w~wiersze, natomiast wpisy dla tej samej osoby, ale pochodzące z~różnych dni będą rozdzielone pomiędzy węzłami.
+
+Wykorzystując klucze złożone należy pamiętać, że istotna jest kolejność nawiasów zastosowanych w~klauzuli \verb+PRIMARY KEY+. W~przypadku pominięcia wewnętrznego nawiasu dla pary \verb+(username, day)+ nowa kolumna zostałaby częścią klucza typu \verb+clustering+, który byłby opisany dwójką \verb+(day, time)+.
+
+\begin{verbbox}
+CREATE TABLE timeline (
+    username text,
+    day text,
+    time timeuuid,
+    tweet_id uuid,
+    body text,
+    PRIMARY KEY ((username, day), time)
+) WITH CLUSTERING ORDER BY (time DESC)
+
+INSERT INTO timeline (username, day, time, 
+        tweet_id, body) VALUES (
+    'jturek',
+    '2014-08-01',
+    915d6810-308c-11e4-95de-f9043d8d556b,
+    f8122d00-2f99-11e4-babf-0002a5d5c51b,
+    'Sample')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Oś czasu w~Twissandrze partycjonowana względem dnia utworzenia wpisu.}
+	\label{lst:timeline_day_partitioned}
+\end{figure}
 
 \section{Modelowanie - wzorce i~antywzorce}
 \label{sec:patterns_and_antipatterns}
