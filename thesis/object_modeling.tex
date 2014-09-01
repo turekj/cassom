@@ -43,6 +43,40 @@ OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowa
 	\item Narzędzia do populacji danych testowych i~profilowania aplikacji. 
 \end{itemize}
 
+\begin{figure}[ht!]
+	\centering
+
+	\begin{tikzpicture}
+		\begin{umlcomponent}[x=0, y=0]{Database Management}
+			\begin{umlcomponent}[x=0, y=0]{Database Engine}
+				\begin{umlcomponent}[x=0, y=0]{Security}
+				\end{umlcomponent}
+				\begin{umlcomponent}[x=0, y=-3]{Query Execution}
+				\end{umlcomponent}
+			\end{umlcomponent}
+
+			\begin{umlcomponent}[x=6, y=0]{Session}
+				\begin{umlcomponent}{Cluster Manager}
+				\end{umlcomponent}
+
+				\begin{umlcomponent}[x=0, y=-3]{Keyspace Manager}
+				\end{umlcomponent}
+			\end{umlcomponent}
+		\end{umlcomponent}
+
+		\begin{umlcomponent}[x=0, y=-7]{Model Management}
+
+		\end{umlcomponent}
+
+		\begin{umlcomponent}[x=0, y=-12]{Migration Management}
+
+		\end{umlcomponent}
+	\end{tikzpicture}
+
+	\caption{Diagram komponentów mechanizmu Object Modeling for Cassandra.}
+	\label{fig:omc_components}
+\end{figure}
+
 \section{OMC - podstawowe pojęcia}
 \label{sec:ocm_basics}
 
