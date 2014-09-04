@@ -45,37 +45,69 @@ OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowa
 
 \begin{figure}[ht!]
 	\centering
-
 	\begin{tikzpicture}
-		\begin{umlcomponent}[x=0, y=0]{Database Management}
-			\begin{umlcomponent}[x=0, y=0]{Database Engine}
-				\begin{umlcomponent}[x=0, y=0]{Security}
-				\end{umlcomponent}
-				\begin{umlcomponent}[x=0, y=-3]{Query Execution}
-				\end{umlcomponent}
-			\end{umlcomponent}
-
-			\begin{umlcomponent}[x=6, y=0]{Session}
-				\begin{umlcomponent}{Cluster Manager}
-				\end{umlcomponent}
-
-				\begin{umlcomponent}[x=0, y=-3]{Keyspace Manager}
-				\end{umlcomponent}
-			\end{umlcomponent}
-		\end{umlcomponent}
-
-		\begin{umlcomponent}[x=0, y=-7]{Model Management}
-
-		\end{umlcomponent}
-
-		\begin{umlcomponent}[x=0, y=-12]{Migration Management}
-
-		\end{umlcomponent}
+		\umlbasiccomponent[x=4, y=0]{Database Engine}
+		\umlbasiccomponent[x=0, y=-8]{Migration}
+		\umlbasiccomponent[x=4, y=-4]{Schema}
+		\umlbasiccomponent[x=8, y=-8]{Metadata}
+		\umlVHVassemblyconnector[interface=Database Interface]{Database Engine}{Schema}
+		\umlVHassemblyconnector[interface=Schema Interface, first arm]{Metadata}{Schema}
+		\umlVHassemblyconnector[interface=Schema Interface, first arm]{Migration}{Schema}
+		\umlassemblyconnector[interface=Metadata Interface]{Migration}{Metadata}
 	\end{tikzpicture}
-
-	\caption{Diagram komponentów mechanizmu Object Modeling for Cassandra.}
+	\caption{Diagram komponentów mechanizmu OMC.}
 	\label{fig:omc_components}
 \end{figure}
+
+Na rysuku~\ref{fig:omc_components} zaprezentowano diagram komponentów mechanizmu. Składa się on z~czterech podstawowych części:
+
+\begin{description}
+	\item[Silnik bazodanowy] jest oparty o~sterownik języka CQL. W~skład silnika wchodzą metody umożliwiające nawiązywanie i~konfigurowanie połączenia z~Cassandrą, zarządzanie klastrem, wykonywanie oraz zapewnianie bezpieczeństwa zapytań.
+	\item[Schemat] moduł, który służy do zarządzania fizycznym modelem danych. Odpowiada za tworzenie/utrzymywanie przestrzeni kluczy (\verb+keyspace+), wierszy oraz kolumn. Ponadto pozwala aktualizować fizyczny model danych, a~także wyznaczać różnice pomiędzy dwiema wersjami struktury.
+	\item[Metadane] moduł, który zarządza elementami interfejsu służącymi do opisu logicznego modelu danych (używanego wewnątrz mechanizmu). Jego odpowiedzialnością jest konwersja pomiędzy logiczną a~fizyczną strukturą. Moduł dostarcza także implementacji metod umożliwiających operacje przetwarzania danych.
+	\item[Migracja] moduł, który potrafi wyznaczać i~wersjonować różnice pomiędzy kolejnymi zmianami w~modelu danych. Dostarcza również funkcjonalności do aktualizacji fizycznej struktury na żądanie użytkownika.
+\end{description}
+
+Spośród wymienionych powyżej komponentów najbardziej rozbudowany służy do opisu modelu logicznego za pomocą metadanych. Składają się na niego moduły zaprezentowane na diagramie~\ref{fig:omc_metadata_components}.
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tikzpicture}
+		\begin{umlcomponent}[x=0, y=-1.5]{Model Transformation}
+			\umlbasiccomponent[x=0, y=0]{Metadata Transformation}
+		\end{umlcomponent}
+		
+		\begin{umlcomponent}[x=0, y=-8]{Metadata Registry}
+			\umlemptyclass[x=0, y=0]{Table Metadata}
+			\umlemptyclass[x=0, y=-2.5]{Column Metadata}
+		\end{umlcomponent}
+
+		\begin{umlcomponent}[x=8, y=0]{Data Description}
+			\umlemptyclass[x=0, y=0]{Model}
+			\umlemptyclass[x=0, y=-2.5]{Field}
+		\end{umlcomponent}
+
+		\begin{umlcomponent}[x=8, y=-9.2]{Data Access}
+			\umlemptyclass{Object Manager}
+		\end{umlcomponent}
+
+		\umlVHVassemblyconnector[interface=Metadata]{Metadata Registry}{Model Transformation}
+		\umlassemblyconnector[interface=Metadata]{Data Access}{Metadata Registry}
+		\umlVHVassemblyconnector[interface=Description]{Data Description}{Data Access}
+		\umlassemblyconnector[interface=Description]{Model Transformation}{Data Description}
+	\end{tikzpicture}
+	\caption{Diagram komponentów modułu metadanych z~wyszczegółowionymi najistotniejszymi elementami.}
+	\label{fig:omc_metadata_components}
+\end{figure}
+
+Komponenty przedstawione na diagramie~\ref{fig:omc_metadata_components} mają następującą odpowiedzialność:
+
+\begin{description}
+	\item[Data Description] dostarcza komponenty programistyczne do opisu logicznego modelu danych. Definiuje jednostkę tego opisu - \verb+Model+. Ponadto zawiera interfejs pola (\verb+Field+), a~także dostarcza implementacji wielu jego różnych typów.
+	\item[Metadata Registry] odpowiada za rejestrowanie wszystkich modeli zdefiniowanych przez użytkownika oraz ich metadanych. Ponadto definiuje byty \verb+TableMetadata+ oraz \verb+ColumnMetadata+. Pozwalają one wymieniać informacje pomiędzy warstwami obsługi logicznego oraz fizycznego modelu danych. 
+	\item[Model Transformation] implementuje operacje inicjalnej transformacji klas opisujących logiczny model danych. Ponadto udostępnia metody do przekształcania ich do postaci metadanych.
+	\item[Data Access] dostarcza komponenty programistyczne do wykonywania operacji na logicznym modelu danych. Interfejs \verb+ObjectManager+ wraz z~jego domyślną implementacją udostępniają operacje filtrowania, aktualizacji oraz usuwania danych.
+\end{description}
 
 \section{OMC - podstawowe pojęcia}
 \label{sec:ocm_basics}
