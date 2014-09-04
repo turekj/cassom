@@ -68,8 +68,6 @@ Na rysuku~\ref{fig:omc_components} zaprezentowano diagram komponentów mechanizm
 	\item[Migracja] moduł, który potrafi wyznaczać i~wersjonować różnice pomiędzy kolejnymi zmianami w~modelu danych. Dostarcza również funkcjonalności do aktualizacji fizycznej struktury na żądanie użytkownika.
 \end{description}
 
-Spośród wymienionych powyżej komponentów najbardziej rozbudowany służy do opisu modelu logicznego za pomocą metadanych. Składają się na niego moduły zaprezentowane na diagramie~\ref{fig:omc_metadata_components}.
-
 \begin{figure}[ht!]
 	\centering
 	\begin{tikzpicture}
@@ -100,7 +98,7 @@ Spośród wymienionych powyżej komponentów najbardziej rozbudowany służy do 
 	\label{fig:omc_metadata_components}
 \end{figure}
 
-Komponenty przedstawione na diagramie~\ref{fig:omc_metadata_components} mają następującą odpowiedzialność:
+Spośród wymienionych powyżej komponentów najbardziej rozbudowany służy do opisu modelu logicznego za pomocą metadanych. Składają się na niego moduły zaprezentowane na diagramie~\ref{fig:omc_metadata_components}. Mają one następującą odpowiedzialność:
 
 \begin{description}
 	\item[Data Description] dostarcza komponenty programistyczne do opisu logicznego modelu danych. Definiuje jednostkę tego opisu - \verb+Model+. Ponadto zawiera interfejs pola (\verb+Field+), a~także dostarcza implementacji wielu jego różnych typów.
@@ -108,6 +106,50 @@ Komponenty przedstawione na diagramie~\ref{fig:omc_metadata_components} mają na
 	\item[Model Transformation] implementuje operacje inicjalnej transformacji klas opisujących logiczny model danych. Ponadto udostępnia metody do przekształcania ich do postaci metadanych.
 	\item[Data Access] dostarcza komponenty programistyczne do wykonywania operacji na logicznym modelu danych. Interfejs \verb+ObjectManager+ wraz z~jego domyślną implementacją udostępniają operacje filtrowania, aktualizacji oraz usuwania danych.
 \end{description}
+
+\section{Porównanie OMC z~ORM}
+\label{sec:omc_vs_orm_comparison}
+
+\begin{figure}[ht!]
+	\centering
+	\begin{tabular}{|p{3cm}|p{4.5cm}|p{4.5cm}|}
+		\hline
+		& \textbf{ORM} & \textbf{OMC} \\
+		\hline
+		{\footnotesize \textbf{Mapowanie obiektów do schematu bazy danych}} & 
+		Niskiego poziomu. Modele przekładają się bezpośrednio na tabele, a~pola na kolumny. & 
+		Wysokiego poziomu. Modele przekładają się na tabele, a~pola mogą przekładać się na tabele, kolumny lub grupy kolumn. \\
+		\hline
+		{\footnotesize \textbf{Modelowanie zależności między danymi}} &
+		Zaawansowane opcje konfiguracyjne modelowania relacji. &
+		Proste, wydajne modelowanie zależności ściśle związane z~fizyczną strukturą danych. \\
+		\hline
+		{\footnotesize \textbf{Obsługa dziedziczenia}} & 
+		Rozbudowane opcji konfiguracji dziedziczenia obiektów. & 
+		Proste dziedziczenie polegające na niejawnym włączeniu wszystkich pól do nadklasy. \\
+		\hline
+		{\footnotesize \textbf{Denormalizacja}} &
+		Obsługiwana manualnie przez użytkownika. &
+		W~pełni automatycznie wspierana przez mechanizm (zapis i~uaktualnianie na żądanie). \\
+		\hline
+		{\footnotesize \textbf{Wsparcie dla wzorców projektowania modelu}} &
+		Brak. &
+		Zaimplementowane wiele wzorców projektowych gotowych do użycia. \\
+		\hline 
+		{\footnotesize \textbf{Obsługa mechanizmu migracji}} & 
+		Brak lub realizacja migracji jako oddzielny moduł. &
+		Wbudowany mechanizm migracji. \\
+		\hline
+		{\footnotesize \textbf{Testowanie modelu}} & 
+		Ręczna populacja danych. Wbudowane mechanizmy mierzenia czasu zapytań. &
+		Automatyczna populacja danych. Śledzenie zapytań po różnych parametrach. \\
+		\hline
+	\end{tabular}
+	\caption{Tabelaryczne porównanie funkcjonalności typowych mechanizmów ORM i~modułu Object Modeling for Cassandra.}
+	\label{tab:omc_vs_orm_comparison}
+\end{figure}
+
+W~tabeli~\ref{tab:omc_vs_orm_comparison} przedstawiono różnice pomiędzy mechanizmem modelowania obiektowego dla Cassandry a~typowymi systemami ORM\footnote{Opracowanie zostało przygotowane na podstawie cech mechanizmów Hibernate oraz SQLAlchemy.}.  
 
 \section{OMC - podstawowe pojęcia}
 \label{sec:ocm_basics}
