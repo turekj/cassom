@@ -149,7 +149,25 @@ Spośród wymienionych powyżej komponentów najbardziej rozbudowany służy do 
 	\label{tab:omc_vs_orm_comparison}
 \end{figure}
 
-W~tabeli~\ref{tab:omc_vs_orm_comparison} przedstawiono różnice pomiędzy mechanizmem modelowania obiektowego dla Cassandry a~typowymi systemami ORM\footnote{Opracowanie zostało przygotowane na podstawie cech mechanizmów Hibernate oraz SQLAlchemy.}.  
+W~tabeli~\ref{tab:omc_vs_orm_comparison} przedstawiono porównanie mechanizmu modelowania obiektowego dla Cassandry z~typowymi systemami ORM\footnote{Opracowanie zostało przygotowane na podstawie cech mechanizmów Hibernate oraz SQLAlchemy.}. Podstawową różnicą jest warstwa abstrakcji, na której operują te rozwiązania. Mechanizmy ORM są silnie powiązane ze strukturami bazodanowymi. Definiowane przez programistę klasy zawsze odpowiadają tabelom, natomiast pola mapowane są w~stosunku jeden-do-jednego na kolumny. Bardzo rzadko występuje sytuacja, gdy mapowania realizowane są niejawnie\footnote{Przykładem niejawności jest użycie tabeli pośredniej w~modelowaniu relacji typu wiele-do-wielu. Tabela nie jest zdefiniowana przez klasę w~kodzie. Wymagane jest podanie odpowiednich parametrów konfiguracyjnych pola.}. W~zależności od intencji użytkownika, mechanizm modelowania obiektowego dla Cassandry umożliwia wierne odwzorowanie zachowania systemów ORM. Dostarcza on implementację pól dla wszystkich typów danych, które mogą być umieszczone w~kolumnach. Wykorzystując je możliwe jest stworzenie modelu danych niskiego poziomu.  
+
+Unikatową cechą modelowania obiektowego dla Cassandry jest możliwość wykorzystywania struktur wyższego poziomu. Zapewniają one abstrakcję od fizycznego schematu i/lub wykonywanych do bazy danych zapytań, która jest skoncentrowana na charakterystyce przechowywanych danych:
+
+\begin{itemize}
+	\item Modelując zależności przy pomocy pola \verb+DenormalizedField+ użytkownik wskazuje wyłącznie nazwy powiązanej encji oraz pól, które mają być dostępne w~trakcie zapytań. System sam zarządza takimi aspektami jak włączenie dodatkowych kolumn do definicji tabeli, dodanie pól do obiektu modelującego oraz aktualizacja powiązanych wartości. W~typowym systemie ORM użytkownik musiałby jawnie zdefiniować pola modelu, a~następnie w~parametrach konfiguracyjnych określić sposoby zarządzania każdym z~tych pól osobno.
+	\item W~tradycyjnym systemie ORM optymalizacja modelu kolejki danych wymagałaby rozbudowania wszystkich odwołań do danych w~całej aplikacji. Modyfikacja wymagałaby dodania warunków, które nie stanowią logicznej części zapytania, a~jedynie zwiększają szybkość pobierania danych. W~mechanizmie modelowania obiektowego dla Cassandry wystarczy dodanie odpowiedniego parametru do modelu. System samodzielnie śledzi niezbędne wartości i~modyfikuje odwołania w~sposób niewidoczny dla kodu aplikacji.
+\end{itemize}
+
+OMC dostarcza szereg funkcjonalności, które usprawniają zarządzanie danymi i~wykraczają poza zakres mapowania obiektowo-relacyjnego. Należy do nich system migracji, który umożliwia automatyczną aktualizację modelu pomiędzy wersjami. Jest to kluczowe zagadnienie w~przypadku rozbudowy istniejących aplikacji korzystających z~OMC:
+
+\begin{itemize}
+	\item Bez mechanizmu migracji użytkownik musiałby ręcznie zaktualizować schemat danych. Rozbudowując istniejącą tabelę często zachodzi konieczność manualnego uzupełnienia wszystkich istniejących rekordów danych. Reguły aktualizacji nie zawsze są trywialne i~mogą wymagać tworzenia rozbudowanych skryptów/aplikacji.
+	\item Mechanizm migracji wykonuje powyższe zadania automatycznie. Pozwala na tworzenie skomplikowanych reguł aktualizacji istniejących rekordów z~wykorzystaniem kodu źródłowego. Kod ten może odwoływać się do metod interfejsu OMC, a~więc w~szczególności odwoływać się do powiązanych danych.
+\end{itemize}
+
+Kolejnym wykraczającym poza zakres mapowania obiektowo-relacyjnego przykładem zarządzania danymi jest mechanizm do populacji wartości testowych. Umożliwia on inicjalne wypełnienie pustego schematu bazy danych. Automat wykorzystuje naiwną strategię generacji danych, która może być kontrolowana przez użytkownika w~dowolnym zakresie. Może być wykorzystywany zarówno do testowania wydajności modelu, jak również wykonywania migracji z~innego źródła danych.
+
+Podsumowując porównanie, tradycyjne mapowanie obiektowe (dostosowane do charakterystyki systemu bazodanowego) jest z~założenia jedną z~części modelowania obiektowego dla Cassandry. Pakiet OMC ułatwia proces opisywania danych poprzez dostarczenie abstrakcji niezwiązanych z~fizyczną strukturą/wykonywanymi odwołaniami. Dostarcza także dodatkowe funkcjonalności zarządzania danymi, bez których korzystanie z~mapowania obiektowego w~zastosowaniach produkcyjnych jest znacznie utrudnione. 
 
 \section{OMC - podstawowe pojęcia}
 \label{sec:ocm_basics}
