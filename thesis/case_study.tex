@@ -98,6 +98,24 @@ Model \verb+Followers+ wykorzystuje prosty typ zależności - \verb+RelatedField
 	\label{vrb:omc_twissandra_followers_relation}
 \end{figure}
 
+Podczas pobierania instancji modelu \verb+Followers+ z~bazy danych domyślnie uzupełniane są wyłącznie wartości kluczy. Na żądanie użytkownik może ściągnąć obiekt wraz z~elementami powiązanymi. Zostało to zaprezentowane na listingu~\ref{vrb:omc_twissandra_followers_relation_eager}. Pobierając obiekt \verb+follower_one+ bez użycia metody \verb+related()+ odwołanie do pól encji zależnej powoduje wyjątek aplikacji. W~przypadku instancji \verb+follower_two+ wszystkie właściwości powiązane są dostępne do odczytu.
+
+\begin{verbbox}
+	follower_one = Followers.objects().find(user='jturek', 
+	                   follower='manisero')
+	follower_one.user.password.check('Pass1') # exception
+	follower_two = Followers.objects().find(user='jturek',
+	                   follower='manisero').related()
+	follower_two.user.password.check('Pass2') # ok
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Pobieranie instancji obiektu wraz z~elementami powiązanymi.}
+	\label{vrb:omc_twissandra_followers_relation_eager}
+\end{figure}
+
 W~trakcie opisywania modelu danych Twissandry Autor zauważył, że dodanie indeksu do tabeli \verb+followers+ na kolumnie \verb+follower+ umożliwia odwrócenie zależności. Z~wykorzystaniem OMC jest to jeszcze prostsze - wystarczy dla zadanego pola ustawić flagę \verb+searchable+. Mechanizm sam utworzy odpowiedni indeks i~umożliwi wyszukiwanie po wartościach wskazanej kolumny. Na listingu~\ref{vrb:omc_twissandra_searching_followers} przedstawiono odwołanie do metod interfejsu, które umożliwia odnalezienie wszystkich osób śledzonych przez użytkownika \verb+jturek+.
 
 \begin{verbbox}
