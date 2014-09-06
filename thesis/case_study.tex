@@ -1,0 +1,78 @@
+% -*- root: main.tex -*-
+
+\chapter{Studium przypadku}
+\label{chap:case_study}
+
+W~rozdziale Autor przedstawia proces modelowania danych w~mechanizmie OMC. Przebieg procesu jest omówiony na przykładzie istniejących modeli danych, które są obsługiwane przy pomocy CQL. Dzięki takiemu podejściu łatwo jest wskazać korzyści, które zapewnia użytkownikowi stosowanie OMC.
+
+\section{Twissandra}
+\label{sec:case_study_twissandra}
+
+W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra. Przedstawia on kompletny model danych w~języku CQL dla serwisu o~analogicznej funkcjonalności do platformy Twitter. 
+
+\subsection{Użytkownik}
+
+\begin{verbbox}
+	class User(Model):
+	    username = TextField(partition_key=True)
+	    password = PasswordField(algorithm='SHA512', 
+	                             iterations=10000)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Użytkownik Twissandry zamodelowany w~OMC.}
+	\label{vrb:omc_twissandra_user}
+\end{figure}
+
+\begin{verbbox}
+	class Followers(Model):
+	    user = RelationField(relates=User, 
+	                         partition_key=True)
+	    follower = RelationField(relates=User,
+	                             clustering_key=True,
+	                             searchable=True)
+	    since = TimestampField(auto_add_now=True)
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Śledzeni użytkownicy w~Twissandrze zamodelowani w~OMC.}
+	\label{vrb:omc_twissandra_followers}
+\end{figure}
+
+\begin{verbbox}
+	class Tweet(Model):
+	    id = UuidField(partition_key=True, 
+	                   auto_generate=True)
+	    user = RelationField(relates=User)
+	    body = TextField()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Wpis w~Twissandrze zamodelowany w~OMC.}
+	\label{vrb:omc_twissandra_tweet}
+\end{figure}
+
+\begin{verbbox}
+	class Timeline(Model):
+	    user = RelationField(relates=User,
+	                         partition_key=True)
+	    day = TextField()
+	    time = UuidField(type=TimeUuid, 
+	                     auto_generate=True,
+	                     clustering_key=True)
+	    tweet = DenormalizedField(relates=Tweet,
+	                              fields=['id', 'body'])
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{caption}
+	\label{vrb:label}
+\end{figure}
