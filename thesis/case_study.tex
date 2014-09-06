@@ -8,14 +8,35 @@ W~rozdziale Autor przedstawia proces modelowania danych w~mechanizmie OMC. Przeb
 \section{Twissandra}
 \label{sec:case_study_twissandra}
 
-W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra. Przedstawia on kompletny model danych w~języku CQL dla serwisu o~analogicznej funkcjonalności do platformy Twitter. 
+W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra. Przedstawia on kompletny model danych w~języku CQL dla serwisu o~funkcjonalności analogicznej do platformy Twitter. Autor pracy przedstawi proces tworzenia analogicznego schematu w~OMC z~rozbiciem na poszczególne encje danych.
 
 \subsection{Użytkownik}
+
+Encja użytkownika posiada tylko dwie właściwości - nazwę oraz hasło. Nawet dla tak prostego przypadku mechanizm OMC może wprowadzić znaczne ułatwienie dla użytkownika. W~zaprezentowanym w~sekcji \ref{sec:twissandra} przykładzie hasło było przechowywane jako otwarty tekst. W~docelowym systemie takie rozwiązanie byłoby nieakceptowalne ze względów bezpieczeństwa. 
+
+Zgodnie z~obecnymi standardami bezpieczeństwa przechowywanie hasła w~bazie danych wymaga wykonania następujących operacji:~\cite{how_to_store_users_password_safely}
+
+\begin{enumerate}
+	\item Przechowywanie w~bazie danych wartości funkcji skrótów haseł. Rekomendowanym algorytmem do obliczania funkcji skrótu jest \verb+SHA-256+.
+	\item Wykorzystanie ,,soli''. Polega to na łączeniu losowego ciągu znaków (o~długości 16 bitów lub większej) z~hasłem. Na podstawie tak uzyskanego ciągu obliczana jest funkcja skrótu. Losowe znaki, które służą jako ,,sól'' są zapisywane, obok skrótu, w~bazie danych. Dzięki temu:
+		\begin{itemize}
+			\item Dwaj użytkownicy z~identycznym hasłem (z~dużym prawdopodobieństwem zależnym od jakości losowania ,,soli'') w~bazie danych będą mieli różne funkcje skrótu.
+			\item Zwiększa się liczba kombinatorycznych możliwości to sprawdzenia w~przypadku ataków typu brute force\footnote{Brute force (ang. brutalna siła) - atak polegający na sprawdzaniu wszystkich możliwych haseł aż do momentu znalezienia poprawnego.}. Każda możliwość musi zostać przetestowana dla dowolnej ,,soli'' występującej w~danych.
+		\end{itemize}
+	\item Wykorzystanie iteracyjnego algorytmu PBKDF2 opisanego w~standardzie RFC 2898.~\cite{rfc_2898} Pozwala on skalować czas niezbędny do wyznaczenia funkcji skrótu dla jednego hasła poprzez zwiększanie liczby wymaganych iteracji obliczeń. Dzięki temu zwiększa się czas niezbędny do zgadnięcia klucza użytkowników, którzy nie stosują kryptograficznie bezpiecznych haseł.
+\end{enumerate}
+
+W~przypadku modelowania encji użytkownika z~wykorzystaniem języka CQL odpowiedzialność za bezpieczeństwo przechowywania haseł spada na programistę aplikacji. Mechanizm OMC posiada dedykowany do przechowywania kluczy typ pola \verb+PasswordField+. Pozwala on wybrać algorytm obliczania funkcji skrótu, potrafi automatycznie dodawać ,,sól'', a~także wyspecyfikować liczbę iteracji PBKDF2. W~kolumnach bazy danych, oprócz skrótu i~,,soli'' zapisywana jest także liczba iteracji. W~przyszłości informacja ta może zostać wykorzystania do zwiększenia bezpieczeństwa haseł.
+
+Pole \verb+PasswordField+ charakteryzuje się tym, że przeliczenia dokonywane są w~trakcie ustawiania wartości. Oznacza to, że w~pamięci przechowywane jest wyłącznie wynikowa wartość funkcji skrótu. Wartość hasła może być jedynie ustawiona lub porównana - sprawdzenie zgodności kluczy dokonywane jest za pomocą metody \verb+check+.
+
+Definicja modelu użytkownika w~OMC została zaprezentowana na diagramie~\ref{vrb:omc_twissandra_user}. W~schemacie bazodanowym pole \verb+username+ zostanie zmapowane na kolumnę tekstową, natomiast pole \verb+password+ będzie automatycznie obsługiwane przez trzy kolumny - \verb+password+ do przechowywania wartości skrótu klucza, \verb+password_salt+ z~,,solą'' oraz \verb+password_iterations+, w~którym przechowywana jest siła algorytmu PBKDF2. Widać tutaj istotną różnicę w~stosunku do tradycyjnych systemów mapowania obiektowo-relacyjnego. Definicja modelu nie skupia się na fizycznej strukturze danych, ale na rodzaju przechowywanych informacji (w~tym wypadku klucza).
 
 \begin{verbbox}
 	class User(Model):
 	    username = TextField(partition_key=True)
-	    password = PasswordField(algorithm='SHA512', 
+	    password = PasswordField(algorithm='SHA256',
+	                             salt=True, 
 	                             iterations=10000)
 \end{verbbox}
 
@@ -26,13 +47,31 @@ W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra
 	\label{vrb:omc_twissandra_user}
 \end{figure}
 
+Do modelu można odwoływać się przy pomocy zarządcy obiektów (pozwala on wyszukiwać wpisy w~bazie danych) lub bezpośrednio do instancji. Przykładem wykorzystania zarządcy jest pobranie użytkownika o~pseudonimie \verb+jturek+ zaprezentowane w~pierwszej linii listingu~\ref{vrb:omc_twissandra_user_operations}. W~drugiej linii widać odwołanie bezpośrednio do instancji, które sprawdza czy \verb+UnsafePassword+ jest hasłem znalezionego użytkownika.
+
+\begin{verbbox}
+	user = User.objects().get('jturek')
+	user.password.check('UnsafePassword') # false
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Przykłady odwołania do encji użytkownika.}
+	\label{vrb:omc_twissandra_user_operations}
+\end{figure}
+
+\subsection{Śledzeni użytkownicy}
+
+Fakt śledzenia użytkownika odnotowywany jest poprzez model \verb+Followers+. Przechowuje on relacje pomiędzy dwiema osobami wraz z~datą utworzenia zależności. Propozycja modelu została przedstawiona na listingu~\ref{vrb:omc_twissandra_followers}.
+
 \begin{verbbox}
 	class Followers(Model):
-	    user = RelationField(relates=User, 
-	                         partition_key=True)
-	    follower = RelationField(relates=User,
-	                             clustering_key=True,
-	                             searchable=True)
+	    user = RelatedField(relates=User, 
+	                        partition_key=True)
+	    follower = RelatedField(relates=User,
+	                            clustering_key=True,
+	                            searchable=True)
 	    since = TimestampField(auto_add_now=True)
 \end{verbbox}
 
@@ -42,6 +81,37 @@ W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra
 	\caption{Śledzeni użytkownicy w~Twissandrze zamodelowani w~OMC.}
 	\label{vrb:omc_twissandra_followers}
 \end{figure}
+
+Model \verb+Followers+ wykorzystuje prosty typ zależności - \verb+RelatedField+. Przenosi on składowe klucza ze wskazywanej do danej encji. Dodatkowo umożliwia operowanie zarówno na obiektach, jak również na prostych wartościach. Na listingu~\ref{vrb:omc_twissandra_followers_relation} zaprezentowano dwa sposoby połączenia obiektu \verb+Followers+ z~tym samym użytkownikiem. Pierwszy z~nich polega na podstawieniu do pola instancji powiązanego obiektu. Drugi pozwala bezpośrednie ustawienie komponentu klucza jako wartości. Dla pola o~nazwie \verb+field+ i~komponentu klucza o~nazwie \verb+component+ podstawienie to może być wykonane przez odwołanie do pola \verb+field_component+. Mechanizm ten oferuje wsparcie dla złożonych kluczy.
+
+\begin{verbbox}
+	follower_one = Followers()
+	follower_one.user = User.objects().get('jturek')
+	follower_two = Followers()
+	follower_two.user_username = jturek'
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Ustawianie wartości pola RelatedField przez obiekt powiązany lub jego klucz.}
+	\label{vrb:omc_twissandra_followers_relation}
+\end{figure}
+
+W~trakcie opisywania modelu danych Twissandry Autor zauważył, że dodanie indeksu do tabeli \verb+followers+ na kolumnie \verb+follower+ umożliwia odwrócenie zależności. Z~wykorzystaniem OMC jest to jeszcze prostsze - wystarczy dla zadanego pola ustawić flagę \verb+searchable+. Mechanizm sam utworzy odpowiedni indeks i~umożliwi wyszukiwanie po wartościach wskazanej kolumny. Na listingu~\ref{vrb:omc_twissandra_searching_followers} przedstawiono odwołanie do metod interfejsu, które umożliwia odnalezienie wszystkich osób śledzonych przez użytkownika \verb+jturek+.
+
+\begin{verbbox}
+	Followers.objects().find(follower='jturek')
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Wyszukiwanie wszystkich osób śledzonych przez \emph{jturek}.}
+	\label{vrb:omc_twissandra_searching_followers}
+\end{figure}
+
+Wykorzystując OMC do modelowania tabeli \verb+Followers+ użytkownik otrzymuje jeszcze jedno udogodnienie. Pole z~odciskiem czasu o~nazwie \verb+since+ jest oznaczone parametrem \verb+auto_add_now+. Dzięki temu przy dodawaniu nowego wpisu jego wartość, jeżeli nie została wyspecyfikowana jawnie, zostanie wypełniona obecną datą i~czasem. Wprawdzie język CQL pozwala w~prosty sposób osiągnąć ten sam efekt (za pomocą funkcji \verb+dateOf(now())+), ale trzeba o~tym pamiętać w~każdym fragmencie aplikacji. Posiadając poprawnie zaprojektowany model w~OMC użytkownik może zaniedbać istnienie pola aż do momentu odczytywania jego wartości.
 
 \begin{verbbox}
 	class Tweet(Model):
@@ -73,6 +143,6 @@ W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra
 \begin{figure}[ht!]
 	\centering
 	\theverbbox
-	\caption{caption}
-	\label{vrb:label}
+	\caption{Oś czasu w~Twissandrze zamodelowana w~OMC.}
+	\label{vrb:omc_twissandra_timeline}
 \end{figure}
