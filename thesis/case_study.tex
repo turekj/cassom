@@ -131,11 +131,17 @@ W~trakcie opisywania modelu danych Twissandry Autor zauważył, że dodanie inde
 
 Wykorzystując OMC do modelowania tabeli \verb+Followers+ użytkownik otrzymuje jeszcze jedno udogodnienie. Pole z~odciskiem czasu o~nazwie \verb+since+ jest oznaczone parametrem \verb+auto_add_now+. Dzięki temu przy dodawaniu nowego wpisu jego wartość, jeżeli nie została wyspecyfikowana jawnie, zostanie wypełniona obecną datą i~czasem. Wprawdzie język CQL pozwala w~prosty sposób osiągnąć ten sam efekt (za pomocą funkcji \verb+dateOf(now())+), ale trzeba o~tym pamiętać w~każdym fragmencie aplikacji. Posiadając poprawnie zaprojektowany model w~OMC użytkownik może zaniedbać istnienie pola aż do momentu odczytywania jego wartości.
 
+\subsection{Wpisy}
+
+Przedstawiony w~sekcji~\ref{sec:twissandra} schemat tabeli dla wpisów posiada trzy właściwości: identyfikator, nazwę użytkownika oraz treść. Jest to prosty model, który wykorzystuje jedynie mechanizmy omówione dotychczas. Został on zaprezentowany na listingu~\ref{vrb:omc_twissandra_tweet}.
+
 \begin{verbbox}
 	class Tweet(Model):
+	    __manager__ = TweetManager
+
 	    id = UuidField(partition_key=True, 
 	                   auto_generate=True)
-	    user = RelationField(relates=User)
+	    user = RelatedField(relates=User)
 	    body = TextField()
 \end{verbbox}
 
@@ -145,6 +151,70 @@ Wykorzystując OMC do modelowania tabeli \verb+Followers+ użytkownik otrzymuje 
 	\caption{Wpis w~Twissandrze zamodelowany w~OMC.}
 	\label{vrb:omc_twissandra_tweet}
 \end{figure}
+
+W~przypadku dodawania nowych wpisów warto rozważyć problem osi czasu. Z~analizy modelu Twissandry wiadomo, że wstawienie nowego wiersza do tabeli \verb+tweets+ implikuje konieczność uzupełnienia powiązanych rekordów w~tabeli \verb+timeline+. OMC pozwala przeciążać obiekty zarządzające encjami. Dzięki temu możliwe jest zmodyfikowanie metody \verb+save()+, która zapisuje instancję w~bazie danych w~taki sposób, aby oś czasu była wypełniana automatycznie.
+
+Pole \verb+__manager__+ klasy \verb+Model+ wskazuje na typ obiektu zarządzający danymi tego modelu. Dzięki temu możliwe jest zastąpienie standardowej implementacji elementem, który posiada dedykowaną logikę. Podczas zapisywania nowego wiersza zarządca wpisów \verb+TweetManager+:
+
+\begin{enumerate}
+	\item Odszuka wszystkich użytkowników śledzących autora wpisu.
+	\item Dla każdego ze śledzących utworzy wpis na osi czasu.
+	\item Utworzy wpis na osi czasu autora wpisu.
+\end{enumerate}
+
+\noindent Implementację według powyższego algorytmu przedstawia listing~\ref{vrb:omc_twissandra_tweet_save}.
+
+\begin{verbbox}
+	class TweetManager(ObjectManager):
+	    def save(entity):
+	        super(ObjectManager, self).save(entity)
+
+	        followers = Followers.objects().find(
+	                        user=entity.user_username)
+
+	        for follower in followers:
+	            timeline = Timeline(user=follower.username, 
+	                                tweet=entity)
+	            timeline.save()
+
+	        user_timeline = Timeline(user=entity.user_username, 
+	                                 tweet=entity)
+	        user_timeline.save()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Automatyczne zapisywanie wpisu do osi czasu użytkownika oraz śledzących go osób.}
+	\label{vrb:omc_twissandra_tweet_save}
+\end{figure}
+
+Możliwość włączenia uniwersalnych metod przetwarzania danych bezpośrednio do funkcji obsługujących model jest korzystna. Sposób obsługi przechowywanych informacji stanowi o~ich charakterystyce. Pojęciowo jest on  integralną częścią modelu. Korzyści są widoczne zwłaszcza w~ramach rozwoju systemu. Jeżeli zajdzie konieczność dodania niestandardowej logiki biznesowej obsługującej encje zagwarantowane jest, że modyfikacje wystarczy wprowadzić w~jednym miejscu.
+
+Klasa \verb+ObjectManager+ posiada metodę, która umożliwia modyfikację instancji modelu bezpośrednio przed zapisem. Jej działanie zostanie zaprezentowane dla następujących prawdopodobnych założeń dla serwisu Twitter:
+
+\begin{itemize}
+	\item W~systemie wpisy dodawane są tylko w~kontekście aktualnie zalogowanego użytkownika.
+	\item Istnieje obiekt \verb+LoginManager+, który zwraca informację o~aktualnie zalogowanym użytkowniku.
+\end{itemize}
+
+Przyjmując powyższe założenia można zmodyfikować zarządcę wpisów w~taki sposób, aby w~polu \verb+user+ zawsze zapisywana była nazwa aktualnie uwierzytelnionego użytkownika. Do tego celu wykorzystano metodę \verb+before_save+. Jej użycie przedstawia listing~\ref{vrb:omc_twissandra_tweet_pre_save}.
+
+\begin{verbbox}
+	class TweetManager(ObjectManager):
+	    def before_save(entity):
+	        super(ObjectManager, self).before_save(entity)
+	        entity.user = LoginManager.get_authenticated_user()
+\end{verbbox}
+
+\begin{figure}[ht!]
+	\centering
+	\theverbbox
+	\caption{Automatyczne uzupełnianie pola \emph{user} aktualnie uwierzytelnionym użytkownikiem.}
+	\label{vrb:omc_twissandra_tweet_pre_save}
+\end{figure}
+
+\subsection{Oś czasu}
 
 \begin{verbbox}
 	class Timeline(Model):
