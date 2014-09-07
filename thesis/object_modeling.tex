@@ -808,6 +808,7 @@ Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowa
 \end{itemize}
 
 \subsection{Szereg zdarzeń}
+\label{sec:time_series_modeling}
 
 Apache Cassandra została zaprojektowana z~myślą o~wspieraniu szeregów zdarzeń. Szereg zdarzeń to uporządkowane względem czasu wystąpienia wpisy do bazy danych, które opcjonalnie mogą posiadać z~góry określony czas życia. Typowym przykładem szeregu zdarzeń są wartości odczytów z~urządzeń pomiarowych. Wartości te zwyczajowo są pobierane cyklicznie, a~do wykorzystania w~czasie rzeczywistym przydatne są tylko najnowsze odczyty. Doskonały opis modelowania szeregów zdarzeń przedstawiony jest we wpisie Patricka McFadina na portalu \textbf{Planet Cassandra}.~\cite{time_series_modeling_pattern} Artykuł analizuje przykład stacji meteorologicznych. Przedstawia trzy sposoby zapisu szeregu zdarzeń w~Apache Cassandra. 
 

@@ -198,7 +198,7 @@ Klasa \verb+ObjectManager+ posiada metodę, która umożliwia modyfikację insta
 	\item Istnieje obiekt \verb+LoginManager+, który zwraca informację o~aktualnie zalogowanym użytkowniku.
 \end{itemize}
 
-Przyjmując powyższe założenia można zmodyfikować zarządcę wpisów w~taki sposób, aby w~polu \verb+user+ zawsze zapisywana była nazwa aktualnie uwierzytelnionego użytkownika. Do tego celu wykorzystano metodę \verb+before_save+. Jej użycie przedstawia listing~\ref{vrb:omc_twissandra_tweet_pre_save}.
+Przyjmując powyższe założenia można zmodyfikować zarządcę wpisów w~taki sposób, aby w~polu \verb+user+ zawsze zapisywana była nazwa aktualnie uwierzytelnionego użytkownika. Do tego celu nadpisano metodę wywoływaną przed każdym zapisem - \verb+before_save()+. Jej użycie przedstawia listing~\ref{vrb:omc_twissandra_tweet_pre_save}.
 
 \begin{verbbox}
 	class TweetManager(ObjectManager):
@@ -248,3 +248,14 @@ Do realizacji powiązania poprzez denormalizację wymagane jest podanie dwóch d
 	\caption{Oś czasu w~Twissandrze zamodelowana w~OMC.}
 	\label{vrb:omc_twissandra_timeline}
 \end{figure}
+
+W~sekcji~\ref{sec:twissandra} Autor zaproponował żeby oś czasu była partycjonowana po nazwie użytkownika oraz dacie wpisu (z~dokładnością do dnia). Można wykorzystać do tego celu metodę \verb+before_save()+ omówioną przy okazji encji wpisu:
+
+\begin{enumerate}
+	\item Do modelu \verb+Timeline+ dodać tekstowe pole \verb+day+ i~dołączyć je do klucza typu partycjonującego.
+	\item W~metodzie \verb+before_save()+ pobrać datę wpisu z~pola \verb+tweet_time+, sformatować ją do postaci ciągu znaków i~wpisać do pola \verb+day+.
+\end{enumerate}
+
+Rozwiązanie to wprowadza pewną automatyzację. Podobnie jak w~przypadku implementacji wykorzystującej czysty język CQL wymaga jednak napisania kodu źródłowego służącego do formatowania dat. Pamiętając, że OMC oferuje wsparcie dla wzorców projektowania można znacznie prościej zaprojektować model. Opisany w~sekcji~\ref{sec:time_series_modeling} szereg zdarzeń jest odpowiedzialny za partycjonowanie wpisów po komponentach daty. Wykorzystując wzorzec wystarczy dodać do pola \verb+tweet_time+ parametr konfiguracyjny \verb+partition_by_day=True+ i~wszystkie opisane wcześniej czynności zostaną automatycznie wykonane przez OMC. 
+
+
