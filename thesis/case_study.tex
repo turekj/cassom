@@ -216,16 +216,30 @@ Przyjmując powyższe założenia można zmodyfikować zarządcę wpisów w~taki
 
 \subsection{Oś czasu}
 
+Oś czasu jest najbardziej skomplikowanym elementem modelu Twissandry. Jednocześnie ukazuje najwięcej korzyści wykorzystania mechanizmu OMC do modelowania dziedziny danych. 
+
+Oś czasu jest bezpośrednio związana z~użytkownikiem. Do realizacji tego powiązania, podobnie jak w~przypadku wpisów lub śledzonych osób, można wykorzystać pole typu \verb+RelatedField+. Znacznie ciekawszym przypadkiem jest relacja osi czasu i~wpisu. Zgodnie z~wnioskami przedstawionymi w~sekcji~\ref{sec:twissandra} do wydajnej realizacji tego powiązania można wykorzystać denormalizację. 
+
+Relizując denormalizację przy pomocy języka CQL nie ma możliwości wprowadzenia żadnego powiązania pomiędzy odpowiadającymi kolumnami. Dane traktowane są zupełnie niezależnie, a~za zachowanie ich spójności odpowiada wyłącznie programista aplikacji. Mechanizm OMC realizuje logiczne powiązanie danych przy pomocy pola \verb+DenormalizedField+. Świadczą o~tym następujące możliwości:
+
+\begin{itemize}
+	\item Wartość pola może być ustawiana na podstawie instancji obiektu zależnego (w~tym wypadku \verb+Tweet+).
+	\item Istnieje możliwość sprawdzenia poprawności denormalizacji. Zapis obiektu \verb+Timeline+ za pomocą metody \verb+save(validation=True)+ nie powiedzie się jeżeli dane będą niezgodne z~wskazywaną encją. Odpowiada to (rozbudowanemu o~sprawdzanie kolumn niebędących kluczem) mechanizmowi klucza obcego w~relacyjnych bazach danych.
+	\item Mechanizm udostępnia interfejs do automatycznej aktualizacji encji zależnych. Przy modyfikacji obiektu klasy \verb+Tweet+ z~wykorzystaniem metody \verb+update(update_related=True)+ zaktualizują się również odpowiadające temu wpisowi instancje osi czasu.
+\end{itemize}
+
+Do realizacji powiązania poprzez denormalizację wymagane jest podanie dwóch danych. W~parametrze \verb+relates+ wskazywana jest klasa modelu zależnego, natomiast parametr \verb+fields+ to lista nazw pól, które mają zostać zdenormalizowane. Istotne jest, że klucz encji zależnej automatycznie dołączany jest do listy denormalizowanych pól. Na listingu~\ref{vrb:omc_twissandra_timeline} pokazana jest definicja modelu osi czasu, która wykorzystuje \verb+DenormalizedField+.
+
 \begin{verbbox}
 	class Timeline(Model):
 	    user = RelationField(relates=User,
 	                         partition_key=True)
-	    day = TextField()
-	    time = UuidField(type=TimeUuid, 
-	                     auto_generate=True,
-	                     clustering_key=True)
+	    tweet_time = UuidField(type=TimeUuid, 
+	                           auto_generate=True,
+	                           clustering_key=True,
+	                           partition_by_day=True)
 	    tweet = DenormalizedField(relates=Tweet,
-	                              fields=['id', 'body'])
+	                              fields=['body'])
 \end{verbbox}
 
 \begin{figure}[ht!]
