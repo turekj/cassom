@@ -237,6 +237,7 @@ Do realizacji powiązania poprzez denormalizację wymagane jest podanie dwóch d
 	    tweet_time = UuidField(type=TimeUuid, 
 	                           auto_generate=True,
 	                           clustering_key=True,
+	                           order_descending=True,
 	                           partition_by_day=True)
 	    tweet = DenormalizedField(relates=Tweet,
 	                              fields=['body'])
@@ -249,6 +250,8 @@ Do realizacji powiązania poprzez denormalizację wymagane jest podanie dwóch d
 	\label{vrb:omc_twissandra_timeline}
 \end{figure}
 
+Oś czasu powinna być posortowana od najnowszych do najstarszych wpisów. Podobnie jak CQL, mechanizm OMC umożliwia sortowanie pól należących do klucza typu \verb+clustering+. Służą do tego flagi \verb+order_ascending+ oraz \verb+order_descending+, które układają dane odpowiednio w~porządku rosnącym lub malejącym według danej wartości. Na listingu~\ref{vrb:omc_twissandra_timeline} zaprezentowano sortowanie malejące względem pola \verb+tweet_time+, czyli czasu publikacji wpisu.
+
 W~sekcji~\ref{sec:twissandra} Autor zaproponował żeby oś czasu była partycjonowana po nazwie użytkownika oraz dacie wpisu (z~dokładnością do dnia). Można wykorzystać do tego celu metodę \verb+before_save()+ omówioną przy okazji encji wpisu:
 
 \begin{enumerate}
@@ -256,6 +259,12 @@ W~sekcji~\ref{sec:twissandra} Autor zaproponował żeby oś czasu była partycjo
 	\item W~metodzie \verb+before_save()+ pobrać datę wpisu z~pola \verb+tweet_time+, sformatować ją do postaci ciągu znaków i~wpisać do pola \verb+day+.
 \end{enumerate}
 
-Rozwiązanie to wprowadza pewną automatyzację. Podobnie jak w~przypadku implementacji wykorzystującej czysty język CQL wymaga jednak napisania kodu źródłowego służącego do formatowania dat. Pamiętając, że OMC oferuje wsparcie dla wzorców projektowania można znacznie prościej zaprojektować model. Opisany w~sekcji~\ref{sec:time_series_modeling} szereg zdarzeń jest odpowiedzialny za partycjonowanie wpisów po komponentach daty. Wykorzystując wzorzec wystarczy dodać do pola \verb+tweet_time+ parametr konfiguracyjny \verb+partition_by_day=True+ i~wszystkie opisane wcześniej czynności zostaną automatycznie wykonane przez OMC. 
+Rozwiązanie to wprowadza pewną automatyzację. Podobnie jak w~przypadku implementacji wykorzystującej czysty język CQL wymaga jednak napisania kodu źródłowego służącego do formatowania dat. Pamiętając, że OMC oferuje wsparcie dla wzorców projektowania można znacznie prościej zaprojektować model. Opisany w~sekcji~\ref{sec:time_series_modeling} szereg zdarzeń jest odpowiedzialny za partycjonowanie wpisów po komponentach daty. Wykorzystując wzorzec wystarczy dodać do pola \verb+tweet_time+ parametr konfiguracyjny \verb+partition_by_day=True+ i~wszystkie opisane wcześniej czynności zostaną automatycznie wykonane przez OMC. Takie rozwiązanie zostało uwzględnione na listingu~\ref{vrb:omc_twissandra_timeline} pokazującym model osi czasu.
 
+\section{Wnioski}
 
+Studium przypadku dla projektu Twissandra pozwala wyciągnąć wnioski dotyczące mechanizmu modelowania obiektowego dla Cassandry. OMC jest narzędziem wspierającym tworzenie schematu danych. Może być ono zastosowane bez znajomości języka CQL i/lub podstawowej wiedzy na temat wewnętrznej reprezentacji informacji w~Cassandrze. Jednakże podobnie jak w~przypadku mapowania obiektowo-relacyjnego zbudowanie efektywnego modelu wymaga znajomości zagadnień związanych z~bazą danych. Proces modelowania wymaga podejmowania decyzji analogicznych do definiowania schematu w~języku CQL.
+
+W~odróżnieniu od CQL mechanizm OMC pozwala definiować dziedzinę danych na różnych poziomach abstrakcji. Tworzy on nie tylko fizyczny schemat, ale ponadto opisuje charakterystykę danych, zależności pomiędzy encjami, a~także sposób ich przetwarzania. Dzięki dedykowanym mechanizmom dla wzorców projektowania użytkownik oszczędza dużo pracy. W~OMC definiowany jest problem, natomiast jego rozwiązaniem zajmuje się narzędzie.
+
+Filozofią modelowania obiektowego dla Cassandry jest budowanie efektywnych, logicznych schematów danych. Przykładowo dodając nowy element \verb+Timeline+ w~OMC wystarczy podać dwie dane: instancję użytkownika \verb+User+ oraz wpisu \verb+Tweet+. Odpowiada to logicznej strukturze danych. Oś czasu jest bowiem złączeniem użytkownika serwisu i~widocznych dla niego wpisów. Dla kontrastu język CQL opisuje fizyczną strukturę. Dodając nowy element osi czasu należy manualnie uzupełnić wartości aż pięciu kolumn.

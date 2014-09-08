@@ -3,9 +3,9 @@
 \chapter{Apache Cassandra}
 \label{chap:apache_cassandra}
 
-Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza danych typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych.}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do których dążyli twórcy Cassandry była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
+Apache Cassandra jest bazą danych NoSQL\footnote{NoSQL (ang. Not Only SQL) - podzbiór baz danych, które zapewniają inne sposoby modelowania dziedziny niż tradycyjny model oparty na tabelach i~relacjach.}, która powstała w~wyniku połączenia rozwiązań wykorzystywanych w~Dynamo\footnote{Amazon DynamoDB - zdecentralizowana, wysoce skalowalna baza typu klucz-wartość.} oraz BigTable\footnote{Google BigTable - rozproszony system bazodanowy, który dobrze skaluje się dla ogromnych ilości danych.}. Cassandra początkowo była rozwijana dla potrzeb portalu społecznościowego Facebook. Baza danych powstała z~myślą o~rozwiązaniu problemu pełnotekstowego przeszukiwania skrzynek odbiorczych użytkowników, w~których dziennie zapisywane były miliardy wiadomości. Głównym celem, do którego dążyli twórcy Cassandry, była możliwość wykorzystania jej do przechowywania ogromnych ilości danych w~bardzo rozproszonym środowisku, gdzie awarie pojedynczych węzłów zdarzają się na porządku dziennym. W~tych warunkach baza danych musi zapewniać szybki i~niezawodny dostęp do danych. \cite{cassandra_introduction} 
 
-Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najbardziej znaczące przykłady użycia produkcyjnego to eBay, Instagram oraz GitHub\footnote{eBay, Instagram, Github - przykłady dużych portali internetowych. eBay to serwis aukcyjny, Instagram to portal społecznościowy oparty o~publikację zdjęć wykonanych telefonami komórkowymi, a~Github to usługa pozwalająca na przechowywanie i~wersjonowanie kodu źródłowego aplikacji.}. Największa światowa instalacja Cassandry obejmuje około 15000 węzłów, na których przechowywane jest łącznie ponad 4 petabajty danych. \cite{official_cassandra}
+Apache Cassandra wykorzystywana jest w~wielu serwisach na całym świecie. Najbardziej znaczące przykłady użycia produkcyjnego to eBay, Instagram oraz Github\footnote{eBay, Instagram, Github - przykłady dużych portali internetowych. eBay to serwis aukcyjny, Instagram to portal społecznościowy oparty o~publikację zdjęć wykonanych telefonami komórkowymi, a~Github to usługa pozwalająca na przechowywanie i~wersjonowanie kodu źródłowego aplikacji.}. Największa światowa instalacja Cassandry obejmuje około 15000 węzłów, na których przechowywane jest łącznie ponad 4 petabajty danych. \cite{official_cassandra}
 
 W~przeciwieństwie do relacyjnych baz danych, Apache Cassandra nie zapewnia wsparcia dla reguły ACID\footnote{ACID (ang. Atomic, Consistency, Isolation, Durability) - zasada atomowości, spójności, izolacji i~trwałości. Wymienione cechy gwarantują poprawne przetwarzanie transakcji w~bazach danych.}. Zamiast tego zostały zrealizowane postulaty twierdzenia CAP: ,,we współdzielonym systemie plików można zachować maksymalnie dwie z~trzech właściwości: spójności, dostępności oraz podatności na partycjonowanie''. \cite{cap_theorem} Apache Cassandra priorytetyzuje właściwości dostępności oraz partycjonowania. Spójność danych jest odwrotnie proporcjonalna i~może być regulowana w~zależności od czasu odpowiedzi. Wysoka spójność danych oznacza wolniejszą odpowiedź bazy.
 
@@ -19,7 +19,7 @@ Model danych Apache Cassandra jest analogiczny do BigTable. \cite{official_bigta
 	\verb+Map<RowKey, Map<ColumnKey, Triple<Value, Timestamp, TTL>>>+
 \end{figure}
 
-gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. \cite{mc_fadin_long_live_data_model} Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych. Pogrubiona wartość w~lewej komórce to klucz wiersza, natomiast wyróżnione wartości w~pierwszym wierszu oznaczają klucze poszczególnych kolumn. Każda komórka składa się z~trzech wartości: wartości, czasu życia oraz ,,odcisku czasu''.
+gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator kolumny, \verb+Value+ to wartość komórki, \verb+Timestamp+ to czas aktualizacji komórki, a~\verb+TTL+ to czas życia danej wartości. \cite{mc_fadin_long_live_data_model} Na rysunku \ref{fig:data_model_example} przedstawiona jest schematyczna ilustracja wiersza danych. Pogrubiona wartość w~lewej komórce to klucz wiersza, natomiast wyróżnione nagłówki oznaczają klucze poszczególnych kolumn. Każda komórka składa się z~trzech elementów: wartości, czasu życia oraz ,,odcisku czasu''.
 
 \begin{figure}[ht!]
 	\centering
@@ -43,6 +43,13 @@ gdzie \verb+RowKey+ to identyfikator wiersza, \verb+ColumnKey+ to identyfikator 
 \label{sec:cassandra_data_distribution}
 
 Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kolejność elementów. Węzły są rozmieszczone w~topologii pierścienia. Algorytm dystrybucji zostanie omówiony na przykładzie ze schematu~\ref{fig:data_distribution}: 
+
+\begin{enumerate}
+	\item Każdemu z~węzłów $\{A, B, C, D, E, F\}$ przypisywany jest token, który zawiera się w~zakresie wartości przyjmowanych przez funkcję skrótu. Strategię wyboru tokena można konfigurować. Przykładową strategią jest wybór losowy. W~omawianym przykładzie węzłom zostały przypisane tokeny o~wartościach $\{-16, -9, -3, 4, 9, 17\}$.
+	\item Użytkownik bazy danych przesyła żądanie do dowolnego węzła, który pełni funkcję koordynatora dla danej operacji. Koordynator nadzoruje wpisanie danych do odpowiednich węzłów. W~omawianym przykładzie rolę koordynatora pełni węzeł~$E$.
+	\item \label{en:master_node} Każdy węzeł przechowuje dane, których funkcja skrótu zawiera się w~przedziale $(token_{n-1}, token_{n}]$, gdzie $n$ to numer kolejny węzła rosnący zgodnie z~ruchem wskazówek zegara. W~przykładzie węzeł~$C$ przechowuje wiersze o~wartościach funkcji skrótu z~przedziału $(-9, -3]$, natomiast węzeł~$D$ z~przedziału $(-3, 4]$. Wartości funkcji obliczane są cyklicznie, stąd węzeł~$A$ przechowuje wiersze o~skrócie z~przedziału $(-\infty, -16] \cup (17, \infty)$. W~przykładzie wiersz o~kluczu z~funkcją skrótu wartości $-10$ zostanie utrwalony na węźle~$B$.
+	\item Dane replikowane są na $n$ węzłach, gdzie $n$ to wartość konfigurowalnego współczynnika replikacji. Poza węzłem macierzystym (wyznaczanym w~punkcie \ref{en:master_node} algorytmu) dane są replikowane na $n - 1$ kolejnych (zgodnie z~ruchem wskazówek zegara) węzłach. W~omawianym przykładzie dane zostaną zreplikowane na węzłach~$C$~i~$D$.
+\end{enumerate}
 
 \begin{figure}[ht!]
 	\centering
@@ -71,13 +78,6 @@ Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kole
 	\caption{Schematyczna ilustracja dystrybucji danych w~bazie danych Apache Cassandra.}
 	\label{fig:data_distribution}
 \end{figure}
-
-\begin{enumerate}
-	\item Każdemu z~węzłów $\{A, B, C, D, E, F\}$ przypisywany jest token, który zawiera się w~zakresie wartości przyjmowanych przez funkcję skrótu. Strategię wybóru tokenu można konfigurować. Przykładową strategią jest wybór losowy. W~omawianym przykładzie węzłom zostały przypisane tokeny o~wartościach $\{-16, -9, -3, 4, 9, 17\}$.
-	\item Użytkownik bazy danych przesyła żądanie do dowolnego węzła, który pełni funkcję koordynatora dla danej operacji. Koordynator nadzoruje wpisanie danych do odpowiednich węzłów. W~omawianym przykładzie rolę koordynatora pełni węzeł~$E$.
-	\item \label{en:master_node} Każdy węzeł przechowuje dane, których funkcja skrótu zawiera się w~przedziale $(token_{n-1}, token_{n}]$, gdzie $n$ to numer kolejny węzła rosnący zgodnie z~ruchem wskazówek zegara. W~przykładzie węzeł~$C$ przechowuje wiersze o~wartościach funkcji skrótu z~przedziału $(-9, -3]$, natomiast węzeł~$D$ z~przedziału $(-3, 4]$. Wartości funkcji obliczane są cyklicznie, stąd węzeł~$A$ przechowuje wiersze o~skrócie z~przedziału $(-\infty, -16] \cup (17, \infty)$. W~przykładzie wiersz o~kluczu z~funkcją skrótu wartości $-10$ zostanie utrwalony na węźle~$B$.
-	\item Dane replikowane są na $n$ węzłach, gdzie $n$ to wartość konfigurowalnego współczynnika replikacji. Poza węzłem macierzystym (wyznaczanym w~punkcie \ref{en:master_node} algorytmu) dane są replikowane na $n - 1$ kolejnych (zgodnie z~ruchem wskazówek zegara) węzłach. W~omawianym przykładzie dane zostaną zreplikowane na węzłach~$C$~i~$D$.
-\end{enumerate}
 
 \section{Algorytmy zapisu/usuwania danych}
 \label{sec:data_storage_delete_algorithm}
@@ -133,11 +133,11 @@ Algorytm zapisu danych w~Apache Cassandra został schematycznie przedstawiony na
 			\item \emph{commit log} - przechowuje informacje o~kolejnych zapisach wykonywanych do bazy danych.
 		\end{itemize}
 	\item Podstawową strukturą do pobierania danych jest \emph{memtable}. Jest ona umieszczona w~szybkiej pamięci, zapewnia więc krótki czas dostępu do danych. Wykorzystanie trwałej struktury \emph{commit log} pozwala na odtworzenie zawartości \emph{memtable} w~przypadku awarii wymagającej nagłego restartu maszyny, na przykład braku zasilania. Przy ponownym uruchomieniu węzła Cassandry odtwarza on kolejno wszystkie zapisy, które znajdują się w~\emph{commit logu}.
-	\item W~przypadku przepełnienia \emph{memtable} wykonywane jest ,,spłukiwanie'' zawartości pamięci na dysk do struktury nazywanej \emph{SSTable}. Poza danymi zawiera ona indeks, który pozwala na szybki dostęp do danych wierszy. Jej charakterystyczną cechą jest niezmienność. Po przepisaniu danych z~\emph{memtable} do \emph{SSTable} druga z~nich nie jest już modyfikowana. Z~tego względu wiersze o~tym samym kluczu są często podzielone pomiędzy wiele takich struktur. ,,Spłukiwanie'' może zostać uruchomione manualnie z~wykorzystaniem polecenia \verb+nodetool flush+.
+	\item W~przypadku przepełnienia \emph{memtable} wykonywane jest ,,spłukiwanie'' zawartości pamięci na dysk do struktury nazywanej \emph{SSTable}. Poza danymi zawiera ona indeks, który pozwala na szybki dostęp do danych wierszy. Jej charakterystyczną cechą jest niezmienność. Po przepisaniu danych z~\emph{memtable} do \emph{SSTable} jej zawartość nie jest już modyfikowana. Z~tego względu wiersze o~tym samym kluczu są często podzielone pomiędzy wiele takich struktur. ,,Spłukiwanie'' może zostać uruchomione manualnie z~wykorzystaniem polecenia \verb+nodetool flush+.
 	\item Ostatnim etapem zapisu danych jest kompresja. Aktualizacja danych nie może nadpisywać istniejących wierszy, bo struktura \emph{SSTable} jest niezmienna. Zamiast tego wstawia ona rekordy z~późniejszym ,,odciskiem czasu''. Powoduje to nadmiarowe zużycie przestrzeni dyskowej. Kompresja pozwala usunąć nieaktualne wierwsze poprzez przepisanie istniejących \emph{SSTable} na nowe, uporządkowane struktury. Kompresja może być wywoływana automatycznie w~zależności od wybranej strategii lub manualnie, z~wykorzystaniem polecenia \verb+nodetool compact+.
 \end{enumerate}
 
-Niemodyfikowalność struktur \emph{SSTable} ma swoje konsekwencje także w~przypadku usuwania danych. Wiersz nie może zostać fizycznie skasowany. Zamiast tego oznacza się go specjalnym znacznikiem \emph{tombstone}. Wiersze oznaczone tą flagą są usuwane na etapie kompresji danych.
+Niemodyfikowalność struktur \emph{SSTable} ma swoje konsekwencje także dla operacji usuwania danych. Wiersz nie może zostać fizycznie skasowany. Zamiast tego oznacza się go specjalnym znacznikiem \emph{tombstone}. Wiersze oznaczone tą flagą są usuwane na etapie kompresji danych.
 
 \section{Obszary zastosowania Cassandry}
 \label{sec:cassandra_usage_areas}
@@ -146,8 +146,8 @@ Specyficzny schemat danych Apache Cassandry i~brak wielu mechanizmów znanych z~
 
 \begin{itemize}
 	\item Brak wsparcia dla transakcji znacząco utrudnia wykorzystanie Cassandry w~dziedzinach, dla których spójność danych jest kwestią kluczową. Przykładem może być obszar finansowy. W~systemach relacyjnych spójność jest zapewniona poprzez mechanizmy bazy danych. W~przypadku Apache Cassandry odpowiedzialność zostaje przeniesiona na aplikacje dostępowe, co znacząco zwiększa ilość pracy koncepcyjnej i~zwiększa ryzyko błędów.
-	\item Brak możliwości złączania powoduje, że model danych musi być projektowany w~oparciu o~wykonywane do niego odwołania. Utrudnia to rozbudowę aplikacji. Przykładowo dla relacji jeden do wielu modelowanej poprzez tabelę, w~której identyfikatorem wiersza jest identyfikator obiektu nadrzędnego, a~w~kolumnach wpisywane są identyfikatory obiektów podrzędnych, nie jest możliwe zwrócenie wszystkich obiektów nadrzędnych wskazujących na danych obiekt podrzędny bez modyfikacji schematu.
-	\item Brak złączeń implikuje denormalizację modelu danych. Wprowadza to problemy z~zachowaniem spójności. Aby zaktualizować adres, który jest przechowywany w~formie zdenormalizowanej w~tabeli użytkownika oraz zamówienia należy znaleźć wszystkie rekordy, które wskazują na ten adres. Odpowiedzialność za spójność danych ponownie zostaje przeniesiona na aplikację, która wykorzystuje bazę.
+	\item Brak możliwości złączania powoduje, że model danych musi być projektowany w~oparciu o~wykonywane do niego odwołania. Utrudnia to rozbudowę aplikacji. Przykładowo dla relacji jeden do wielu modelowanej poprzez tabelę, w~której identyfikatorem wiersza jest identyfikator obiektu nadrzędnego, a~w~kolumnach wpisywane są identyfikatory obiektów podrzędnych, nie jest możliwe zwrócenie wszystkich obiektów nadrzędnych wskazujących na dany obiekt podrzędny bez modyfikacji schematu.
+	\item Brak złączeń implikuje denormalizację modelu danych. Wprowadza to problemy z~zachowaniem spójności. Aby zaktualizować adres, który jest przechowywany w~formie zdenormalizowanej w~tabeli użytkownika oraz zamówienia, należy znaleźć wszystkie rekordy, które wskazują na ten adres. Odpowiedzialność za spójność danych ponownie zostaje przeniesiona na aplikację, która wykorzystuje bazę.
 \end{itemize}
 
 W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono porównanie różnych aspektów Apache Cassandry i~relacyjnych systemów bazodanowych. Analizując informacje zebrane w~tabeli i~przedstawione wcześniej w~rozdziale można wyciągnąć następujące wnioski:
@@ -187,7 +187,7 @@ W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono poró
 			\hline
 		\end{tabular}
 
-		\footnotetext{Sharding (od \emph{shard} - ang. kawałek) - technika polegająca na podziale zbioru danych na niezależne partycje w~zależności od ich cech, na przykład grupując użytkowników po lokalizacji geograficznej.~\cite{database_sharding}}
+		\footnotetext{Sharding (od \emph{shard} - ang. kawałek) - technika polegająca na podziale zbioru danych na niezależne partycje w~zależności od ich cech, na przykład grupując użytkowników według lokalizacji geograficznej.~\cite{database_sharding}}
 
 		\caption{Porównanie Apache Cassandry z~relacyjnymi bazami danych.}
 		\label{tab:cassanda_relationship_database_comparison}
@@ -215,7 +215,7 @@ W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono poró
 	\item \textbf{Systemy ,,zapisochłonne''}.
 \end{itemize}
 
-Z~przedstawionych scenariuszy Autor zdecydował się wyróżnić ostatni. Istotnym zagadnieniem w~przypadku wielkich danych jest operacja zapisu, która musi być wykonywana w~czasie rzeczywistym. Aby omówić problem należy przedstawić typową architekturę wykorzystywaną dla relacyjnych bazach danych do przechowywania wielkich danych.~\cite{sharding_in_mysql} Przedstawia ją diagram~\ref{fig:sharding}.
+Z~przedstawionych scenariuszy Autor zdecydował się wyróżnić ostatni. Istotnym zagadnieniem w~przypadku wielkich danych jest operacja zapisu, która musi być wykonywana w~czasie rzeczywistym. Aby omówić problem należy przedstawić typową architekturę wykorzystywaną w~relacyjnych bazach danych do przechowywania wielkich danych.~\cite{sharding_in_mysql} Prezentuje ją diagram~\ref{fig:sharding}.
 
 \begin{figure}[ht!]
 	\centering
@@ -224,7 +224,7 @@ Z~przedstawionych scenariuszy Autor zdecydował się wyróżnić ostatni. Istotn
 	\label{fig:sharding}
 \end{figure}
 
-Na diagramie przedstawiono aplikację, który odwołuje się do relacyjnej bazy danych. Została ona podzielona na dwie partycje względem identyfikatora wiersza (mniejszy lub większy od 100000). Każda partycja zawiera jeden węzeł, który wykonuje operacje zapisu (\verb+DB Zapis+). Do niego odwołuje się aplikacja z~żądaniem zapisu danych. W~każdej partycji znajdują się również trzy węzły, które pozwalają na odczyt danych (\verb+DB Odczyt+). Aplikacja zwraca się o~odczyt danych kolejno do różnych węzłów. Pozwala to zbalansować obciążenie. Należy zauważyć, że w~przedstawionej architekturze aplikacja musi wiedzieć, do której partycji należy się odwołać dla wyszukiwanych danych.
+Na diagramie przedstawiono aplikację, która odwołuje się do relacyjnej bazy danych. Została ona podzielona na dwie partycje względem identyfikatora wiersza (mniejszy lub większy od 100000). Każda partycja zawiera jeden węzeł, który wykonuje operacje zapisu (\verb+DB Zapis+). Do niego odwołuje się aplikacja z~żądaniem zapisu danych. W~każdej partycji znajdują się również trzy węzły, które pozwalają na odczyt danych (\verb+DB Odczyt+). Aplikacja zwraca się o~odczyt danych kolejno do różnych węzłów. Pozwala to zbalansować obciążenie. Należy zauważyć, że w~przedstawionej architekturze aplikacja musi wiedzieć, do której partycji należy się odwołać aby pobrać odpowiednie dane.
 
 Proces skalowania systemu o~przedstawionej architekturze jest dwustopniowy:
 
@@ -233,7 +233,7 @@ Proces skalowania systemu o~przedstawionej architekturze jest dwustopniowy:
 	\item Skalowanie operacji zapisu. W~tym przypadku nie wystarczy dodanie drugiego węzła odpowiedzialnego za zapis, gdyż dane i~tak muszą zostać zreplikowane pomiędzy węzłami. Z~tego względu obciążenie obu serwerów pozostałoby bez zmian. Skalowanie operacji zapisu to skomplikowany proces wymagający stworzenia nowej partycji i~modyfikacji reguł przydzielania rekordów do poszczególnych fragmentów. 
 \end{enumerate}
 
-Podobna architektura wykorzystywana jest w~komercyjnych rozwiązaniach, takich jak \verb+MySQL Cluster CGE+\footnote{Strona domowa projektu - \url{http://www.mysql.com/products/cluster/}.}. Występują tam dodatkowe warstwy pośredniczące, które ukrywają szczegóły wykonywania zapytań przed aplikacją. Sama zasad działania pozostaje jednak analogiczna.
+Podobna architektura wykorzystywana jest w~komercyjnych rozwiązaniach, takich jak \verb+MySQL Cluster CGE+\footnote{Strona domowa projektu - \url{http://www.mysql.com/products/cluster/}.}. Występują tam dodatkowe warstwy pośredniczące, które ukrywają szczegóły wykonywania zapytań przed aplikacją. Sama zasada działania pozostaje jednak analogiczna.
 
 Problemem w~tej architekturze pozostaje skalowanie operacji zapisu. Może ono zostać wykonane poprawnie tylko pod warunkiem, że istnieje funkcja partycjonująca dla danego natężenia operacji zapisu, która dzieli całość danych na dostatecznie wydajne (a~więc małe) fragmenty. Okazuje się, że w~praktyce nie zawsze jest to możliwe. Właśnie ten problem przyczynił się do powstania projektu Apache Cassandra w~Facebooku. 
 
@@ -242,7 +242,7 @@ Wszystkie przypadki użycia wymienione przez twórców Cassandry pokrywają scen
 \section{Struktura danych a~modelowanie}
 \label{sec:relative_vs_cassandra_model}
 
-Struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandrze zmienia podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
+Struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandrze zmieniają podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
 
 Załóżmy, że celem jest modelowanie danych dla sklepu internetowego. Zakupów dokonują użytkownicy, którzy mogą wstawić wiele przedmiotów z~oferty sklepu na listę życzeń. W~przypadku baz opartych o~język SQL jest to klasyczny problem relacji typu wiele-do-wielu, do modelowania których wykorzystywana jest najczęściej tabela pośrednia. 
 
@@ -597,7 +597,7 @@ W~zaprezentowanym przykładzie kolumna \verb+username+ pełni rolę klucza \verb
 
 Usunięcie kolumny \verb+follower+ z~klucza utworzonej tabeli spowodowałby, że dany użytkownik mógłby być śledzony tylko przez jedną osobę. Z~kolei przesunięcie tej kolumny do klucza typu \verb+partition+ pozwoliłoby pobierać wiersze wyłącznie przy podaniu kombinacji wartości \verb+username+ oraz \verb+follower+, co nie jest intencją omawianego modelu.
 
-Tabela \verb+followers+ umożliwia reprezentację relacji śledzenia tylko w~jedną stronę. Do realizacji widoku, na którym będą wyświetlone wszystkie wpisy osób śledzonych przez użytkownika wymagana jest informacja odwrotna. Autor Twissandry sugeruje stworzenie komplementarnej tabeli \verb+friends+, w~której zapisane będą nazwy osób śledzonych przez dany profil. W~omawianym przypadku równie wydajnym rozwiązaniem jest wykorzystanie indeksów zaimplementowanych w~CQL. Stworzenie indeksu na kolumnie \verb+follower+ w~tabeli \verb+followers+ przy pomocy zapytania przedstawionego na listingu~\ref{lst:all_followed_by_jkowalski_index} umożliwia wyszukanie wszystkich użytkowników śledzonych przez danego. Przykładowe zapytanie realizujące takie wyszukanie zostało zaprezentowane na listingu~\ref{lst:all_followed_by_jkowalski_select}.
+Tabela \verb+followers+ umożliwia reprezentację relacji śledzenia tylko w~jedną stronę. Do realizacji widoku, na którym będą wyświetlone wszystkie wpisy osób śledzonych przez użytkownika, wymagana jest informacja odwrotna. Autor Twissandry sugeruje stworzenie komplementarnej tabeli \verb+friends+, w~której zapisane będą nazwy osób śledzonych przez dany profil. W~omawianym przypadku równie wydajnym rozwiązaniem jest wykorzystanie indeksów zaimplementowanych w~CQL. Stworzenie indeksu na kolumnie \verb+follower+ w~tabeli \verb+followers+ przy pomocy zapytania przedstawionego na listingu~\ref{lst:all_followed_by_jkowalski_index} umożliwia wyszukanie wszystkich osób śledzonych przez danego użytkownika. Przykładowe zapytanie realizujące takie wyszukanie zostało zaprezentowane na listingu~\ref{lst:all_followed_by_jkowalski_select}.
 
 \begin{verbbox}
 	CREATE INDEX ON followers (follower)
@@ -712,7 +712,7 @@ W~powyższym schemacie kluczowym problemem jest reprezentacja publicznej osi cza
 
 Rozwiązaniem tego problemu jest wprowadzenie większej granulacji publicznej osi czasu. Można to osiągnąć rozbudowując klucz typu \verb+partition+ o~kolejną składową. Sugerowanym przez Autora rozbiciem osi czasu jest podział względem dnia publikacji wpisu. Przykładowo aplikacja może odwoływać się do klucza \verb+!PUBLIC!2014-07-01+ dla wpisów opublikowanych pierwszego lipca 2014 roku, natomiast do pobrania danych z~kolejnego dnia wykorzystywać identyfikator \verb+!PUBLIC!2014-07-02+. 
 
-Dużym ułatwieniem jest fakt, że aplikacja nie musi samodzielnie budować i~zarządzać skomplikowanymi identyfikatorami. Język CQL umożliwia wykorzystanie złożonego klucza typu \verb+partition+.~\cite{create_table_cassandra_reference} Listing~\ref{lst:timeline_day_partitioned} prezentuje w~jaki sposób zdefiniować oś czasu z~dodatkowym podziałem względem dnia publikacji. Zmiana obejmuje dodanie kolumny tekstowej \verb+day+ oraz uwzględnienie jej w~klauzuli \verb+PRIMARY KEY+. W~fizycznym modelu danych wpisy o~jednakowych wartościach nazwy użytkownika i~dnia zostaną pogrupowane w~wiersze, natomiast wpisy dla tej samej osoby, ale pochodzące z~różnych dni będą rozdzielone pomiędzy węzłami.
+Dużym ułatwieniem jest fakt, że aplikacja nie musi samodzielnie budować i~zarządzać skomplikowanymi identyfikatorami. Język CQL umożliwia wykorzystanie złożonego klucza typu \verb+partition+.~\cite{create_table_cassandra_reference} Listing~\ref{lst:timeline_day_partitioned} prezentuje w~jaki sposób zdefiniować oś czasu z~dodatkowym podziałem względem dnia publikacji. Zmiana obejmuje dodanie kolumny tekstowej \verb+day+ oraz uwzględnienie jej w~klauzuli \verb+PRIMARY KEY+. W~fizycznym modelu danych wpisy o~jednakowych wartościach nazwy użytkownika i~dnia zostaną pogrupowane w~wiersze, natomiast wpisy dla tej samej osoby, ale pochodzące z~różnych dni, będą rozdzielone pomiędzy węzłami.
 
 Wykorzystując klucze złożone należy pamiętać, że istotna jest kolejność nawiasów zastosowanych w~klauzuli \verb+PRIMARY KEY+. W~przypadku pominięcia wewnętrznego nawiasu dla pary \verb+(username, day)+ nowa kolumna zostałaby częścią klucza typu \verb+clustering+, który byłby opisany dwójką \verb+(day, time)+.
 
@@ -745,9 +745,9 @@ INSERT INTO timeline (username, day, time,
 \section{Modelowanie - wzorce i~antywzorce}
 \label{sec:patterns_and_antipatterns}
 
-Pomimo, że CQL znacząco upraszcza modelowanie w~Cassandrze stworzenie efektywnego schematu danych nie jest zadaniem prostym. Aby ułatwić ten proces twórcy i~użytkownicy Cassandry zaczęli opisywać wzorce i~antywzorce modelowania oraz dostępu do danych. Pełnią one analogiczną role do wzorców i~antywzorców projektowych znanych z~inżynierii oprogramowania. Na ich opis składa się możliwie ogólna definicja problemu, a~także poprawny (lub niepoprawny) sposób jego rozwiązania. 
+Pomimo że CQL znacząco upraszcza modelowanie w~Cassandrze to stworzenie efektywnego schematu danych nie jest zadaniem prostym. Aby ułatwić ten proces twórcy i~użytkownicy Cassandry zaczęli opisywać wzorce i~antywzorce modelowania oraz dostępu do danych. Pełnią one rolę analogiczną do wzorców i~antywzorców projektowych znanych z~inżynierii oprogramowania. Na ich opis składa się możliwie ogólna definicja problemu, a~także poprawny (lub niepoprawny) sposób jego rozwiązania. 
 
-Przykładem antywzorca modelowania jest kolejka oparta na kolumnach.~\cite{cassandra_queue_antipattern} Kolejka to struktura danych, w~której ilości wykonywanych operacji wstawiania, usuwania i~odczytu są do siebie zbliżone. W~przypadku Cassandry usuwanie kolumn z~wiersza nie jest wykonywane natychmiast po odebraniu żądania. Zamiast tego usunięta kolumna jest oznaczana specjalnym znacznikiem \emph{tombstone} i~fizycznie usuwana dopiero po upłynięciu pewnego czasu. Takie działanie przyspiesza znacząco operację usuwania kosztem operacji odczytu. Kiedy w~wierszu występuje wiele znaczników \emph{tombstone} operacje filtrowania zakresu kolumn wykonywane są znacznie wolniej.
+Przykładem antywzorca modelowania jest kolejka, której elementy zapisywane są w~kolumnach.~\cite{cassandra_queue_antipattern} Kolejka to struktura danych, w~której ilości wykonywanych operacji wstawiania, usuwania i~odczytu są do siebie zbliżone. W~przypadku Cassandry usuwanie kolumn z~wiersza nie jest wykonywane natychmiast po odebraniu żądania. Zamiast tego usunięta kolumna jest oznaczana specjalnym znacznikiem \emph{tombstone} i~fizycznie usuwana dopiero po upłynięciu pewnego czasu. Takie działanie przyspiesza znacząco operację usuwania kosztem operacji odczytu. Kiedy w~wierszu występuje wiele znaczników \emph{tombstone} operacje filtrowania zakresu kolumn wykonywane są znacznie wolniej.
 
 Przykładem wzorca dostępu do danych jest unikanie konfliktów synchronizacji poprzez uaktualnianie wyłącznie zmodyfikowanych wartości.~\cite{cassandra_concepts_patterns_antipatterns} Encja \emph{Item} z~diagramu~\ref{tab:bad_cassandra_data_model} ma 5~właściwości. Wyświetlenie ekranu aktualizacji przedmiotu wymaga pobrania zawartości całego wiersza z~bazy danych. Wzorzec stanowi, że jeżeli na tym ekranie zostanie zmieniony wyłącznie opis to do Cassandry należy przesłać żądanie uaktualniające zawartość wyłącznie jednej komórki - \emph{desc}. Pozostałe wartości z~formularza mogą być już nieaktualne. Przesłanie kompletu informacji poskutkowałoby nadpisaniem aktualnych wartości. Postępowanie według wzorca pozwala wykorzystywać mechanizm rozwiązywania konfliktów wbudowany w~Cassandrę.
 
