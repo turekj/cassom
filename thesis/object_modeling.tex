@@ -63,9 +63,9 @@ Na rysuku~\ref{fig:omc_components} zaprezentowano diagram komponentów mechanizm
 
 \begin{description}
 	\item[Silnik bazodanowy] jest oparty o~sterownik języka CQL. W~skład silnika wchodzą metody umożliwiające nawiązywanie i~konfigurowanie połączenia z~Cassandrą, zarządzanie klastrem, wykonywanie oraz zapewnianie bezpieczeństwa zapytań.
-	\item[Schemat] moduł, który służy do zarządzania fizycznym modelem danych. Odpowiada za tworzenie/utrzymywanie przestrzeni kluczy (\verb+keyspace+), wierszy oraz kolumn. Ponadto pozwala aktualizować fizyczny model danych, a~także wyznaczać różnice pomiędzy dwiema wersjami struktury.
-	\item[Metadane] moduł, który zarządza elementami interfejsu służącymi do opisu logicznego modelu danych (używanego wewnątrz mechanizmu). Jego odpowiedzialnością jest konwersja pomiędzy logiczną a~fizyczną strukturą. Moduł dostarcza także implementacji metod umożliwiających operacje przetwarzania danych.
-	\item[Migracja] moduł, który potrafi wyznaczać i~wersjonować różnice pomiędzy kolejnymi zmianami w~modelu danych. Dostarcza również funkcjonalności do aktualizacji fizycznej struktury na żądanie użytkownika.
+	\item[Schemat] to moduł, który służy do zarządzania fizycznym modelem danych. Odpowiada za tworzenie/utrzymywanie przestrzeni kluczy (\verb+keyspace+), wierszy oraz kolumn. Ponadto pozwala aktualizować fizyczny model danych, a~także wyznaczać różnice pomiędzy dwiema wersjami struktury.
+	\item[Metadane] to moduł, który zarządza elementami interfejsu służącymi do opisu logicznego modelu danych (używanego wewnątrz mechanizmu). Jego odpowiedzialnością jest konwersja pomiędzy logiczną a~fizyczną strukturą. Moduł dostarcza także implementacji metod umożliwiających operacje przetwarzania danych.
+	\item[Migracja] to moduł, który potrafi wyznaczać i~wersjonować różnice pomiędzy kolejnymi zmianami w~modelu danych. Dostarcza również funkcjonalności do aktualizacji fizycznej struktury na żądanie użytkownika.
 \end{description}
 
 \begin{figure}[ht!]
@@ -125,7 +125,7 @@ Spośród wymienionych powyżej komponentów najbardziej rozbudowany służy do 
 		Proste, wydajne modelowanie zależności ściśle związane z~fizyczną strukturą danych. \\
 		\hline
 		{\footnotesize \textbf{Obsługa dziedziczenia}} & 
-		Rozbudowane opcji konfiguracji dziedziczenia obiektów. & 
+		Rozbudowane opcje konfiguracji dziedziczenia obiektów. & 
 		Proste dziedziczenie polegające na niejawnym włączeniu wszystkich pól do nadklasy. \\
 		\hline
 		{\footnotesize \textbf{Denormalizacja}} &
@@ -176,7 +176,7 @@ Podsumowując porównanie, tradycyjne mapowanie obiektowe (dostosowane do charak
 
 \subsection{Model}
 
-Jest to klasa, która opisuje atomowy względem kodu źródłowego obiekt modelujący bazę danych. Obiekt ten, w~zależności od definicji, może być mapowany na jedną lub wiele tabel. Jedynym wymaganiem, które musi spełnić klasa należąca do modelu jest dziedziczenie po klasie bazowej \verb+Model+. Ciało modelu stanowią pola.
+Jest to klasa, która opisuje atomowy względem kodu źródłowego obiekt modelujący bazę danych. Obiekt ten, w~zależności od definicji, może być mapowany na jedną lub wiele tabel. Jedynym wymaganiem, które musi spełnić klasa należąca do modelu, jest dziedziczenie po klasie bazowej \verb+Model+. Ciało modelu stanowią pola.
 
 \subsection{Pole}
 
@@ -320,7 +320,7 @@ gdzie $t_{AC}$, ~$t'_{AC}$ to czas komunikacji (i~komunikacji zwrotnej) pomiędz
 
 Wynika stąd, że wykonanie dodatkowego zapytania wprowadza opóźnienia związane głównie z~połączeniem pomiędzy poszczególnymi maszynami. Opóźnienia te w~większości przypadków są relatywnie niskie (rzędu kilku milisekund), więc nie jest to krytyczny problem wydajnościowy. Ponieważ można ich uniknąć, należy traktować je jako błąd projektowania modelu.
 
-Ze względu na specyfikę modelu danych Apache Cassandry poprawnym podejściem do projektowania schematu danych jest wyjście od definicji encji i~wykonywanych na nich zapytań. Należy zauważyć, że zapytanie jest w~pewnym sensie nadzbiorem w~stosunku do relacji. Nie tylko zawiera ono informację, że dwa obiekty są ze sobą połączone, ale reprezentuje też sposób tego połączenia pozwalający na uzyskanie wymaganych informacji. Ponieważ zapytania najczęściej odwołują się do połączonych fragmentów wielu encji podstawowym ,,narzędziem'' modelowania Cassandry jest denormalizacja. Jest to zasadne zwłaszcza w~kontekście wydajnych operacji zapisu, które oferuje baza.
+Ze względu na specyfikę modelu danych Apache Cassandry poprawnym podejściem do projektowania schematu danych jest wyjście od definicji encji i~wykonywanych na nich zapytań. Należy zauważyć, że zapytanie jest w~pewnym sensie nadzbiorem w~stosunku do relacji. Nie tylko zawiera ono informację, że dwa obiekty są ze sobą połączone, ale reprezentuje też sposób tego połączenia pozwalający na uzyskanie wymaganych informacji. Ponieważ zapytania najczęściej odwołują się do połączonych fragmentów wielu encji, podstawowym ,,narzędziem'' modelowania Cassandry jest denormalizacja. Jest to zasadne zwłaszcza w~kontekście wydajnych operacji zapisu, które oferuje baza.
 
 Niech w~przykładzie~\ref{fig:er_user_address} omawiany będzie model danych dla strony internetowej, na której występują następujące odwołania do modelu danych:
 
@@ -347,7 +347,7 @@ Z~punktów \ref{enum:username_flag}~i~\ref{enum:user_city_country} wynika, że w
 	\label{tab:address_denormalization_example}
 \end{figure}
 
-Silna denormalizacja pozwala na budowanie efektywnych i~bardzo szybkich modeli danych. W~zamian wymaga ona dużego nakładu planowania. Wprowadzanie zmian do modelu zdenormalizowanego jest trudne, gdyż struktura istniejących danych jest bardzo usztywniona. W~niektórych przypadkach uzysk wydajności wynikający z~wykorzystania struktury zdenormalizowanej na korzyść znormalizowanej jest niewielki, a~poniesione koszta sprawiają, że cały proces jest nieopłacalny. Z~tego względu mechanizm OMC zapewnia szerszy wybór narzędzi do modelowania zależności pomiędzy elementami modelu danych. Narzędzia te odzwierciedlają rozważania opublikowane na blogu technologicznym portalu aukcyjnego eBay - jednego z~większych użytkowników Apache Cassandry.~\cite{modeling_best_practices_pt_1}.
+Silna denormalizacja pozwala na budowanie efektywnych i~bardzo szybkich modeli danych. W~zamian wymaga ona dużego nakładu planowania. Wprowadzanie zmian do modelu zdenormalizowanego jest trudne, gdyż struktura istniejących danych jest bardzo usztywniona. W~niektórych przypadkach uzysk wydajności wynikający z~wykorzystania struktury zdenormalizowanej na korzyść znormalizowanej jest niewielki, a~poniesiony koszt sprawia, że cały proces jest nieopłacalny. Z~tego względu mechanizm OMC zapewnia szerszy wybór narzędzi do modelowania zależności pomiędzy elementami modelu danych. Narzędzia te odzwierciedlają rozważania opublikowane na blogu technologicznym portalu aukcyjnego eBay - jednego z~większych użytkowników Apache Cassandry.~\cite{modeling_best_practices_pt_1}.
 
 OMC posiada trzy wbudowane tryby, które automatyzują proces zarządzania zależnościami między danymi. Różnią się one pomiędzy sobą wydajnością (mierzoną w~liczbie zapytań niezbędnych do pobrania kompletu wymaganych danych) oraz stopniem normalizacji:
 
@@ -397,7 +397,7 @@ class User(Model):
 	\label{lst:denormalization_by_field_example}
 \end{figure}
 
-Pole \verb+DenormalizedField+ używa dwóch parametrów konfiguracyjnych. Opcja \verb+relates+ przechowuje nazwę modelu, który jest wskazywany przez dane pole. Parametr \verb+fields+ definiuje nazwy pól encji wskazywanej, które mają zostać włączone do definicji modelu. Ważne jest, że w~celu uniknięcia kolizji nazw dołączane pola nazywane są według specjalnego klucza łączącego nazwę pola w~modelu nadrzędnym z~polami w~encji zależnej. W~podanym przykładzie dołączane pola będą miały nazwy: \verb+address_address_id+, \verb+address_city+ oraz \verb+address_country+.
+Pole \verb+DenormalizedField+ używa dwóch parametrów konfiguracyjnych. Opcja \verb+relates+ przechowuje nazwę modelu wskazywanego. Parametr \verb+fields+ określa pola encji zależnej, które mają zostać włączone do modelu. Ważne jest, że w~celu uniknięcia kolizji dołączane pola nazywane są według specjalnego klucza. Łączy on nazwę pola w~modelu nadrzędnym z~polami w~encji zależnej. W~podanym przykładzie dołączane pola będą miały nazwy: \verb+address_address_id+, \verb+address_city+ oraz \verb+address_country+.
 
 W~porównaniu do ręcznej denormalizacji użycie pola \verb+DenormalizedField+ wprowadza liczne usprawnienia:
 
@@ -423,7 +423,7 @@ Mechanizm denormalizacji przez tabelę działa analogicznie do denormalizacji pr
 	\item Domyślnie (przy braku specyfikacji listy pól) denormalizowane są wszystkie pola obiektu zależnego.
 \end{itemize}
 
-Na listingu~\ref{lst:denormalization_by_table_example} przedstawiono przykład denormalizacji przez tabelę opisanej jako model OMC. Ze względu na brak wyspecifikowanych pól (parametr \verb+fields+) do tabeli denormalizacyjnej zostaną włączone wszystkie pola modelu \verb+Address+. Schemat tabeli denormalizacyjnej, która powstanie na skutek zadeklarowania przykładowego modelu został zaprezentowany na diagramie~\ref{tab:address_denormalization_by_table_example}.
+Na listingu~\ref{lst:denormalization_by_table_example} przedstawiono przykład denormalizacji przez tabelę opisanej jako model OMC. Ze względu na brak wyspecyfikowanych pól (parametr \verb+fields+) do tabeli denormalizacyjnej zostaną włączone wszystkie pola modelu \verb+Address+. Schemat tabeli denormalizacyjnej, która powstanie na skutek zadeklarowania przykładowego modelu, został zaprezentowany na diagramie~\ref{tab:address_denormalization_by_table_example}.
 
 \begin{verbbox}[\footnotesize]
 class User(Model):
@@ -455,7 +455,7 @@ class User(Model):
 	\label{tab:address_denormalization_by_table_example}
 \end{figure}
 
-Do obsługi zdenormalizowanej tabeli generowana jest prosta klasa modelu. Opakowuje ona dostęp do zdenormalizowanych pól. Parametr \verb+model+ specyfikuje nazwę klasy tego modelu, którą następnie można wykorzystywać w~kodzie. Dostęp do wartości zdenormalizowanych dostępny jest po pobraniu obiektu zależnego. Zakładając, że zmienna \verb+user+ jest instancją klasy \verb+User+, wywołanie \verb+user.address.get()+ zwraca dane z~wiersza zdenormalizowanej tabeli. Z~wyniku wykonania metody można uzyskać później wartości pól, przykładowo \verb+user.address.get().postal_code+ dla kodu pocztowego. 
+Do obsługi zdenormalizowanej tabeli generowana jest prosta klasa modelu. Opakowuje ona dostęp do zdenormalizowanych pól. Parametr \verb+model+ specyfikuje nazwę klasy tego modelu, którą następnie można wykorzystywać w~kodzie. Dostęp do wartości zdenormalizowanych możliwy jest po pobraniu obiektu zależnego. Zakładając, że zmienna \verb+user+ jest instancją klasy \verb+User+, wywołanie \verb+user.address.get()+ zwraca dane z~wiersza zdenormalizowanej tabeli. Z~wyniku wykonania metody można uzyskać później wartości pól, przykładowo \verb+user.address.get().postal_code+ dla kodu pocztowego. 
 
 \subsection{Normalizacja przez tabelę}
 \label{sec:normalization_by_table}
@@ -516,7 +516,7 @@ Na podstawie opisu działania metody \verb+get()+ łatwo stwierdzić, że takie 
 |q_{avg}| = 1 + r_{avg}
 \end{equation}
 
-gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrzędną. Dla licznych, gęstych zbiorów danych oznacza to występowanie sytuacji, w~których należy $n$ osobnych zapytań dla wszystkich $n$ elementów zapytań, które znajdują się w~zbiorze.
+gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrzędną. Dla licznych, gęstych zbiorów danych oznacza to występowanie sytuacji, w~których należy wykonać $n$ osobnych zapytań dla wszystkich $n$ elementów, które znajdują się w~zbiorze.
 
 \subsection{Porównanie wydajności metod zarządzania zależnościami}
 
@@ -726,7 +726,7 @@ Szukając pewnego rodzaju uogólnienia Autor wprowadził pomocniczą definicję 
 
 Dla tak określonego zbioru danych zdecydowanie najlepszym wyborem jest modelowanie z~wykorzystaniem denormalizacji poprzez pola. Głównym kryterium jest tutaj znacząca przewaga w~czasie wyszukiwania danych i~akceptowalny narzut przeznaczony na aktualizację danych. Liczne artykuły prezentujące studium przypadku użycia Apache Cassandry każą sądzić, że ten rodzaj modelowania zależności jest prawdopodobnie najlepiej dostosowany do specyfiki schematu danych. 
 
-W~przypadku małych zbiorów danych (preferowana ilość wierszy w~tabelach $\leq 10000$) o~niskiej gęstości zależności warto rozważyć użycie reprezentacji znormalizowanej. Nie jest ona obarczona narzutem na aktualizację danych. Zaletą tej reprezentacji jest większa elastyczność schematu. W~przeciwieństwie do postaci zdenormalizowanej, gdzie może zdarzyć się, że przy dodaniu kolejnego zapytania trzeba rozszerzyć tabelę denormalizacji o~kolejną kolumnę, zapewnia on dostęp do kompletu danych bez konieczności wprowadzania zmian w~strukturze. 
+W~przypadku małych zbiorów danych (preferowana ilość wierszy w~tabelach $\leq 10000$) o~niskiej gęstości zależności warto rozważyć użycie reprezentacji znormalizowanej. Nie jest ona obarczona narzutem na aktualizację danych. Zaletą tej reprezentacji jest większa elastyczność schematu. W~postaci zdenormalizowanej może zdarzyć się, że przy dodaniu zapytania trzeba rozszerzyć tabelę o~kolejną kolumnę. Reprezentacja znormalizowana zawsze zapewnia dostęp do kompletu danych bez konieczności wprowadzania zmian w~strukturze. 
 
 Reprezentacja zdenormalizowana jest zalecana w~przypadku, gdy wyszukiwanie danych nie jest kluczowym kryterium. Przykładem mogą być dane służące do generacji raportów, gdzie liczba aktualizacji może znacznie przewyższać liczbę wyszukiwań. 
 
@@ -735,7 +735,7 @@ Duży problem stanowi modelowanie zależności o~dużej liczbie połączeń mię
 \begin{itemize}
 	\item Zaniedbania aktualizacji zdenormalizowanych danych. W~praktyce jest to bardzo kłopotliwe i~może być zastosowane jeżeli udaje się zdenormalizowanie wyłącznie danych przeznaczonych tylko do odczytu.
 	\item Poświęcenia czasu aktualizacji kosztem czasu dostępu do danych i~wyboru modelu zdenormalizowanego.
-	\item Poświęcenia czas dostępu do danych kosztem czasu aktualizacji i~wyboru modelu znormalizowanego.
+	\item Poświęcenia czasu dostępu do danych kosztem czasu aktualizacji i~wyboru modelu znormalizowanego.
 	\item Zmiany modelowania danych. Przekształcony schemat może między innymi redukować zagęszczenie zależności lub konieczność wykonywania operacji aktualizacji.
 \end{itemize}
 
@@ -750,7 +750,7 @@ W~omawianym w~sekcji~\ref{sec:relation_modeling} przykładzie można wyeliminowa
 	\item Zduplikowanie istniejącego adresu nie ma wpływu na poprawność danych.
 \end{itemize} 
 
-Jeżeli powyższe założenia są spełnione aktualizacja może być zastąpiona poprzez wstawienie nowych danych do bazy. Ta operacja jest bardziej wydajna ze względu na pominięcie etapu wyszukiwania użytkowników, którzy są przypisani do danego adresu. Porównanie szybkości aktualizacji i~wstawiania nowych danych do bazy (z~unieważnianiem poprzednich) zostało przedstawione na wykresie~\ref{fig:update_vs_insert_time_density_comparison}. Testy zostały przeprowadzone na środowisku lokalnym dla stałej liczby wierszy w~tabelach (10000 użytkowników oraz 1000 adresów). W~kolejnych iteracjach modyfikowana była średnia gęstość zależności w~modelu. Modyfikacji / wstawianiu podlegały wszystkie wiersze.
+Jeżeli powyższe założenia są spełnione aktualizacja może być zastąpiona poprzez wstawienie nowych danych do bazy. Ta operacja jest bardziej wydajna ze względu na pominięcie etapu wyszukiwania użytkowników, którzy są przypisani do danego adresu. Porównanie szybkości aktualizacji i~wstawiania nowych danych do bazy (z~unieważnianiem poprzednich) zostało przedstawione na wykresie~\ref{fig:update_vs_insert_time_density_comparison}. Testy zostały przeprowadzone na środowisku lokalnym dla stałej liczby wierszy w~tabelach (10000 użytkowników oraz 1000 adresów). W~kolejnych iteracjach modyfikowana była średnia gęstość zależności w~modelu. Modyfikacji/wstawianiu podlegały wszystkie wiersze.
 
 \begin{figure}[ht!]
 	\centering
@@ -859,7 +859,7 @@ Pole \verb+event_time+ modelu \verb+TimeSeriesPatternTwo+ jest kluczem klastrowa
 
 \begin{itemize}
 	\item Przy tworzeniu schematu tabeli dodaje automatycznie nową kolumnę \verb+event_time_day+\footnote{Nazwa jest tworzona z~nazwy pola oraz nazwy komponentu daty.} o~typie tekstowym. Pole to jest automatycznie włączane do klucza partycjonowania.
-	\item Przy zapisywaniu obiektu do bazy danych automatycznie wypełnia wartość dodatkowego pola o~ślad czasu obcięty do z~dokładnością do dnia.
+	\item Przy zapisywaniu obiektu do bazy danych automatycznie wypełnia wartość dodatkowego pola o~ślad czasu obcięty z~dokładnością do dnia.
 	\item Przy wyszukiwaniu obiektów po dacie automatycznie filtruje dane zarówno po wartości pola \verb+event_time_day+, jak i~\verb+event_time+.
 \end{itemize}
 
@@ -888,7 +888,7 @@ class TimeSeriesPatternThree(Model):
 	\label{lst:time_series_modeling_three}
 \end{figure} 
 
-Dla każdego pola, które jest częścią klucza klastrowania można ustawić odwrotną kolejność sortowania elementów. Do tego celu należy ustawić flagę \verb+descending_clustering+ na \verb+True+.
+Dla każdego pola, które jest częścią klucza klastrowania, można ustawić odwrotną kolejność sortowania elementów. Do tego celu należy ustawić flagę \verb+descending_clustering+ na \verb+True+.
 
 \subsection{Wsparcie dla kolejek}
 
@@ -1016,7 +1016,7 @@ Mechanizm aktualizacji selektywnej można wyłączyć. Można dokonać tego wywo
 
 \subsection{Indeks wartości unikalnych}
 
-Aby umożliwić wyszukiwanie po wartościach kolumny, która nie należy do klucza głównego tabeli należy użyć indeksu drugiego rzędu (\emph{secondary index}). Według dokumentacji Apache Cassandry~\cite{cassandra_indexes} indeksy drugiego stopnia powinny być używane na kolumnach, które silnie grupują wiersze encji nadrzędnej. Wynika to z~wewnętrznej implementacji indeksów drugiego stopnia. Załóżmy, że w~systemie istnieje tabela przechowująca dane użytkowników, w~której zapisane są wiersze zaprezentowane na diagramie~\ref{tab:secondary_index_example_users_table}.
+Aby umożliwić wyszukiwanie po wartościach kolumny, która nie należy do klucza głównego tabeli, należy użyć indeksu drugiego rzędu (\emph{secondary index}). Według dokumentacji Apache Cassandry~\cite{cassandra_indexes} indeksy drugiego stopnia powinny być używane na kolumnach, które silnie grupują wiersze encji nadrzędnej. Wynika to z~wewnętrznej implementacji indeksów drugiego stopnia. Załóżmy, że w~systemie istnieje tabela przechowująca dane użytkowników, w~której zapisane są wiersze zaprezentowane na diagramie~\ref{tab:secondary_index_example_users_table}.
 
 \begin{figure}[ht!]
 	\centering
@@ -1096,7 +1096,7 @@ class User(Model):
 \begin{figure}[ht!]
 	\centering
 	\theverbbox
-	\caption{Modelowanie tabeli użytkownicy z~wykorzystaniem indeksu dla wartości unikalnych.}
+	\caption{Modelowanie tabeli ,,użytkownicy'' z~wykorzystaniem indeksu dla wartości unikalnych.}
 	\label{lst:omc_unique_index_modeling}
 \end{figure}
 
@@ -1187,7 +1187,7 @@ Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia spos�
 \section{Migracje pomiędzy wersjami modelu}
 \label{sec:ocm_migrations}
 
-Typowym problemem związanym z~wykorzystaniem baz danych jest aktualizacja schematu. Dotyczy on również narzędzi do mapowania obiektowego. Problem ten pojawia się, gdy udało się wdrożyć pewien schemat i~istnieją już dane na nim operujące, a~wymagana jest modyfikacja modelu. Typowe scenariusze obejmują między innymi dodawanie kolumn do istniejących tabel, dodawanie nowych modeli oraz usuwanie istniejących tabel. 
+Typowym problemem związanym z~wykorzystaniem baz danych jest aktualizacja schematu. Zagadnienie dotyczy również narzędzi do mapowania obiektowego. Problem ten pojawia się, gdy udało się wdrożyć pewien schemat i~istnieją już dane na nim operujące, a~wymagana jest modyfikacja modelu. Typowe scenariusze obejmują między innymi dodawanie kolumn do istniejących tabel, dodawanie nowych modeli oraz usuwanie istniejących tabel. 
 
 Modyfikacje wprowadzane do działającego modelu zazwyczaj nie są skomplikowane i~łatwo wprowadzić je ręcznie. Dla przedstawionej propozycji mapowania obiektowego dla Cassandry można jednak znaleźć przypadki, których automatyzacja zaoszczędzi dużo pracy. Niech w~modelu danych będzie wykorzystane pole typu \verb+DenormalizedField+. Jeżeli wymagane będzie dodanie nowej zdenormalizanej danej należy:
 
@@ -1205,7 +1205,7 @@ Mechanizm migracji w~OMC jest oparty na najnowszej wersji projektu Django.~\cite
 	\item[operacje] czyli zmiany w~modelu, które należy wykonać aby zaktualizować model danych.
 \end{description}
 
-Niech dany będzie model użytkownika przedstawiony na listingu~\ref{vrb:user_for_migrations}. W~pierwszej wersji modelu identyfikator jest typu \verb+text+. Poza tym użytkownik posiada jeszcze imię typu tekstowego. W~drugiej wersji modelu dodano pole tekstowe nazwisko oraz zmieniono typ identyfikatora na \verb+timeuuid+. 
+Niech dany będzie model użytkownika przedstawiony na listingu~\ref{vrb:user_for_migrations}. W~pierwszej wersji modelu identyfikator jest typu \verb+text+. Poza tym użytkownik posiada jeszcze imię typu tekstowego. W~drugiej wersji modelu dodano pole tekstowe ,,nazwisko'' oraz zmieniono typ identyfikatora na \verb+timeuuid+. 
 
 Pierwszym krokiem jest stworzenie początkowej migracji. Odpowiada za to metoda \verb+Model.migrations().make(initial=True)+. Wynikiem będzie powstanie nowego pliku \verb+migration_initial.py+. Zakładając, że polecenie zostało wywołane dla pierwszej wersji modelu, zawartość tego pliku jest przedstawiona na listingu~\ref{vrb:initial_migration}.
 

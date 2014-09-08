@@ -21,7 +21,7 @@ Zgodnie z~obecnymi standardami bezpieczeństwa przechowywanie hasła w~bazie dan
 	\item Wykorzystanie ,,soli''. Polega to na łączeniu losowego ciągu znaków (o~długości 16 bitów lub większej) z~hasłem. Na podstawie tak uzyskanego ciągu obliczana jest funkcja skrótu. Losowe znaki, które służą jako ,,sól'' są zapisywane, obok skrótu, w~bazie danych. Dzięki temu:
 		\begin{itemize}
 			\item Dwaj użytkownicy z~identycznym hasłem (z~dużym prawdopodobieństwem zależnym od jakości losowania ,,soli'') w~bazie danych będą mieli różne funkcje skrótu.
-			\item Zwiększa się liczba kombinatorycznych możliwości to sprawdzenia w~przypadku ataków typu brute force\footnote{Brute force (ang. brutalna siła) - atak polegający na sprawdzaniu wszystkich możliwych haseł aż do momentu znalezienia poprawnego.~\cite{brute_force_definition}}. Każda możliwość musi zostać przetestowana dla dowolnej ,,soli'' występującej w~danych.
+			\item Zwiększa się liczba kombinatorycznych możliwości do sprawdzenia w~przypadku ataków typu brute force\footnote{Brute force (ang. brutalna siła) - atak polegający na sprawdzaniu wszystkich możliwych haseł aż do momentu znalezienia poprawnego.~\cite{brute_force_definition}}. Każda możliwość musi zostać przetestowana dla dowolnej ,,soli'' występującej w~danych.
 		\end{itemize}
 	\item Wykorzystanie iteracyjnego algorytmu PBKDF2 opisanego w~standardzie RFC 2898.~\cite{rfc_2898} Pozwala on skalować czas niezbędny do wyznaczenia funkcji skrótu dla jednego hasła poprzez zwiększanie liczby wymaganych iteracji obliczeń. Dzięki temu zwiększa się czas niezbędny do zgadnięcia klucza użytkowników, którzy nie stosują kryptograficznie bezpiecznych haseł.
 \end{enumerate}
