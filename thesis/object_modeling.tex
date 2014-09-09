@@ -3,16 +3,16 @@
 \chapter{Modelowanie obiektowe dla Cassandry}
 \label{chap:cassandra_object_modeling}
 
-Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassandra_orm_performance_summary} Autor zaproponował odmienną koncepcję mechanizmu mapowania obiektowego dla bazy danych Cassandra. Aby uwypuklić różnice pomiędzy przedstawioną propozycją i~tradycyjnymi mechanizmami ORM Autor postuluje stosowanie odmiennego nazewnictwa. Omówiona w~sekcji~\ref{sec:om_for_cassandra_concept} koncepcja, która będzie rozwijana w~dalszej części pracy, nazywana będzie \textbf{modelowaniem obiektowym}:
+Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassandra_orm_performance_summary} autor zaproponował odmienną koncepcję mechanizmu mapowania obiektowego dla bazy danych Cassandra. Aby uwypuklić różnice pomiędzy przedstawioną propozycją i~tradycyjnymi mechanizmami ORM autor postuluje stosowanie odmiennego nazewnictwa. Omówiona w~sekcji~\ref{sec:om_for_cassandra_concept} koncepcja, która będzie rozwijana w~dalszej części pracy, nazywana będzie \textbf{modelowaniem obiektowym}:
 
 \begin{itemize}
-	\item Mechanizmy mapowania obiektowo-relacyjnego nie wymuszają na użytkowniku kolejności projektowania komponentów. Osiągalne są zarówno podejście \emph{code first}\footnote{Code first (ang. dosłownie ,,najpierw kod źródłowy'') - w~kontekście ORM oznacza to modelowanie dziedziny za pomocą kodu źródłowego, z~którego następnie generowany jest schemat bazy danych.}, jak i~\emph{database first}\footnote{Database first (ang. dosłownie ,,najpierw baza danych'') - w~kontekście ORM oznacza to modelowanie dziedziny jako schemat bazodanowy, do którego następnie pisany jest mapujący kod źródłowy.}. W~proponowanym przez Autora modelowaniu obiektowym, ze względu na występowanie struktur wysokiego poziomu odpowiadających wzorcom projektowym, podejście \emph{database first} jest możliwe tylko teoretycznie lub w~bardzo ograniczonym zakresie. Znacznie bardziej efektywne jest podejście \emph{code first}. Posiada ono wsparcie implementacyjne - generację schematu - i~jest rekomendowane przez Autora.
+	\item Mechanizmy mapowania obiektowo-relacyjnego nie wymuszają na użytkowniku kolejności projektowania komponentów. Osiągalne są zarówno podejście \emph{code first}\footnote{Code first (ang. dosłownie ,,najpierw kod źródłowy'') - w~kontekście ORM oznacza to modelowanie dziedziny za pomocą kodu źródłowego, z~którego następnie generowany jest schemat bazy danych.}, jak i~\emph{database first}\footnote{Database first (ang. dosłownie ,,najpierw baza danych'') - w~kontekście ORM oznacza to modelowanie dziedziny jako schemat bazodanowy, do którego następnie pisany jest mapujący kod źródłowy.}. W~proponowanym przez autora modelowaniu obiektowym, ze względu na występowanie struktur wysokiego poziomu odpowiadających wzorcom projektowym, podejście \emph{database first} jest możliwe tylko teoretycznie lub w~bardzo ograniczonym zakresie. Znacznie bardziej efektywne jest podejście \emph{code first}. Posiada ono wsparcie implementacyjne - generację schematu - i~jest rekomendowane przez autora.
 	\item W~mechanizmach mapowania obiektowo-relacyjnego mapowanie odpowiada najczęściej typom danych, natomiast w~obrębie danego typu jest ono jednoznaczne. Przykładowo identyfikator konwertowany jest na liczbowy klucz główny, lista przechowywana jest jako relacja, a~ciąg znaków przekształcany jest na typ \emph{VARCHAR}. W~przypadku modelowania obiektowego dla Cassandry wybór wyznaczać będzie natomiast sposób przechowywania danej wartości. W~zależności od narzuconego sposobu modelowania listy będzie mogła zostać ona zrzutowana na wartość kolumny o~typie \verb+list+, nazwy kolumn w~wierszu lub osobną tabelę.
 	\item Mapowanie obiektowo-relacyjne dostarcza przede wszystkim niskopoziomowe odpowiedniki typów bazodanowych. Wyjątkiem jest relacja wiele-do-wielu. Modelowanie obiektowe dla Cassandry skupia się zarówno na polach niskiego poziomu (przykładowo kolumna o~wartości tekstowej), jak i~na reużywalności komponentów wysokopoziomowych odpowiadających wzorcom projektowym.
 	\item Częścią modelowania obiektowego dla Cassandry są opcjonalne mechanizmy mapowania obiektowo-relacyjnego. Należą do nich generacja schematu oraz migracje pomiędzy wersjami modelu.
 \end{itemize}
 
-W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego dostarczona wykonana przez Autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
+W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego dostarczona wykonana przez autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
 
 \section{Object Modeling for Cassandra}
 \label{sec:ocm_library_description}
@@ -520,7 +520,7 @@ gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrz
 
 \subsection{Porównanie wydajności metod zarządzania zależnościami}
 
-Trzy zaprezentowane metody różnią się od siebie wydajnością poszczególnych operacji w~kontekście charakterystyki danych. Aby ułatwić wybór rodzaju modelowania w~zależności od scenariusza użytkownia Autor przeprowadził szereg testów wydajnościowych, które ukazują zalety i~wady poszczególnych typów modelowania. Wszystkie testy zostały przeprowadzone dla modelu danych użytkowników i~przypisanych do nich adresów.
+Trzy zaprezentowane metody różnią się od siebie wydajnością poszczególnych operacji w~kontekście charakterystyki danych. Aby ułatwić wybór rodzaju modelowania w~zależności od scenariusza użytkownia autor przeprowadził szereg testów wydajnościowych, które ukazują zalety i~wady poszczególnych typów modelowania. Wszystkie testy zostały przeprowadzone dla modelu danych użytkowników i~przypisanych do nich adresów.
 
 \paragraph{Skalowalność operacji wyszukiwania względem gęstości połączeń} 
 
@@ -716,7 +716,7 @@ W~przypadku denormalizacji można zauważyć, że wzrost liczby wierszy w~tabeli
 
 Nie ma uniwersalnego sposobu, który pozwala na uzyskanie optymalnego wyniku przy mapowaniu zależności w~Apache Cassandra. Dobór metody powinien zależeć od charakterystyki przechowywanych danych. 
 
-Szukając pewnego rodzaju uogólnienia Autor wprowadził pomocniczą definicję typowego zbioru danych. Posiada on zbiór następujących cech:
+Szukając pewnego rodzaju uogólnienia autor wprowadził pomocniczą definicję typowego zbioru danych. Posiada on zbiór następujących cech:
 
 \begin{itemize}
 	\item Duża liczba wierszy w~zbiorze ($> 100000$).
@@ -798,7 +798,7 @@ Na podstawie porównania wydajności różnych metod modelowania zależności mi
 \section{Wsparcie dla wzorców modelowania}
 \label{sec:ocm_data_modeling_support}
 
-Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowania. W~literaturze zostały zebrane i~opisane liczne przykłady efektywnych i~nieefektywnych projektów modelu danych dla Apache Cassandry. Z~przeanalizowanych opisów Autor wybrał zbiór reużywalnych wzorców. Następnie, dla każdego wzorca, przygotowany został mechanizm, który ułatwia jego modelowanie w~środowisku OMC. Dzięki temu mechanizm został wzbogacony o~obsługę:
+Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowania. W~literaturze zostały zebrane i~opisane liczne przykłady efektywnych i~nieefektywnych projektów modelu danych dla Apache Cassandry. Z~przeanalizowanych opisów autor wybrał zbiór reużywalnych wzorców. Następnie, dla każdego wzorca, przygotowany został mechanizm, który ułatwia jego modelowanie w~środowisku OMC. Dzięki temu mechanizm został wzbogacony o~obsługę:
 
 \begin{itemize}
 	\item Szeregów zdarzeń, czyli zbioru uporządkowanych względem czasu wiadomości.
@@ -1277,7 +1277,7 @@ Aby migracja zadziałała poprawnie należy nieco zmodyfikować kod z~listingu~\
 \subsection{Wydajność migracji danych}
 \label{sec:ocm_migrations_performance}
 
-Migracja danych wymaga wykonania wielu sekwencyjnych zapytań do bazy danych. Nie jest to rozwiązanie efektywne czasowo. W~celu zbadania wydajności mechanizmu migracji Autor posłużył się modelem przedstawionym na listingu~\ref{vrb:migrations_data_model_for_tests}.
+Migracja danych wymaga wykonania wielu sekwencyjnych zapytań do bazy danych. Nie jest to rozwiązanie efektywne czasowo. W~celu zbadania wydajności mechanizmu migracji autor posłużył się modelem przedstawionym na listingu~\ref{vrb:migrations_data_model_for_tests}.
 
 \begin{figure}[ht!]
 	\centering

@@ -215,7 +215,7 @@ W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono poró
 	\item \textbf{Systemy ,,zapisochłonne''}.
 \end{itemize}
 
-Z~przedstawionych scenariuszy Autor zdecydował się wyróżnić ostatni. Istotnym zagadnieniem w~przypadku wielkich danych jest operacja zapisu, która musi być wykonywana w~czasie rzeczywistym. Aby omówić problem należy przedstawić typową architekturę wykorzystywaną w~relacyjnych bazach danych do przechowywania wielkich danych.~\cite{sharding_in_mysql} Prezentuje ją diagram~\ref{fig:sharding}.
+Z~przedstawionych scenariuszy autor zdecydował się wyróżnić ostatni. Istotnym zagadnieniem w~przypadku wielkich danych jest operacja zapisu, która musi być wykonywana w~czasie rzeczywistym. Aby omówić problem należy przedstawić typową architekturę wykorzystywaną w~relacyjnych bazach danych do przechowywania wielkich danych.~\cite{sharding_in_mysql} Prezentuje ją diagram~\ref{fig:sharding}.
 
 \begin{figure}[ht!]
 	\centering
@@ -452,7 +452,7 @@ Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu
 \section{Przykład modelowania dziedziny danych}
 \label{sec:cassandra_modelling_examples}
 
-W~Internecie znajdują się przykładowe modele danych stworzone przez użytkowników Apache Cassandry. Zapewniają one materiał do nauki dla nowych użytkowników bazy. Prezentują sprawdzone sposoby rozwiązania zadanego problemu koncentrując się na omówieniu decyzji projektowych, które należy podjąć aby zbudować efektywny schemat. Proces tworzenia wydajnych modeli danych zostanie przez Autora przedstawiony z~wykorzystaniem takiego przykładu. Do modelowania zostanie wykorzystany język CQL, gdyż począwszy od wersji CQL3 jest on oficjalnym standardem zalecanym przez autorów Cassandry. 
+W~Internecie znajdują się przykładowe modele danych stworzone przez użytkowników Apache Cassandry. Zapewniają one materiał do nauki dla nowych użytkowników bazy. Prezentują sprawdzone sposoby rozwiązania zadanego problemu koncentrując się na omówieniu decyzji projektowych, które należy podjąć aby zbudować efektywny schemat. Proces tworzenia wydajnych modeli danych zostanie przez autora przedstawiony z~wykorzystaniem takiego przykładu. Do modelowania zostanie wykorzystany język CQL, gdyż począwszy od wersji CQL3 jest on oficjalnym standardem zalecanym przez autorów Cassandry. 
 
 \subsection{Twissandra}
 \label{sec:twissandra}
@@ -710,7 +710,7 @@ W~powyższym schemacie kluczowym problemem jest reprezentacja publicznej osi cza
 	\item Architektura w~istotny sposób degraduje dobrą skalowalność horyzontalną, którą cechuje się Cassandra. Wiersz z~publiczną osią czasu będzie znacznie dłuższy niż przeciętny wiersz z~osią czasu użytkownika, gdyż znajdują się w~nim wszystkie wpisy utworzone w~serwisie. W~zaprezentowanym schemacie publiczna oś czasu będzie umieszczona w~jednym fizycznym wierszu Cassandry\footnote{Należy pamiętać, że wiersze w~fizycznym modelu danych są niepodzielne.}, a~więc węzły przechowujące ją będą nieproporcjonalnie obciążone w~porównaniu do pozostałych.
 \end{itemize}
 
-Rozwiązaniem tego problemu jest wprowadzenie większej granulacji publicznej osi czasu. Można to osiągnąć rozbudowując klucz typu \verb+partition+ o~kolejną składową. Sugerowanym przez Autora rozbiciem osi czasu jest podział względem dnia publikacji wpisu. Przykładowo aplikacja może odwoływać się do klucza \verb+!PUBLIC!2014-07-01+ dla wpisów opublikowanych pierwszego lipca 2014 roku, natomiast do pobrania danych z~kolejnego dnia wykorzystywać identyfikator \verb+!PUBLIC!2014-07-02+. 
+Rozwiązaniem tego problemu jest wprowadzenie większej granulacji publicznej osi czasu. Można to osiągnąć rozbudowując klucz typu \verb+partition+ o~kolejną składową. Sugerowanym przez autora rozbiciem osi czasu jest podział względem dnia publikacji wpisu. Przykładowo aplikacja może odwoływać się do klucza \verb+!PUBLIC!2014-07-01+ dla wpisów opublikowanych pierwszego lipca 2014 roku, natomiast do pobrania danych z~kolejnego dnia wykorzystywać identyfikator \verb+!PUBLIC!2014-07-02+. 
 
 Dużym ułatwieniem jest fakt, że aplikacja nie musi samodzielnie budować i~zarządzać skomplikowanymi identyfikatorami. Język CQL umożliwia wykorzystanie złożonego klucza typu \verb+partition+.~\cite{create_table_cassandra_reference} Listing~\ref{lst:timeline_day_partitioned} prezentuje w~jaki sposób zdefiniować oś czasu z~dodatkowym podziałem względem dnia publikacji. Zmiana obejmuje dodanie kolumny tekstowej \verb+day+ oraz uwzględnienie jej w~klauzuli \verb+PRIMARY KEY+. W~fizycznym modelu danych wpisy o~jednakowych wartościach nazwy użytkownika i~dnia zostaną pogrupowane w~wiersze, natomiast wpisy dla tej samej osoby, ale pochodzące z~różnych dni, będą rozdzielone pomiędzy węzłami.
 

@@ -3,7 +3,7 @@
 \chapter{Studium przypadku}
 \label{chap:case_study}
 
-W~rozdziale Autor przedstawia proces modelowania danych w~mechanizmie OMC. Przebieg procesu jest omówiony na przykładzie istniejących modeli danych, które są obsługiwane przy pomocy CQL. Dzięki takiemu podejściu łatwo jest wskazać korzyści, które zapewnia użytkownikowi stosowanie OMC.
+W~rozdziale autor przedstawia proces modelowania danych w~mechanizmie OMC. Przebieg procesu jest omówiony na przykładzie istniejących modeli danych, które są obsługiwane przy pomocy CQL. Dzięki takiemu podejściu łatwo jest wskazać korzyści, które zapewnia użytkownikowi stosowanie OMC.
 
 \section{Twissandra}
 \label{sec:case_study_twissandra}
@@ -116,7 +116,7 @@ Podczas pobierania instancji modelu \verb+Followers+ z~bazy danych domyślnie uz
 	\label{vrb:omc_twissandra_followers_relation_eager}
 \end{figure}
 
-W~trakcie opisywania modelu danych Twissandry Autor zauważył, że dodanie indeksu do tabeli \verb+followers+ na kolumnie \verb+follower+ umożliwia odwrócenie zależności. Z~wykorzystaniem OMC jest to jeszcze prostsze - wystarczy dla zadanego pola ustawić flagę \verb+searchable+. Mechanizm sam utworzy odpowiedni indeks i~umożliwi wyszukiwanie po wartościach wskazanej kolumny. Na listingu~\ref{vrb:omc_twissandra_searching_followers} przedstawiono odwołanie do metod interfejsu, które umożliwia odnalezienie wszystkich osób śledzonych przez użytkownika \verb+jturek+.
+W~trakcie opisywania modelu danych Twissandry autor zauważył, że dodanie indeksu do tabeli \verb+followers+ na kolumnie \verb+follower+ umożliwia odwrócenie zależności. Z~wykorzystaniem OMC jest to jeszcze prostsze - wystarczy dla zadanego pola ustawić flagę \verb+searchable+. Mechanizm sam utworzy odpowiedni indeks i~umożliwi wyszukiwanie po wartościach wskazanej kolumny. Na listingu~\ref{vrb:omc_twissandra_searching_followers} przedstawiono odwołanie do metod interfejsu, które umożliwia odnalezienie wszystkich osób śledzonych przez użytkownika \verb+jturek+.
 
 \begin{verbbox}
 	Followers.objects().find(follower='jturek')
@@ -252,7 +252,7 @@ Do realizacji powiązania poprzez denormalizację wymagane jest podanie dwóch d
 
 Oś czasu powinna być posortowana od najnowszych do najstarszych wpisów. Podobnie jak CQL, mechanizm OMC umożliwia sortowanie pól należących do klucza typu \verb+clustering+. Służą do tego flagi \verb+order_ascending+ oraz \verb+order_descending+, które układają dane odpowiednio w~porządku rosnącym lub malejącym według danej wartości. Na listingu~\ref{vrb:omc_twissandra_timeline} zaprezentowano sortowanie malejące względem pola \verb+tweet_time+, czyli czasu publikacji wpisu.
 
-W~sekcji~\ref{sec:twissandra} Autor zaproponował żeby oś czasu była partycjonowana po nazwie użytkownika oraz dacie wpisu (z~dokładnością do dnia). Można wykorzystać do tego celu metodę \verb+before_save()+ omówioną przy okazji encji wpisu:
+W~sekcji~\ref{sec:twissandra} autor zaproponował żeby oś czasu była partycjonowana po nazwie użytkownika oraz dacie wpisu (z~dokładnością do dnia). Można wykorzystać do tego celu metodę \verb+before_save()+ omówioną przy okazji encji wpisu:
 
 \begin{enumerate}
 	\item Do modelu \verb+Timeline+ dodać tekstowe pole \verb+day+ i~dołączyć je do klucza typu partycjonującego.
