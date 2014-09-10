@@ -7,17 +7,17 @@ Na podstawie wyników wydajnościowych przedstawionych w~sekcji~\ref{sec:cassand
 
 \begin{itemize}
 	\item Mechanizmy mapowania obiektowo-relacyjnego nie wymuszają na użytkowniku kolejności projektowania komponentów. Osiągalne są zarówno podejście \emph{code first}\footnote{Code first (ang. dosłownie ,,najpierw kod źródłowy'') - w~kontekście ORM oznacza to modelowanie dziedziny za pomocą kodu źródłowego, z~którego następnie generowany jest schemat bazy danych.}, jak i~\emph{database first}\footnote{Database first (ang. dosłownie ,,najpierw baza danych'') - w~kontekście ORM oznacza to modelowanie dziedziny jako schemat bazodanowy, do którego następnie pisany jest mapujący kod źródłowy.}. W~proponowanym przez autora modelowaniu obiektowym, ze względu na występowanie struktur wysokiego poziomu odpowiadających wzorcom projektowym, podejście \emph{database first} jest możliwe tylko teoretycznie lub w~bardzo ograniczonym zakresie. Znacznie bardziej efektywne jest podejście \emph{code first}. Posiada ono wsparcie implementacyjne - generację schematu - i~jest rekomendowane przez autora.
-	\item W~mechanizmach mapowania obiektowo-relacyjnego mapowanie odpowiada najczęściej typom danych, natomiast w~obrębie danego typu jest ono jednoznaczne. Przykładowo identyfikator konwertowany jest na liczbowy klucz główny, lista przechowywana jest jako relacja, a~ciąg znaków przekształcany jest na typ \emph{VARCHAR}. W~przypadku modelowania obiektowego dla Cassandry wybór wyznaczać będzie natomiast sposób przechowywania danej wartości. W~zależności od narzuconego sposobu modelowania listy będzie mogła zostać ona zrzutowana na wartość kolumny o~typie \verb+list+, nazwy kolumn w~wierszu lub osobną tabelę.
+	\item W~mechanizmach mapowania obiektowo-relacyjnego odwzorowanie odpowiada najczęściej typom danych, natomiast w~obrębie danego typu jest ono jednoznaczne. Przykładowo identyfikator konwertowany jest na liczbowy klucz główny, lista przechowywana jest jako relacja, a~ciąg znaków przekształcany jest na typ \emph{VARCHAR}. W~przypadku modelowania obiektowego dla Cassandry wybór wyznaczać będzie natomiast sposób przechowywania danej wartości. W~zależności od narzuconego sposobu modelowania listy będzie mogła zostać ona zrzutowana na wartość kolumny o~typie \verb+list+, nazwy kolumn w~wierszu lub osobną tabelę.
 	\item Mapowanie obiektowo-relacyjne dostarcza przede wszystkim niskopoziomowe odpowiedniki typów bazodanowych. Wyjątkiem jest relacja wiele-do-wielu. Modelowanie obiektowe dla Cassandry skupia się zarówno na polach niskiego poziomu (przykładowo kolumna o~wartości tekstowej), jak i~na reużywalności komponentów wysokopoziomowych odpowiadających wzorcom projektowym.
 	\item Częścią modelowania obiektowego dla Cassandry są opcjonalne mechanizmy mapowania obiektowo-relacyjnego. Należą do nich generacja schematu oraz migracje pomiędzy wersjami modelu.
 \end{itemize}
 
-W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego dostarczona wykonana przez autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
+W~dalszej części pracy omówiona zostanie konkretna implementacja modelowania obiektowego wykonana przez autora. Pełna nazwa tego projektu to \textbf{Object Modeling for Cassandra}. W~dalszej części pracy używana będzie nazwa skrócona - \emph{OMC}.
 
 \section{Object Modeling for Cassandra}
 \label{sec:ocm_library_description}
 
-OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowania dziedziny danych dedykowane dla bazy Apache Cassandra. Pakiet udostępnia moduły, które umożliwiają zarządzanie środowiskiem bazodanowym i~pracę z~danymi bez odwoływania się do interfejsu Thrift/CQL. Funkcjonalności pakietu obejmują:
+OMC jest biblioteką dla języka Python, która dostarcza narzędzia do modelowania dziedziny danych dedykowane dla bazy Apache Cassandra. Pakiet udostępnia moduły, które umożliwiają zarządzanie środowiskiem bazodanowym i~pracę z~danymi bez odwoływania się do interfejsu Thrift/CQL. Funkcjonalności mechanizmu obejmują:
 
 \begin{itemize}
 	\item Mapowanie obiektowe dla modelu danych Cassandry:
@@ -94,7 +94,7 @@ Na rysuku~\ref{fig:omc_components} zaprezentowano diagram komponentów mechanizm
 		\umlVHVassemblyconnector[interface=Description]{Data Description}{Data Access}
 		\umlassemblyconnector[interface=Description]{Model Transformation}{Data Description}
 	\end{tikzpicture}
-	\caption{Diagram komponentów modułu metadanych z~wyszczegółowionymi najistotniejszymi elementami.}
+	\caption{Diagram komponentów modułu metadanych z~wyszczególnionymi najistotniejszymi elementami.}
 	\label{fig:omc_metadata_components}
 \end{figure}
 
@@ -204,7 +204,7 @@ Wszystkie elementy ujęte w~znaki \textbf{\{\}} w~adresie~\ref{lst:connection_st
 \begin{description}
 	\item[ip] adres IP węzła koordynatora, z~którym będzie komunikować się kod źródłowy,
 	\item[port] port IP koordynatora (podanie portu jest opcjonalne; wartość domyślna to 9042),
-	\item[keyspace] przestrzeń nazw Cassandry, w~której operuje OCM,
+	\item[keyspace] przestrzeń nazw Cassandry, w~której operuje OMC,
 	\item[rf] współczynnik replikacji\footnote{Współczynnik replikacji (ang. replication factor) - określa na ile węzłów kopiowany jest każdy wstawiony wiersz.} podawany przy tworzeniu przestrzeni nazw, jeżeli ta nie istnieje (parametr jest opcjonalny),
 	\item[strategy] nazwa strategii replikacji podawanej przy tworzeniu przestrzeni nazw, jeśli ta nie istnieje (parametr jest opcjonalny).
 \end{description}
@@ -267,9 +267,9 @@ CREATE TABLE sample_table_model (id PRIMARY KEY, sample_field text);
 \section{Modelowanie zależności między danymi}
 \label{sec:relation_modeling}
 
-\emph{Autor celowo nie używa terminu ,,relacja'', aby uniknąć skojarzenia z~RDBMS\footnote{Relative Database Management Systems - relacyjne systemy zarządzania bazami danych}. Jak wykazały badania przeprowadzone w~sekcji~\ref{sec:kundera_performance} tradycyjne podejście relacyjne w~Apache Cassandra jest bardzo nieefektywne i~powinno być unikane.}
+\emph{Autor celowo nie używa terminu ,,relacja'', aby uniknąć nasuwającego się skojarzenia z~RDBMS\footnote{Relative Database Management Systems - relacyjne systemy zarządzania bazami danych.}. Jak wykazały badania przeprowadzone w~sekcji~\ref{sec:kundera_performance} tradycyjne podejście relacyjne w~Apache Cassandra jest bardzo nieefektywne i~powinno być unikane.}
 
-W~przypadku relacyjnych baz danych modelowanie wymaga określenia definicji modelowanych obiektów - encji oraz zależności między nimi. Na diagramie~\ref{fig:er_user_address} zaprezentowano efekt modelowania prostej dziedziny danych, która umożliwia przechowywanie adresu dla użytkownika. Charakterystyka RDBMS pozwala na pobranie danych użytkownika i~adresu w~jednym odwołaniu do bazy danych.
+W~przypadku relacyjnych baz danych tworzenie schematu wymaga określenia definicji modelowanych obiektów - encji oraz zależności między nimi. Na diagramie~\ref{fig:er_user_address} zaprezentowano efekt modelowania prostej dziedziny danych, która umożliwia przechowywanie adresu dla użytkownika. Charakterystyka RDBMS pozwala na pobranie danych użytkownika i~adresu w~jednym odwołaniu do bazy danych.
 
 \begin{figure}[ht!]
 	\centering
@@ -305,7 +305,7 @@ W~przypadku relacyjnych baz danych modelowanie wymaga określenia definicji mode
 	\label{fig:er_user_address}
 \end{figure}
 
-Model ten można dokładnie odwzorować w~Apache Cassandra, jednakże jest to rozwiązanie niewydajne. Charakterystyka bazy sprawia, że sprawdzenie kraju zamieszkania użytkownika wymaga wykonania dwóch osobnych zapytań: pobrania użytkownika, a~następnie wskazywanego przez odpowiadający mu wiersz adresu. Czas przeznaczony na wykonanie jednego zapytania można aproksymować wzorem:
+Model ten można dokładnie odwzorować w~Apache Cassandrze, jednakże jest to rozwiązanie niewydajne. Charakterystyka bazy sprawia, że sprawdzenie kraju zamieszkania użytkownika wymaga wykonania dwóch osobnych zapytań: pobrania użytkownika, a~następnie wskazywanego przez odpowiadający mu wiersz adresu. Czas przeznaczony na wykonanie jednego zapytania można aproksymować wzorem:
 
 \begin{equation}
 	t_{SELECT} = t_{AC} + t_{HASH} + t_{CN} + t_{GET} + t'_{CN} + t'_{AC}
@@ -361,7 +361,7 @@ OMC posiada trzy wbudowane tryby, które automatyzują proces zarządzania zale�
 
 Mechanizm denormalizacji przez pole pozwala wskazać encję, której wybrane pola zostaną automatycznie dołączone w~wybrane miejsce modelu. Po wskazaniu encji zależnej domyślnie przenoszony jest klucz partycjonowania tej encji. Jest on również dołączany do klucza klastrowania modelu. Dzięki temu możliwe jest zdefiniowanie wielu połączeń i~docieranie od obiektu nadrzędnego do obiektu zależnego. 
 
-Denormalizacja przez pole wykorzystuje typ \verb+DenormalizedField+. Jego działanie zostanie omówione na podstawie definicji danych zawartej na diagramie~\ref{tab:address_denormalization_example}. Listing~\ref{lst:denormalization_by_field_address_entity} przedstawiono definicję encji adres zapisaną w~OCM. Model użytkownika został pokazany na listingu~\ref{lst:denormalization_by_field_example}. 
+Denormalizacja przez pole wykorzystuje typ \verb+DenormalizedField+. Jego działanie zostanie omówione na podstawie definicji danych zawartej na diagramie~\ref{tab:address_denormalization_example}. Listing~\ref{lst:denormalization_by_field_address_entity} przedstawia treść encji ,,adres'' opisanej w~OMC. Model użytkownika został pokazany na listingu~\ref{lst:denormalization_by_field_example}. 
 
 \begin{verbbox}[\footnotesize]
 class Address(Model):
@@ -403,7 +403,7 @@ W~porównaniu do ręcznej denormalizacji użycie pola \verb+DenormalizedField+ w
 
 \begin{itemize}
 	\item Cały klucz partycjonowania encji wskazywanej jest automatycznie włączany do modelu. Dzięki temu zawsze możliwe jest przejście od obiektu nadrzędnego do podrzędnego.
-	\item Wykorzystanie zasady DRY\footnote{Don't Repeat Yourself (ang. ,,nie powtarzaj się'') - zasada, która w~kontekście programowania zaleca powielania tych samych lub bardzo podobnych fragmentów kodu w~wielu miejscach.} przy definiowaniu denormalizowanych pól. Gdyby w~modelu Address deklaracja typu pola \verb+country+ została zmieniona na \verb+IntegerField()+ (kod kraju zamiast nazwy), typ denormalizowanego pola w~modelu \verb+User+ zostałby automatycznie uaktualniony.
+	\item Wykorzystanie zasady DRY\footnote{Don't Repeat Yourself (ang. ,,nie powtarzaj się'') - zasada, która w~kontekście programowania zaleca unikać powielania tych samych lub bardzo podobnych fragmentów kodu w~wielu miejscach.} przy definiowaniu denormalizowanych pól. Gdyby w~modelu Address deklaracja typu pola \verb+country+ została zmieniona na \verb+IntegerField()+ (kod kraju zamiast nazwy), typ denormalizowanego pola w~modelu \verb+User+ zostałby automatycznie uaktualniony.
 	\item Generowany jest mechanizm automatycznego rozpakowywania wartości denormalizowanych z~obiektu modelu. Zakładając, że zmienna \verb+address+ przechowuje obiekt typu \verb+Address+, a~\verb+user+ obiekt typu \verb+User+, wywołanie \verb+user.address = address+ spowoduje automatyczne przypisanie wartości pól \verb+address_*+ zmiennej \verb+user+.
 	\item Generowana jest metoda do automatycznego pobierania wskazywanego wiersza danych. Wywołanie \verb+user.address.get()+ zwróci obiekt typu \verb+Address+, pod warunkiem, że klucz \verb+user.address_address_id+ jest poprawny.
 	\item W~przypadku aktualizacji danych encji zależnej mechanizm potrafi na życzenie zaktualizować również wszystkie zdenormalizowane wartości, które wskazują na ten obiekt. Można tego dokonać wywołując metodę \verb+update(update_related=True)+ na obiekcie modelu.
@@ -418,7 +418,7 @@ Denormalizacja przez pole jest najbardziej efektywnym czasowo sposobem modelowan
 Mechanizm denormalizacji przez tabelę działa analogicznie do denormalizacji przez pola, z~następującymi różnicami:
 
 \begin{itemize}
-	\item Zdenormalizowane dane przechowywane są w~osobnej tabeli, a~nie w~obiekcie nadrzędnym. 
+	\item Zdenormalizowane dane przechowywane są w~oddzielnej tabeli, a~nie w~nadrzędnym obiekcie. 
 	\item Zdenormalizowane dane nie są dostępne bezpośrednio jako pola obiektu, z~którego następuje odwołanie. 
 	\item Domyślnie (przy braku specyfikacji listy pól) denormalizowane są wszystkie pola obiektu zależnego.
 \end{itemize}
@@ -475,7 +475,7 @@ class User(Model):
 \begin{figure}[ht!]
 	\centering
 	\theverbbox
-	\caption{Normalizacja przez tabelę - implementacja encji użytkownik.}
+	\caption{Normalizacja przez tabelę - implementacja encji ,,użytkownik''.}
 	\label{lst:normalization_by_table_example}
 \end{figure}
 
@@ -506,7 +506,7 @@ class User(Model):
 		\end{tabular} \\
 	\end{tabular}
 
-	\caption{Model danych tabeli normalizacyjnej. Identyfikatorem wiersza w~tabeli \emph{user\_address\_norm\_table} jest identyfikator użytkownika.}
+	\caption{Model danych tabeli normalizacyjnej. Kluczem wiersza w~tabeli \emph{user\_address\_norm\_table} jest identyfikator użytkownika.}
 	\label{tab:address_normalization_table_data_model}
 \end{figure}
 
@@ -520,13 +520,13 @@ gdzie $r_{avg}$ jest średnią liczbą obiektów wskazywanych przez encję nadrz
 
 \subsection{Porównanie wydajności metod zarządzania zależnościami}
 
-Trzy zaprezentowane metody różnią się od siebie wydajnością poszczególnych operacji w~kontekście charakterystyki danych. Aby ułatwić wybór rodzaju modelowania w~zależności od scenariusza użytkownia autor przeprowadził szereg testów wydajnościowych, które ukazują zalety i~wady poszczególnych typów modelowania. Wszystkie testy zostały przeprowadzone dla modelu danych użytkowników i~przypisanych do nich adresów.
+Trzy zaprezentowane metody różnią się od siebie wydajnością poszczególnych operacji w~kontekście charakterystyki danych. Aby ułatwić wybór rodzaju modelowania w~zależności od scenariusza użytkowania autor przeprowadził szereg testów wydajnościowych, które ukazują zalety i~wady poszczególnych typów modelowania. Wszystkie testy zostały przeprowadzone dla modelu danych użytkowników i~przypisanych do nich adresów.
 
 \paragraph{Skalowalność operacji wyszukiwania względem gęstości połączeń} 
 
 Celem pierwszego testu jest zbadanie zależności pomiędzy wydajnością operacji pobierania kompletu danych, a~gęstością połączeń pomiędzy encjami zależnymi. Gęstość połączeń to średnia ilość podzależnych elementów przypadających na jeden element nadrzędny. 
 
-W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów. W~poszczególnych iteracjach mierzone były czas pobierania wszystkich użytkowników, wraz ze wszystkimi wymaganymi informacjami adresowymi, ale dla różnej gęstości połączeń pomiędzy danymi. Wyniki testu zostały przedstawione na wykresie~\ref{fig:select_time_relation_density_comparison}.
+W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów. W~poszczególnych iteracjach mierzone były czasy pobierania wszystkich użytkowników, wraz z~wymaganymi informacjami adresowymi, ale dla różnej gęstości połączeń pomiędzy danymi. Wyniki testu zostały przedstawione na wykresie~\ref{fig:select_time_relation_density_comparison}.
 
 \begin{figure}[ht!]
 	\centering
@@ -572,7 +572,7 @@ W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów.
 	\label{fig:select_time_relation_density_comparison}
 \end{figure}
 
-Z~wykresu można odczytać ogromną przewagę modeli zdenormalizowanych nad modelem znormalizowanym przy masowym odczycie wielu rekordów. Jest to zgodne z~prognozami przedstawionymi w~sekcji~\ref{sec:normalization_by_table}. Liczba zapytań potrzebnych do pobrania kompletu informacji z~wykorzystaniem normalizacji przez tabelę rośnie wraz ze wzrostem encji w~zbiorze danych, jak również z~gęstością połączeń. Uzyskany wykres ma charakterystykę nieliniową. W~przypadku denormalizacji przez pola/tabelę uzyskane wyniki mają charakterystykę w~przybliżeniu liniową. Ilość wykonywanych zapytań zależy wyłącznie od liczby elementów w~zbiorze danych.
+Z~wykresu można odczytać ogromną przewagę modeli zdenormalizowanych nad modelem znormalizowanym przy masowym odczycie wielu rekordów. Jest to zgodne z~prognozami przedstawionymi w~sekcji~\ref{sec:normalization_by_table}. Liczba zapytań potrzebnych do pobrania kompletu informacji z~wykorzystaniem normalizacji przez tabelę rośnie wraz ze wzrostem ilości encji w~zbiorze danych, jak również z~gęstością połączeń. Uzyskany wykres ma charakterystykę nieliniową. W~przypadku denormalizacji przez pola/tabelę uzyskane wyniki mają charakterystykę w~przybliżeniu liniową. Ilość wykonywanych zapytań zależy wyłącznie od liczby elementów w~zbiorze danych.
 
 Należy zauważyć, że wykres nie oddaje pełni różnic pomiędzy modelami. Ponieważ czas dostępu dla zależności znormalizowanej odbiega znacząco od pozostałych, skala nie odzwierciedla różnicy pomiędzy podejściami zdenormalizowanymi. Zgodnie z~przewidywaniami mechanizm denormalizacji przez pole jest dla wszystkich punktów pomiaru w~przybliżeniu dwukrotnie szybszy od denormalizacji przez tabelę, ponieważ do pobrania informacji należy wykonać dwa razy mniej zapytań.
 
@@ -624,7 +624,7 @@ Celem tego testu jest zbadanie szybkości wyszukiwania kompletu danych, kiedy g�
 	\label{fig:select_time_relation_quantity_comparison}
 \end{figure}
 
-Kolejny raz efektywność zależności znormalizowanej przez tabelę znacząco odstaje od efektywności zależności zdenormalizowanych. Jednakże w~przeciwieństwie do gęstości zależności, zwiększanie liczby wierszy powoduje liniowy wzrost czasu potrzebnego na pobranie kompletu danych. Wynika z~tego, że model zdenormalizowany dużo lepiej sprawdza się w~przypadku rzadkich zbiorów połączeń pomiędzy encjami. Podobnie jak w~przypadku poprzedniego badania, model zdenormalizowany poprzez pola okazuje się dwa razy szybszy od denormalizacji z~użyciem osobnej tabeli.
+Kolejny raz efektywność zależności znormalizowanej przez tabelę znacząco odstaje od efektywności zależności zdenormalizowanych. Jednakże w~przeciwieństwie do gęstości zależności, zwiększanie liczby wierszy powoduje liniowy wzrost czasu potrzebnego na pobranie kompletu danych. Wynika z~tego, że model znormalizowany dużo lepiej sprawdza się w~przypadku rzadkich zbiorów połączeń pomiędzy encjami. Podobnie jak w~przypadku poprzedniego badania, model zdenormalizowany poprzez pola okazuje się dwa razy szybszy od denormalizacji z~użyciem osobnej tabeli.
 
 \paragraph{Skalowalność operacji aktualizacji względem gęstości połączeń} 
 
@@ -664,7 +664,7 @@ Celem testu jest porównanie szybkości aktualizacji danych zależnych w~przypad
 	\label{fig:update_time_relation_density_comparison}
 \end{figure}
 
-Z~wykresu wynika, że czas aktualizacji rekordów znormalizowanych jest niezależny od gęstości połączeń. W~modelu znormalizowanym wystarczy zaktualizować wszystkie encje zależne, więc mierzony czas faktycznie powinien być stały względem gęstości. Aktualizacja modelu znormalizowanego jest bardzo efektywna. Czas aktualizacji 1000 przedmiotów na środowisku lokalnym (przetwarzanie jednowątkowe) wynosił niewiele poniżej 30 sekund. 
+Z~wykresu wynika, że czas aktualizacji rekordów znormalizowanych jest niezależny od gęstości połączeń. W~modelu znormalizowanym wystarczy zaktualizować wszystkie encje zależne, więc mierzony czas faktycznie powinien być stały względem gęstości. Nadpisywanie modelu znormalizowanego jest bardzo efektywne. Czas aktualizacji 1000 przedmiotów na środowisku lokalnym (przetwarzanie jednowątkowe) wynosił niewiele poniżej 30 sekund. 
 
 Oba modele zdenormalizowane mają fatalną wydajność aktualizacji kompletu danych. Problemem jest brak możliwości efektywnego wyszukiwania identyfikatorów wszystkich użytkowników, którzy są powiązani z~danym adresem. Klauzula aktualizacji w~Apache Cassandra nie wspiera wykorzystania indeksów drugiego stopnia. Bez wykorzystania indeksów drugiego stopnia nie jest możliwe znalezienie encji nadrzędnych, które są powiązane z~daną encją zależną. Stąd wykonanie zestawu operacji \verb+UPDATE+ jest zawsze poprzedzone wyszukiwaniem \verb+SELECT+. Kolejną przeszkodą jest ilość aktualizowanych danych. W~przypadku modelu znormalizowanego wystarczyło wykonanie $|Z|$ operacji, gdzie $Z$~to zbiór elementów zależnych (adresów). Dla modelu zdenormalizowanego liczba ta jest zwielokrotniona przez średnią gęstość połączeń pomiędzy wierszami.
 
@@ -677,7 +677,7 @@ Celem testu jest porównanie szybkości aktualizacji danych zależnych w~przypad
 	\begin{tikzpicture}
 		\begin{axis}[
 				width=.8\textwidth,
-				xlabel=Czas aktualizowania kompletu informacji ($s$),
+				xlabel=Czas aktualizacji kompletu informacji ($s$),
 				ylabel=Liczba wierszy użytkowników / adresów,
 				scaled ticks=false, 
 				ytick={5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000},				
@@ -714,7 +714,7 @@ W~przypadku denormalizacji można zauważyć, że wzrost liczby wierszy w~tabeli
 
 \subsection{Wnioski z~analizy wydajności modelowania zależności}
 
-Nie ma uniwersalnego sposobu, który pozwala na uzyskanie optymalnego wyniku przy mapowaniu zależności w~Apache Cassandra. Dobór metody powinien zależeć od charakterystyki przechowywanych danych. 
+Nie ma uniwersalnego sposobu, który pozwala na uzyskanie optymalnego wyniku przy mapowaniu zależności w~Apache Cassandrze. Dobór metody powinien zależeć od charakterystyki przechowywanych danych. 
 
 Szukając pewnego rodzaju uogólnienia autor wprowadził pomocniczą definicję typowego zbioru danych. Posiada on zbiór następujących cech:
 
@@ -728,18 +728,18 @@ Dla tak określonego zbioru danych zdecydowanie najlepszym wyborem jest modelowa
 
 W~przypadku małych zbiorów danych (preferowana ilość wierszy w~tabelach $\leq 10000$) o~niskiej gęstości zależności warto rozważyć użycie reprezentacji znormalizowanej. Nie jest ona obarczona narzutem na aktualizację danych. Zaletą tej reprezentacji jest większa elastyczność schematu. W~postaci zdenormalizowanej może zdarzyć się, że przy dodaniu zapytania trzeba rozszerzyć tabelę o~kolejną kolumnę. Reprezentacja znormalizowana zawsze zapewnia dostęp do kompletu danych bez konieczności wprowadzania zmian w~strukturze. 
 
-Reprezentacja zdenormalizowana jest zalecana w~przypadku, gdy wyszukiwanie danych nie jest kluczowym kryterium. Przykładem mogą być dane służące do generacji raportów, gdzie liczba aktualizacji może znacznie przewyższać liczbę wyszukiwań. 
+Reprezentacja znormalizowwana jest zalecana w~przypadku, gdy wyszukiwanie danych nie jest kluczowym kryterium. Przykładem mogą być dane służące do generacji raportów, gdzie liczba aktualizacji może znacznie przewyższać liczbę wyszukiwań. 
 
 Duży problem stanowi modelowanie zależności o~dużej liczbie połączeń między danymi. Wraz ze wzrostem gęstości połączeń możliwości zawężają się do:
 
 \begin{itemize}
-	\item Zaniedbania aktualizacji zdenormalizowanych danych. W~praktyce jest to bardzo kłopotliwe i~może być zastosowane jeżeli udaje się zdenormalizowanie wyłącznie danych przeznaczonych tylko do odczytu.
-	\item Poświęcenia czasu aktualizacji kosztem czasu dostępu do danych i~wyboru modelu zdenormalizowanego.
-	\item Poświęcenia czasu dostępu do danych kosztem czasu aktualizacji i~wyboru modelu znormalizowanego.
+	\item Zaniedbania aktualizacji zdenormalizowanych danych. W~praktyce jest to bardzo kłopotliwe i~może być zastosowane jeżeli udaje się zdenormalizować dane przeznaczone wyłącznie do odczytu.
+	\item Poświęcenia czasu aktualizacji kosztem czasu dostępu do danych i~wybór modelu zdenormalizowanego.
+	\item Poświęcenia czasu dostępu do danych kosztem czasu aktualizacji i~wwybór modelu znormalizowanego.
 	\item Zmiany modelowania danych. Przekształcony schemat może między innymi redukować zagęszczenie zależności lub konieczność wykonywania operacji aktualizacji.
 \end{itemize}
 
-Jeżeli żadna z~powyższych możliwości nie daje się zastosować lub nie wprowadza akceptowalnej poprawy wydajności należy rozważyć wybór innego silnika bazodanowego. Dla zbiorów o~bardzo gęstej siatce zależności naturalne zastosowanie mają grafowe bazy danych. Przykładem dojrzałego projektu silnika grafowego o~dobrych własnościach skalowania jest Neo4j\footnote{Strona domowa projektu Neo4j dostępna jest pod adresem \url{http://www.neo4j.org}.}. 
+Jeżeli żadna z~powyższych możliwości nie daje się zastosować lub nie wprowadza akceptowalnej poprawy wydajności należy rozważyć wybór innego silnika bazodanowego. Dla zbiorów o~bardzo gęstej siatce zależności naturalne zastosowanie mają grafowe bazy danych. Przykładem dojrzałego projektu silnika grafowego o~dobrych właściwościach skalowania jest Neo4j\footnote{Strona domowa projektu Neo4j dostępna jest pod adresem \url{http://www.neo4j.org}.}. 
 
 W~omawianym w~sekcji~\ref{sec:relation_modeling} przykładzie można wyeliminować operacje aktualizacji danych przy specyficznych założeniach:
 
@@ -788,11 +788,11 @@ Jeżeli powyższe założenia są spełnione aktualizacja może być zastąpiona
 
 Wyniki pokazują, że dla gęstych modeli danych operacja wstawiania może być nawet dwukrotnie wydajniejsza niż aktualizacja. Zastosowanie wielowątkowej aplikacji do przeprowadzenia testów mogło dalej pogłębić te różnicę. Z~wyniku testu można wywnioskować, że odnajdywanie/nakładnie odpowiednich ograniczeń na dane i~przekształcanie modelu może znacząco poprawiać wydajność również w~przypadkach, w~których w~ogólności Cassandra nie sprawdza się zbyt dobrze.
 
-Na podstawie porównania wydajności różnych metod modelowania zależności między danymi można stwierdzić, że nie ma przypadku, w~którym denormalizacja z~wykorzystaniem tabeli ma przewagę nad pozostałymi dwoma metodami. W~każdym przypadku może być ona zastąpiona denormalizacją przez pola/modelem znormalizowanym z~uzyskaniem identycznej lub lepszej wydajności. Stosowanie tego rodzaju relacji jest uzasadnione jeżeli:
+Na podstawie porównania wydajności różnych metod modelowania zależności między danymi można stwierdzić, że nie ma przypadku, w~którym denormalizacja z~wykorzystaniem tabeli ma przewagę nad pozostałymi metodami. W~każdym przypadku może być ona zastąpiona denormalizacją przez pola/modelem znormalizowanym z~uzyskaniem identycznej lub lepszej wydajności. Stosowanie tego rodzaju relacji jest uzasadnione jeżeli:
 
 \begin{itemize}
 	\item Uzyskana wydajność jest zadowalająca, a~istotne jest fizyczne uporządkowanie i~wydzielenie danych (na przykład gdy część systemu wykorzystuje wydruki w~formie surowej).
-	\item Opisywane są bardzo szerokie wiersze i~problemem jest przekroczenie dwóch miliardów kolumn\footnote{Apache Cassandra narzuca limit dwóch miliardów kolumn w~jednym wierszu.}.
+	\item Opisywane są bardzo szerokie wiersze i~problemem jest przekroczenie miliarda kolumn\footnote{Apache Cassandra narzuca limit miliarda kolumn w~jednym wierszu.}.
 \end{itemize}
 
 \section{Wsparcie dla wzorców modelowania}
@@ -810,7 +810,7 @@ Jednym z~pryncypiów projektowych mechanizmu OMC jest obsługa wzorców modelowa
 \subsection{Szereg zdarzeń}
 \label{sec:time_series_modeling}
 
-Apache Cassandra została zaprojektowana z~myślą o~wspieraniu szeregów zdarzeń. Szereg zdarzeń to uporządkowane względem czasu wystąpienia wpisy do bazy danych, które opcjonalnie mogą posiadać z~góry określony czas życia. Typowym przykładem szeregu zdarzeń są wartości odczytów z~urządzeń pomiarowych. Wartości te zwyczajowo są pobierane cyklicznie, a~do wykorzystania w~czasie rzeczywistym przydatne są tylko najnowsze odczyty. Doskonały opis modelowania szeregów zdarzeń przedstawiony jest we wpisie Patricka McFadina na portalu \textbf{Planet Cassandra}.~\cite{time_series_modeling_pattern} Artykuł analizuje przykład stacji meteorologicznych. Przedstawia trzy sposoby zapisu szeregu zdarzeń w~Apache Cassandra. 
+Apache Cassandra została zaprojektowana z~myślą o~wspieraniu szeregów zdarzeń. Szereg zdarzeń to uporządkowane względem czasu wystąpienia wpisy do bazy danych, które opcjonalnie mogą posiadać z~góry określony czas życia. Typowym przykładem szeregu zdarzeń są wartości odczytów z~urządzeń pomiarowych. Wartości te zwyczajowo są pobierane cyklicznie, a~do wykorzystania w~czasie rzeczywistym przydatne są tylko najnowsze odczyty. Doskonały opis modelowania szeregów zdarzeń przedstawiony jest we wpisie Patricka McFadina na portalu \textbf{Planet Cassandra}.~\cite{time_series_modeling_pattern} Artykuł analizuje przykład stacji meteorologicznych. Przedstawia trzy sposoby zapisu szeregu zdarzeń w~Apache Cassandrze. 
 
 \paragraph{Odczyty dla tego samego urządzenia w~pojedynczym wierszu} 
 
@@ -876,7 +876,7 @@ class TimeSeriesPatternThree(Model):
     __ttl__ = 20
     weatherstation_id = TextField(partitioning_key=True)
     event_time = TimestampField(clustering_key=True, 
-                                descending_clustering=True
+                                order_descending=True,
                                 auto_on_create=True)
     temperature = TextField()
 \end{verbbox}
@@ -888,7 +888,7 @@ class TimeSeriesPatternThree(Model):
 	\label{lst:time_series_modeling_three}
 \end{figure} 
 
-Dla każdego pola, które jest częścią klucza klastrowania, można ustawić odwrotną kolejność sortowania elementów. Do tego celu należy ustawić flagę \verb+descending_clustering+ na \verb+True+.
+Dla każdego pola, które jest częścią klucza klastrowania, można ustawić odwrotną kolejność sortowania elementów. Do tego celu należy ustawić flagę \verb+order_descending+ na \verb+True+.
 
 \subsection{Wsparcie dla kolejek}
 
@@ -1033,7 +1033,7 @@ Aby umożliwić wyszukiwanie po wartościach kolumny, która nie należy do kluc
 		\hhline{|-||----|}
 	\end{tabular} 
 
-	\caption{Przykładowe wartości w~tabeli użytkownicy.}
+	\caption{Przykładowe wartości w~tabeli ,,użytkownik''.}
 	\label{tab:secondary_index_example_users_table}
 \end{figure}
 
@@ -1123,7 +1123,7 @@ Apache Cassandra zapewnia wsparcie dla operacji atomowych.~\cite{cassandra_batch
 	\label{lst:batch_operation_cql_example}
 \end{figure}
 
-Silnik wykorzystywany w~OCM zapewnia wsparcie dla przetwarzania partiami. Potrafi kolejkować wszystkie zapytania DML\footnote{Data Modification Language (ang. język modyfikacji danych) - podzbiór zapytań obejmujących wstawianie (INSERT), aktualizację (UPDATE) oraz usuwanie (DELETE) danych.}, a~następnie wykonywać zapytania z~kolejki jako operacja atomowa. Przykład wykorzystania operacji na partiach w~OCM zaprezentowano na listingu~\ref{lst:ocm_batch_support}.
+Silnik wykorzystywany w~OMC zapewnia wsparcie dla przetwarzania partiami. Potrafi kolejkować wszystkie zapytania DML\footnote{Data Modification Language (ang. język modyfikacji danych) - podzbiór zapytań obejmujących wstawianie (INSERT), aktualizację (UPDATE) oraz usuwanie (DELETE) danych.}, a~następnie wykonywać odwołania z~kolejki jako operacja atomowa. Przykład wykorzystania operacji na partiach w~OMC zaprezentowano na listingu~\ref{lst:ocm_batch_support}.
 
 \begin{verbbox}[\footnotesize]
 	# starts batch
@@ -1149,7 +1149,7 @@ Wywołanie metody \verb+Model.begin_batch()+ powoduje rozpoczęcie kolejkowania 
 \section{Wsparcie dla liczników}
 \label{sec:ocm_counters}
 
-Apache Cassandra udostępnia wsparcie dla specjalnego typu danych - liczników.~\cite{cassandra_counters} Liczniki to kolumny specjalnego typu \verb+counter+, na których można wykonywać tylko dwie operacje: inkrementacja lub dekrementacja. Poza specjalnym typem zmienia się również sposób interakcji z~tabelą. Nie można wstawiać do niej wartości, a~jedynie aktualizować liczniki dla różnych kombinacji pozostałych pól. 
+Apache Cassandra udostępnia wsparcie dla specjalnego typu danych - liczników.~\cite{cassandra_counters} Liczniki to kolumny typu \verb+counter+, na których można wykonywać tylko dwie operacje: inkrementacja lub dekrementacja. Poza specjalnym typem zmienia się również sposób interakcji z~tabelą. Nie można wstawiać do niej wartości, a~jedynie aktualizować liczniki dla różnych kombinacji pozostałych pól. 
 
 OMC wspiera modelowanie liczników. Przykład przedstawiono na listingu~\ref{lst:ocm_counter_support}.
 
@@ -1174,7 +1174,7 @@ p_visits = TripCounter.find(country='Poland').get().visits    # 3
 \begin{figure}[ht!]
 	\centering
 	\theverbbox
-	\caption{Przykład użycia liczników w~OCM.}
+	\caption{Przykład użycia liczników w~OMC.}
 	\label{lst:ocm_counter_support}
 \end{figure}
 
@@ -1182,7 +1182,7 @@ Obsługa modelu posiadającego licznik różni się od wykorzystania standardowe
 
 Pole typu \verb+CounterField+ udostępnia dwie operacje: inkrementację wartości licznika (\verb+increment()+) oraz dekrementację (\verb+decrement()+). Metody wywołane bez podania parametru standardowo zwiększają/zmniejszają wartość o~1. Obie funkcje są łączne. Oznacza to, że tak jak w~przykładzie można dokonywać wielu operacji na jednym liczniku, które przed uaktualnieniem obiektu w~bazie danych są sumowane.
 
-Po wykryciu pola licznikowego w~definicji modelu OCM automatycznie zmienia sposób obsługi obiektu. Nowo powstały obiekt jest traktowany tak, jakby został wcześniej pobrany z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
+Po wykryciu pola licznikowego w~definicji modelu OMC automatycznie zmienia sposób obsługi obiektu. Nowa instancja jest traktowana tak jakby została wcześniej pobrana z~bazy danych - operacja \verb+save()+ dokonuje aktualizacji, a~nie wstawienia. 
 
 \section{Migracje pomiędzy wersjami modelu}
 \label{sec:ocm_migrations}
@@ -1357,7 +1357,7 @@ Badanie wydajności migracji zostało przeprowadzone na środowisku lokalnym. Zm
 	\label{fig:migration_performance_test}
 \end{figure}
 
-Z~wykresu widać, że migracja danych denormalizacyjnych jest procesem czasochłonnym. Przetworzenie pojedynczej zmiany, dla relatywnie niewielu wierszy ($< 500000$), zajmuje 23 minuty. Z~tego względu zdecydowanie odradza się wykonywanie tego typu migracji w~trakcie produkcyjnego działania systemu.
+Z~wykresu widać, że migracja danych denormalizacyjnych jest procesem czasochłonnym. Przetworzenie pojedynczej zmiany, dla relatywnie niewielu wierszy ($< 50000$), zajmuje 23 minuty. Z~tego względu zdecydowanie odradza się wykonywanie tego typu migracji w~trakcie produkcyjnego działania systemu.
 
 Patrząc na wyniki przedstawione na wykresie~\ref{fig:migration_performance_test} należy pamiętać, aby nie utożsamiać ich z~wydajnością bazy danych dla operacji przekształcających schemat danych. Ze względu na charakterystykę modelu, Apache Cassandra dużo szybciej niż relacyjne bazy danych dokonuje przekształceń takich jak dodawnie lub usuwanie kolumn. Na wykresie~\ref{fig:simple_migration_performance_test} przedstawiono porównanie wydajności operacji \verb+ALTER TABLE ... ADD ...+ w~bazach MySQL oraz Cassandra.
 
@@ -1397,14 +1397,14 @@ Na podstawie wykresu można zauważyć, że czas dodawania kolumny do istniejąc
 
 \subsection{Potencjalne problemy migracji}
 
-Mechanizm migracji dla Cassandry posiada pewne wady w~stosunku do analogicznych implementacji dla relacyjnych baz danych.~\cite{django_migrations} Kluczowy problem jest związany z~brakiem możliwości niezawodnego pobrania  wszystkich rekordów z~danej tabeli. Pomimo, że w~najnowszej wersji sterownika dla języka Python został wprowadzony mechanizm paginacji,~\cite{python_driver_pagination} nadal może wydarzyć się sytuacja przekroczenia czasu żądania podczas pobierania wierszy. OCM używa paginacji o~rozmiarze strony równym 10000 rekordów. W~zależności od konfiguracji klastra może być to zbyt wysokie ustawienie. Z~drugiej strony zmniejszenie rozmiaru paginacji ma zły wpływ na wydajność mechanizmu.
+Mechanizm migracji dla Cassandry posiada pewne wady w~stosunku do analogicznych implementacji dla relacyjnych baz danych.~\cite{django_migrations} Kluczowy problem jest związany z~brakiem możliwości niezawodnego pobrania  wszystkich rekordów z~danej tabeli. Pomimo, że w~najnowszej wersji sterownika dla języka Python został wprowadzony mechanizm paginacji,~\cite{python_driver_pagination} nadal może wydarzyć się sytuacja przekroczenia czasu żądania podczas pobierania wierszy. OMC używa paginacji o~rozmiarze strony równym 10000 rekordów. W~zależności od konfiguracji klastra może być to zbyt wysokie ustawienie. Z~drugiej strony zmniejszenie rozmiaru paginacji ma zły wpływ na wydajność mechanizmu.
 
 Drugi problem wiąże się z~brakiem transakcyjności Apache Cassandry. Jeżeli migracja nie powiedzie się, podczas gdy którakolwiek ze zmian została wprowadzona do modelu danych, ponowne uruchomienie mechanizmu nie zadziała. Z~tego względu zaleca się ostrożne wykorzystanie migracji i~poprzedzanie każdej takiej operacji wykonaniem kopii zapasowej danych. 
 
 \section{Profilowanie i~testowanie modelu danych}
 \label{sec:ocm_profiling}
 
-OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym narzędziem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
+OMC posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wydajności modelu danych. Najbardziej podstawowym mechanizmem jest logowanie zapytań. Pozwala ono przechwytywać wszystkie odwołania do bazy i~zapisywać je do pliku wraz z~czasem wykonania. Dodatkowo użytkownik OMC może zażądać żeby zapisywane były tylko i~wyłącznie zapytania, których wykonanie jest dłuższe niż zadany czas. Przykład uruchomienia takiej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_logging}.
 
 \begin{verbbox}[\footnotesize]
 	Model.engine.enable_logging(file='log.txt', longer_than=1000)
@@ -1417,7 +1417,7 @@ OCM posiada zintegrowane narzędzia umożliwiające profilowanie i~testowanie wy
 	\label{vrb:engine_logging}
 \end{figure}
 
-Możliwe jest również wypisywanie najwolniejszych zapytań. W~trybie śledzenia niewydajnych zapytań OMC zapisuje zadaną liczbę odwołań do bazy o~najdłuższym czasie wykonania, posortowanych zaczynając od najwolniejszego. Przykład wykorzystania tej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_slow_queries}.
+Możliwe jest również wypisywanie najwolniejszych poleceń. W~trybie śledzenia niewydajnych zapytań OMC zapisuje zadaną liczbę odwołań do bazy o~najdłuższym czasie wykonania, posortowanych zaczynając od najwolniejszego. Przykład wykorzystania tej funkcjonalności został przedstawiony na listingu~\ref{vrb:engine_slow_queries}.
 
 \begin{verbbox}[\footnotesize]
 	Model.engine.trace_slow_queries(amount=10)
@@ -1434,11 +1434,11 @@ Możliwe jest również wypisywanie najwolniejszych zapytań. W~trybie śledzeni
 
 \subsection{Zasilanie danymi}
 
-Nie da się zmierzyć wydajności modelu danych przy pustej bazie, stąd OMC udostępnia dwa narzędzia ułatwiające populację testowymi danymi:
+Nie da się zmierzyć wydajności modelu danych przy pustej bazie, stąd OMC udostępnia dwa narzędzia ułatwiające populację testowych danych:
 
 \begin{description}
-	\item[Eksport i~import] Pozwala na przenoszenie danych pomiędzy instancjami aplikacji. Przykładowym scenariuszem jest przeniesienie danych z~serwera produkcyjnego na środowisko testowe w~celu optymalizacji modelu.
-	\item[Generacja] Wygenerowanie testowego zestawu danych na podstawie automatycznych lub zdefiniowanych przez użytkownika algorytmów.
+	\item[Eksport i~import] pozwala na przenoszenie danych pomiędzy instancjami aplikacji. Przykładowym scenariuszem jest przeniesienie danych z~serwera produkcyjnego na środowisko testowe w~celu optymalizacji modelu.
+	\item[Generacja] pozwala na zasilenie testowym zestawem danych na podstawie automatycznych lub zdefiniowanych przez użytkownika algorytmów.
 \end{description}
 
 Eksport i~import wykorzystuje natywny mechanizm języka CQL - polecenia \verb+COPY TO+ oraz \verb+COPY FROM+. Służą one do zapisywania danych z~Cassandry w~formacie CSV\footnote{Comma Separated Values (ang. ,,wartości oddzielone przecinkami'') - format pliku, w~którym każda linia oznacza wiersz danych, a~wartości poszczególnych kolumn są rozdzielone przecinkami.}. 
@@ -1459,7 +1459,7 @@ Mechanizm eksportu w~OMC wywołuje polecenie \verb+COPY TO+ dla wszystkich tabel
 	\label{vrb:export_import_example}
 \end{figure}
 
-Używając mechanizmu eksportu należy pamiętać, że obecna implementacja poleceń \verb+COPY ...+ jest bardzo niedopracowana.~\cite{simple_data_importing_and_exporting} Problem stanowi wykorzystanie zapytania \verb+SELECT * FROM table WITH LIMIT 99999999+, które służy do pobierania danych. Cechą charakterystyczną dla Cassandry jest ustawiany w~konfiguracji węzłów parametr \verb+read_request_timeout_in_ms+, który standardowo ma zbyt restrykcyjną wartość, aby powyższe polecenie mogło wykonać się dla jakichkolwiek danych. Przed uruchomieniem eksportu należy odpowiednio dostosować konfigurację bazy danych.
+Używając mechanizmu eksportu należy pamiętać, że obecna implementacja poleceń \verb+COPY ...+ jest bardzo niedopracowana.~\cite{simple_data_importing_and_exporting} Problem stanowi wykorzystanie zapytania \verb+SELECT * FROM table WITH LIMIT 99999999+, które służy do pobierania danych. Cechą charakterystyczną dla Cassandry jest ustawiany w~konfiguracji węzłów parametr \verb+read_request_timeout_in_ms+, który standardowo ma zbyt restrykcyjną wartość, aby powyższe polecenie mogło wykonać się dla jakichkolwiek danych. Przed uruchomieniem eksportu należy odpowiednio dostosować konfigurację bazy.
 
 Niestety, mimo zmiany konfiguracji dla ogromnych zbiorów danych nadal mogą wystąpić przekroczenia czasu żądania. Z~tego względu funkcja \verb+export_to_csv+ ma zdefiniowany parametr \verb+excludes+, który przyjmuje listę nazw modeli wyłączonych z~eksportu. W~nowej wersji CQL problemy te mają zostać rozwiązane dzięki wbudowanym w~język mechanizmom paginacji.
 

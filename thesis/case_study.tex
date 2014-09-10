@@ -12,7 +12,7 @@ W~sekcji \ref{sec:twissandra} został szczegółowo omówiony projekt Twissandra
 
 \subsection{Użytkownik}
 
-Encja użytkownika posiada tylko dwie właściwości - nazwę oraz hasło. Nawet dla tak prostego przypadku mechanizm OMC może wprowadzić znaczne ułatwienie dla użytkownika. W~zaprezentowanym w~sekcji \ref{sec:twissandra} przykładzie hasło było przechowywane jako otwarty tekst. W~docelowym systemie takie rozwiązanie byłoby nieakceptowalne ze względów bezpieczeństwa. 
+Encja użytkownika posiada tylko dwie właściwości - nazwę oraz hasło. Nawet dla tak prostego przypadku mechanizm OMC może wprowadzić znaczne ułatwienie dla programisty. W~zaprezentowanym w~sekcji \ref{sec:twissandra} przykładzie hasło było przechowywane jako otwarty tekst. W~docelowym systemie takie rozwiązanie byłoby nieakceptowalne ze względów bezpieczeństwa. 
 
 Zgodnie z~obecnymi standardami bezpieczeństwa przechowywanie hasła w~bazie danych wymaga wykonania następujących operacji:~\cite{how_to_store_users_password_safely}
 
@@ -28,7 +28,7 @@ Zgodnie z~obecnymi standardami bezpieczeństwa przechowywanie hasła w~bazie dan
 
 W~przypadku modelowania encji użytkownika z~wykorzystaniem języka CQL odpowiedzialność za bezpieczeństwo przechowywania haseł spada na programistę aplikacji. Mechanizm OMC posiada dedykowany do przechowywania kluczy typ pola \verb+PasswordField+. Pozwala on wybrać algorytm obliczania funkcji skrótu, potrafi automatycznie dodawać ,,sól'', a~także wyspecyfikować liczbę iteracji PBKDF2. W~kolumnach bazy danych, oprócz skrótu i~,,soli'' zapisywana jest także liczba iteracji. W~przyszłości informacja ta może zostać wykorzystania do zwiększenia bezpieczeństwa haseł.
 
-Pole \verb+PasswordField+ charakteryzuje się tym, że przeliczenia dokonywane są w~trakcie ustawiania wartości. Oznacza to, że w~pamięci przechowywane jest wyłącznie wynikowa wartość funkcji skrótu. Wartość hasła może być jedynie ustawiona lub porównana - sprawdzenie zgodności kluczy dokonywane jest za pomocą metody \verb+check+.
+Pole \verb+PasswordField+ charakteryzuje się tym, że przeliczenia dokonywane są w~trakcie ustawiania wartości. Oznacza to, że w~pamięci przechowywana jest wyłącznie wynikowa wartość funkcji skrótu. Wartość hasła może być jedynie ustawiona lub porównana - sprawdzenie zgodności kluczy dokonywane jest za pomocą metody \verb+check+.
 
 Definicja modelu użytkownika w~OMC została zaprezentowana na diagramie~\ref{vrb:omc_twissandra_user}. W~schemacie bazodanowym pole \verb+username+ zostanie zmapowane na kolumnę tekstową, natomiast pole \verb+password+ będzie automatycznie obsługiwane przez trzy kolumny - \verb+password+ do przechowywania wartości skrótu klucza, \verb+password_salt+ z~,,solą'' oraz \verb+password_iterations+, w~którym przechowywana jest siła algorytmu PBKDF2. Widać tutaj istotną różnicę w~stosunku do tradycyjnych systemów mapowania obiektowo-relacyjnego. Definicja modelu nie skupia się na fizycznej strukturze danych, ale na rodzaju przechowywanych informacji (w~tym wypadku klucza).
 
@@ -82,7 +82,7 @@ Fakt śledzenia użytkownika odnotowywany jest poprzez model \verb+Followers+. P
 	\label{vrb:omc_twissandra_followers}
 \end{figure}
 
-Model \verb+Followers+ wykorzystuje prosty typ zależności - \verb+RelatedField+. Przenosi on składowe klucza ze wskazywanej do danej encji. Dodatkowo umożliwia operowanie zarówno na obiektach, jak również na prostych wartościach. Na listingu~\ref{vrb:omc_twissandra_followers_relation} zaprezentowano dwa sposoby połączenia obiektu \verb+Followers+ z~tym samym użytkownikiem. Pierwszy z~nich polega na podstawieniu do pola instancji powiązanego obiektu. Drugi pozwala bezpośrednie ustawienie komponentu klucza jako wartości. Dla pola o~nazwie \verb+field+ i~komponentu klucza o~nazwie \verb+component+ podstawienie to może być wykonane przez odwołanie do pola \verb+field_component+. Mechanizm ten oferuje wsparcie dla złożonych kluczy.
+Model \verb+Followers+ wykorzystuje prosty typ zależności - \verb+RelatedField+. Przenosi on składowe klucza ze wskazywanej do danej encji. Dodatkowo umożliwia operowanie zarówno na obiektach, jak również na prostych wartościach. Na listingu~\ref{vrb:omc_twissandra_followers_relation} zaprezentowano dwa sposoby połączenia obiektu \verb+Followers+ z~tym samym użytkownikiem. Pierwszy z~nich polega na podstawieniu do pola instancji powiązanego obiektu. Drugi pozwala bezpośrednio ustawić komponent klucza jako wartość. Dla pola o~nazwie \verb+field+ i~komponentu klucza o~nazwie \verb+component+ podstawienie to może być wykonane przez odwołanie do pola \verb+field_component+. Mechanizm ten oferuje wsparcie dla złożonych kluczy.
 
 \begin{verbbox}
 	follower_one = Followers()
@@ -159,7 +159,7 @@ Pole \verb+__manager__+ klasy \verb+Model+ wskazuje na typ obiektu zarządzając
 \begin{enumerate}
 	\item Odszuka wszystkich użytkowników śledzących autora wpisu.
 	\item Dla każdego ze śledzących utworzy wpis na osi czasu.
-	\item Utworzy wpis na osi czasu autora wpisu.
+	\item Utworzy wpis na osi czasu autora.
 \end{enumerate}
 
 \noindent Implementację według powyższego algorytmu przedstawia listing~\ref{vrb:omc_twissandra_tweet_save}.
@@ -259,7 +259,7 @@ W~sekcji~\ref{sec:twissandra} autor zaproponował żeby oś czasu była partycjo
 	\item W~metodzie \verb+before_save()+ pobrać datę wpisu z~pola \verb+tweet_time+, sformatować ją do postaci ciągu znaków i~wpisać do pola \verb+day+.
 \end{enumerate}
 
-Rozwiązanie to wprowadza pewną automatyzację. Podobnie jak w~przypadku implementacji wykorzystującej czysty język CQL wymaga jednak napisania kodu źródłowego służącego do formatowania dat. Pamiętając, że OMC oferuje wsparcie dla wzorców projektowania można znacznie prościej zaprojektować model. Opisany w~sekcji~\ref{sec:time_series_modeling} szereg zdarzeń jest odpowiedzialny za partycjonowanie wpisów po komponentach daty. Wykorzystując wzorzec wystarczy dodać do pola \verb+tweet_time+ parametr konfiguracyjny \verb+partition_by_day=True+ i~wszystkie opisane wcześniej czynności zostaną automatycznie wykonane przez OMC. Takie rozwiązanie zostało uwzględnione na listingu~\ref{vrb:omc_twissandra_timeline} pokazującym model osi czasu.
+Rozwiązanie to wprowadza pewną automatyzację. Podobnie jak w~przypadku implementacji wykorzystującej czysty język CQL wymaga jednak napisania kodu źródłowego służącego do formatowania dat. Pamiętając, że OMC oferuje wsparcie dla wzorców projektowania można znacznie prościej zdefiniować model. Opisany w~sekcji~\ref{sec:time_series_modeling} szereg zdarzeń jest odpowiedzialny za partycjonowanie wpisów po komponentach daty. Wykorzystując wzorzec wystarczy dodać do pola \verb+tweet_time+ parametr \verb+partition_by_day=True+ i~wszystkie opisane wcześniej czynności zostaną automatycznie wykonane przez OMC. Takie rozwiązanie zostało uwzględnione na listingu~\ref{vrb:omc_twissandra_timeline} pokazującym model osi czasu.
 
 \section{Wnioski}
 \label{sec:twissandra_case_study_remarks}
