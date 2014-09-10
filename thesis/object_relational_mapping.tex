@@ -19,7 +19,7 @@ Potrzeba stworzenia mechanizmów ORM to naturalna konsekwencja powstawania aplik
 O~powszechnym użyciu mechanizmów ORM w~projektach informatycznych świadczą statystyki:
 
 \begin{itemize}
-	\item W~Internecie dostępne są tysiące implementacji mechanizmów ORM o~otwartych źródłach dla dziesiątek różnych języków programowania. Wyszukiwanie frazy \emph{object-relational mapping} w~witrynie \url{http://github.com} zwraca około 45 tysięcy wyników.
+	\item W~Internecie dostępne są tysiące implementacji mechanizmów ORM dla dziesiątek różnych języków programowania. Wyszukiwanie frazy \emph{object-relational mapping} w~witrynie \url{http://github.com} zwraca około 45 tysięcy wyników.
 	\item Popularnym narzędziem ORM jest biblioteka Hibernate dla języka Java. Wyszukiwanie frazy \emph{\textless artifactId \textgreater hibernate-core \textless /artifactId \textgreater}\footnote{Jest to fraza będąca częścią deklaracji biblioteki Hibernate w~popularnym narzędziu do budowania projektów w~języku Java - Maven.} w~witrynie \url{http://github.com} zwraca około 151 tysięcy wyników.
 \end{itemize}
 
@@ -62,7 +62,7 @@ public class User {
 	\label{lst:sample_jpa_pojo}
 \end{figure}
 
-Definicja encji~\ref{lst:sample_jpa_pojo} nie specyfikuje kompletnego przykładu. Brakuje przede wszystkim wartości konfiguracyjnych, takich jak nazwa tabeli, z~której encja będzie mapowana, nazwy kolumn czy też sposób reprezentacji relacji wiele-do-wielu. W~rzeczywistości JPA nie jest tak czytelene jak sugeruje przedstawiony przykład. Parametry konfiguracyjne zajmują większą część definicji klasy i~zdarza się, że najważniejsza informacja - specyfikacja samego obiektu, który reprezentuje dane - jest mocno przysłonięta.
+Definicja encji~\ref{lst:sample_jpa_pojo} nie jest kompletna. Brakuje przede wszystkim wartości konfiguracyjnych, takich jak nazwa tabeli, z~której encja będzie mapowana, nazwy kolumn czy też sposób reprezentacji relacji wiele-do-wielu. W~rzeczywistości JPA nie jest tak czytelene jak sugeruje przedstawiony przykład. Parametry konfiguracyjne zajmują większą część definicji klasy i~zdarza się, że najważniejsza informacja - specyfikacja samego obiektu, który reprezentuje dane - jest mocno przysłonięta.
 
 Na listingu~\ref{lst:sample_jpa_entity_manager} przedstawiono przykładowy kod, który służy do zapisywania użytkownika w~bazie danych. Do obsługi operacji zapisu wykorzystywany jest zarządca encji (\verb+EntityManager+). Za jego pomocą rozpoczynana jest transakcja (\verb+beginTransaction()+), wywoływane jest żądanie utrwalenia obiektu (\verb+persist()+), a~następnie transakcja jest wykonywana (\verb+commit()+).
 
@@ -79,7 +79,7 @@ manager.close();
 \begin{figure}[ht!]
 	\centering
 	\theverbbox
-	\caption{Przykładowy kod zapisujący użytkownika w~bazie danych w~standardzie JPA.}
+	\caption{Przykładowy kod w~standardzie JPA zapisujący użytkownika w~bazie danych.}
 	\label{lst:sample_jpa_entity_manager}
 \end{figure}
 
@@ -88,14 +88,14 @@ Do najbardziej popularnych implementacji Java Persistence API należą Hibernate
 \section{Kundera}
 \label{sec:kundera}
 
-Wraz z~pojawieniem się języka CQL pojawiła się szansa wykorzystania istniejących implementacji mechanizmów ORM do przechowywania danych z~użyciem silnika Cassandry. Motywacją do stworzenia takiego rozwiązania jest zwiększenie wydajności istniejących aplikacji bez modyfikacji ich kodu. Minimalna rekonfiguracja aplikacji i~podłączenie jej pod klaster bazodanowy skutkowałyby zwiększeniem wydajności działania aplikacji. Ponadto wykorzystanie istniejących interfejsów mogłoby umożliwić obsługę różnych typów baz danych należących do ruchu NoSQL. 
+Wraz z~utworzeniem języka CQL pojawiła się szansa wykorzystania istniejących implementacji mechanizmów ORM do przechowywania danych z~użyciem silnika Cassandry. Motywacją do stworzenia takiego rozwiązania jest zwiększenie wydajności istniejących aplikacji bez modyfikacji ich kodu. Minimalna rekonfiguracja aplikacji i~podłączenie jej pod klaster bazodanowy skutkowałyby zwiększeniem wydajności działania aplikacji. Ponadto wykorzystanie istniejących interfejsów mogłoby umożliwić obsługę różnych typów baz danych należących do ruchu NoSQL. 
 
-Przykładem projektu, który wykorzystuje mechanizm ORM do obsługi NoSQLowych baz danych jest Kundera.\cite{kundera_home} Kundera zapewnia implementację mapowania obiektowego zgodną ze standardem JPA 2.0 między innymi dla Cassandry, HBase, MongoDB oraz Neo4j. Dodatkowo biblioteka wspiera obsługę wielu mechanizmów równocześnie.
+Przykładem projektu, który wykorzystuje mechanizm ORM do obsługi NoSQL-owych baz danych jest Kundera.\cite{kundera_home} Kundera zapewnia implementację mapowania obiektowego zgodną ze standardem JPA 2.0 między innymi dla Cassandry, HBase, MongoDB oraz Neo4j. Dodatkowo biblioteka wspiera obsługę wielu mechanizmów równocześnie.
 
 \subsection{Wydajność}
 \label{sec:kundera_performance}
 
-Wyniki pomiarów na stronie domowej projektu Kundera świadczą o~tym, że biblioteka nie wprowadza znacznych narzutów wydajnościowych względem bezpośredniego wykorzystania interfejsu bazy danych. Ważniejsze jest jednak sprawdzenie jak duży narzut wprowadza dostosowanie relacyjnego modelu danych do Apache Cassandry. W~tym celu autor przeprowadził testy porównawcze masowego wstawiania i~pobierania obiektów. Dla każdej z~dwóch operacji zostały przeprowadzone trzy testy. Pierwszy test mierzy czas referencyjny. Jest wykonywany dla zdenormalizowanego modelu Cassandry przedstawionego na diagramie~\ref{tab:denormalized_wishlist}. Drugi test sprawdza czasy dla znormalizowanego modelu zaprezentowanego na diagramie~\ref{fig:er_wishlist}, opisanego w~JPA i~uruchomiony na Cassandrze z~wykorzystaniem biblioteki Kundera. Trzeci test wykorzystuje identyczny opis modelu jak drugi, jednakże wykonywany jest dla silnika MySQL. Wszystkie testy przeprowadzane były jednowątkowo. Czas opóźnień przesyłania danych jest pomijalny, gdyż testy były prowadzone na środowisku lokalnym.
+Wyniki pomiarów na stronie domowej projektu Kundera świadczą o~tym, że biblioteka nie wprowadza znacznych opóźnień względem bezpośredniego wykorzystania interfejsu bazy danych. Ważniejsze jest jednak sprawdzenie jak duży narzut wprowadza dostosowanie relacyjnego modelu danych do Apache Cassandry. W~tym celu autor przeprowadził testy porównawcze masowego wstawiania i~pobierania obiektów. Dla każdej z~dwóch operacji zostały przeprowadzone trzy testy. Pierwszy test mierzy czas referencyjny. Jest wykonywany dla zdenormalizowanego modelu Cassandry przedstawionego na diagramie~\ref{tab:denormalized_wishlist}. Drugi test sprawdza czasy dla znormalizowanego modelu zaprezentowanego na diagramie~\ref{fig:er_wishlist}, opisanego w~JPA i~uruchomiony na Cassandrze z~wykorzystaniem biblioteki Kundera. Trzeci test wykorzystuje identyczny opis modelu jak drugi, jednakże wykonywany jest dla silnika MySQL. Wszystkie testy przeprowadzane były jednowątkowo. Czas opóźnień przesyłania danych jest pomijalny, gdyż testy były prowadzone na środowisku lokalnym.
 
 W~trakcie testów mierzony był całkowity czas wykonania danej operacji. Przyjęte zostały następujące założenia:
 
@@ -202,7 +202,7 @@ Wyniki zebrane na wykresie~\ref{fig:insert_time_comparison} pokazują, że wykor
 
 Potencjalnym zastosowaniem mapowania obiektowo-relacyjnego dla bazy danych Cassandra są środowiska integracyjne dla wielu aplikacji. Wykorzystując homogeniczny model danych można odwoływać się do różnych silników bazodanowych. W~bibliotece Kundera istnieje takie rozwiązane. Zostało nazwane Polyglot Persistence\footnote{Polyglot Persistence (dosłowne tłumaczenie to ,,zapis poliglotyczny'') - opis mechanizmu znajduje się na stronie \url{https://github.com/impetus-opensource/Kundera/wiki/Polyglot-Persistence}.}. W~praktyce dostosowanie modelu danych ORM do istniejących schematów baz danych jest problematyczne.  
 
-Wykres~\ref{fig:insert_time_comparison} demonstruje jak ogromną przewagę szybkości przy zapisie posiada poprawnie zaprojektowany model danych Apache Cassandra. Przypuszczalnie osiągnięty czas mógłby być jeszcze lepszy, gdyż ograniczenie wydajności zapisu nastąpowało prawdopodobnie po stronie klienta testowego. Zgodnie ze specyfikacją Apache Cassandra jest w~stanie obsługiwać bez opóźnień znacznie więcej jednoczesnych żądań zapisu.
+Wykres~\ref{fig:insert_time_comparison} demonstruje jak ogromną przewagę szybkości przy zapisie posiada poprawnie zaprojektowany model danych Apache Cassandra. Przypuszczalnie osiągnięty czas mógłby być jeszcze lepszy, gdyż ograniczenie wydajności zapisu następowało prawdopodobnie po stronie klienta testowego. Zgodnie ze specyfikacją Apache Cassandra jest w~stanie obsługiwać bez opóźnień znacznie więcej jednoczesnych żądań zapisu.
 
 Czasy pobierania listy życzeń użytkownika przedstawione na wykresie~\ref{fig:select_time_comparison} nie różnią się znacząco od siebie. Przewaga szybkości pobierania danych z~wykorzystaniem CQL ponownie wynika z~zastosowania lepszego modelu danych. Denormalizacja pól encji \emph{Item} pozwala pominąć pobieranie dla każdego użytkownika dodatkowego wiersza z~bazy danych. 
 
@@ -211,9 +211,9 @@ Czasy pobierania listy życzeń użytkownika przedstawione na wykresie~\ref{fig:
 
 Na podstawie wyników przeprowadzonych badań można wnioskować, że mechanizmy mapowania obiektowo-relacyjnego nie nadają się do wykorzystania przez bazę danych Apache Cassandra. Wynika to z~faktu, że mechanizmy te wspomagają normalizację i~zachowywanie relacji między encjami, natomiast efektywne modelowanie dziedziny danych w~Cassandrze dąży do denormalizacji i~maksymalnego uproszczenia zależności pomiędzy obiektami.
 
-Drastyczna różnica szybkości zapisu danych w~modelach zoptymalizowanym i~niezoptymalizowanym świadczy o~tym, że do efektywnego modelowania dziedziny w~Apache Cassandra niezbędne są: wiedza na temat sposobu przechowywania danych przez tę bazę oraz podejmowanie świadomych wyborów. Dostarczone przez ORMy mechanizmy mogą wyłącznie spowolnić korzystanie z~Cassandry.
+Drastyczna różnica szybkości zapisu danych w~modelach zoptymalizowanym i~niezoptymalizowanym świadczy o~tym, że do efektywnego modelowania dziedziny w~Apache Cassandra niezbędne są: wiedza na temat sposobu przechowywania danych przez tę bazę oraz podejmowanie świadomych wyborów. Dostarczone przez ORM-y mechanizmy mogą wyłącznie spowolnić korzystanie z~Cassandry.
 
-Podczas badania wydajności autor natrafił również na problemy z~przenośnością kodu źródłowego pomiędzy różnymi systemami bazodanowymi. Wykonanie operacji wstawiania partii danych w~bazie relacyjnej oraz Cassandrze wymagało modyfikacji kodu źródłowego aplikacji testowej. W~relacyjnej bazie danych nie można było ukończyć testu wstawiania i~pobierania danych wykorzystując jedynie elementy zdefiniowane w~JPA. Pomimo wielokrotnej zmiany konfiguracji w~pewnym momencie testu dochodziło do całkowitego zablokowania puli połączeń. Dopiero przejście do transakcji bezstanowej zdefiniowanej w~Hibernate ORM\footnote{Hibernate ORM - środowisko aplikacyjne implementujące standard JPA dla baz relacyjnych. Zdefiniowana w~ramach tego środowiska transakcja bezstanowa nie jest częścią interfejsu JPA, a~więc nie może być wspierana przez Kunderę.} umożliwiło zakończenie testu.
+Podczas badania wydajności autor natrafił również na problemy z~przenośnością kodu źródłowego pomiędzy różnymi systemami bazodanowymi. Wykonanie operacji wstawiania partii danych w~bazie relacyjnej oraz Cassandrze wymagało modyfikacji programu testowego. W~relacyjnej bazie danych nie można było ukończyć testu wstawiania i~pobierania danych wykorzystując jedynie elementy zdefiniowane w~JPA. Pomimo wielokrotnej zmiany konfiguracji w~pewnym momencie testu dochodziło do całkowitego zablokowania puli połączeń. Dopiero przejście do transakcji bezstanowej zdefiniowanej w~Hibernate ORM\footnote{Hibernate ORM - środowisko aplikacyjne implementujące standard JPA dla baz relacyjnych. Zdefiniowana w~ramach tego środowiska transakcja bezstanowa nie jest częścią interfejsu JPA, a~więc nie może być wspierana przez Kunderę.} umożliwiło zakończenie testu.
 
 Opisane problemy z~przenośnością kodu mogą być następstwem fundamentalnych różnic pomiędzy relacyjnymi systemami bazodanowymi a~Apache Cassandrą. Przykładowo transakcja, czyli jedno z~podstawowych pojęć związanych z~zapytaniami w~języku SQL, nie istnieje w~systemie Cassandra. Dostosowanie implementacji do interfejsu mapowania obiektowo-relacyjnego wymaga sztucznego blokowania zapytań po stronie klienta, co prowadzi do wystąpienia niepotrzebnych opóźnień i~nadmiernego wykorzystania mechanizmów synchronizacji wielowątkowej. Z~drugiej strony brak lub nieodpowiednie wykorzystanie transakcji w~przypadku bazy relacyjnej prowadzi do błędów zapytań. 
 

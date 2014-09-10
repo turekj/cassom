@@ -75,14 +75,14 @@ Do dystrybucji danych wykorzystywana jest funkcja skrótu, która zachowuje kole
 		\draw[-triangle 45] (-2.5, 0.0) arc (90:-30:1.45cm);
 	\end{tikzpicture}
 
-	\caption{Schematyczna ilustracja dystrybucji danych w~bazie danych Apache Cassandra.}
+	\caption{Schematyczna ilustracja dystrybucji danych w~bazie Apache Cassandra.}
 	\label{fig:data_distribution}
 \end{figure}
 
 \section{Algorytmy zapisu/usuwania danych}
 \label{sec:data_storage_delete_algorithm}
 
-Algorytm zapisu danych w~Apache Cassandra został schematycznie przedstawiony na diagramie~\ref{fig:cassandra_data_store_diagram}.~\cite{cassandra_write_internals} Składa się on z~następujących kroków:
+Algorytm zapisu danych w~Apache Cassandrze został schematycznie przedstawiony na diagramie~\ref{fig:cassandra_data_store_diagram}.~\cite{cassandra_write_internals} Składa się on z~następujących kroków:
 
 \begin{figure}[ht!]
 	\centering	
@@ -133,8 +133,8 @@ Algorytm zapisu danych w~Apache Cassandra został schematycznie przedstawiony na
 			\item \emph{commit log} - przechowuje informacje o~kolejnych zapisach wykonywanych do bazy danych.
 		\end{itemize}
 	\item Podstawową strukturą do pobierania danych jest \emph{memtable}. Jest ona umieszczona w~szybkiej pamięci, zapewnia więc krótki czas dostępu do danych. Wykorzystanie trwałej struktury \emph{commit log} pozwala na odtworzenie zawartości \emph{memtable} w~przypadku awarii wymagającej nagłego restartu maszyny, na przykład braku zasilania. Przy ponownym uruchomieniu węzła Cassandry odtwarza on kolejno wszystkie zapisy, które znajdują się w~\emph{commit logu}.
-	\item W~przypadku przepełnienia \emph{memtable} wykonywane jest ,,spłukiwanie'' zawartości pamięci na dysk do struktury nazywanej \emph{SSTable}. Poza danymi zawiera ona indeks, który pozwala na szybki dostęp do danych wierszy. Jej charakterystyczną cechą jest niezmienność. Po przepisaniu danych z~\emph{memtable} do \emph{SSTable} jej zawartość nie jest już modyfikowana. Z~tego względu wiersze o~tym samym kluczu są często podzielone pomiędzy wiele takich struktur. ,,Spłukiwanie'' może zostać uruchomione manualnie z~wykorzystaniem polecenia \verb+nodetool flush+.
-	\item Ostatnim etapem zapisu danych jest kompresja. Aktualizacja danych nie może nadpisywać istniejących wierszy, bo struktura \emph{SSTable} jest niezmienna. Zamiast tego wstawia ona rekordy z~późniejszym ,,odciskiem czasu''. Powoduje to nadmiarowe zużycie przestrzeni dyskowej. Kompresja pozwala usunąć nieaktualne wierwsze poprzez przepisanie istniejących \emph{SSTable} na nowe, uporządkowane struktury. Kompresja może być wywoływana automatycznie w~zależności od wybranej strategii lub manualnie, z~wykorzystaniem polecenia \verb+nodetool compact+.
+	\item W~przypadku przepełnienia \emph{memtable} wykonywane jest ,,spłukiwanie'' zawartości pamięci na dysk do struktury nazywanej \emph{SSTable}. Poza danymi zawiera ona indeks, który pozwala na szybki dostęp do wybranych wierszy. Jej charakterystyczną cechą jest niezmienność. Po przepisaniu danych z~\emph{memtable} do \emph{SSTable} jej zawartość nie jest już modyfikowana. Z~tego względu wiersze o~tym samym kluczu są często podzielone pomiędzy wiele takich struktur. ,,Spłukiwanie'' może zostać uruchomione manualnie z~wykorzystaniem polecenia \verb+nodetool flush+.
+	\item Ostatnim etapem zapisu danych jest kompresja. Aktualizacja danych nie może nadpisywać istniejących wierszy, bo struktura \emph{SSTable} jest niezmienna. Zamiast tego wstawia ona rekordy z~późniejszym ,,odciskiem czasu''. Powoduje to nadmiarowe zużycie przestrzeni dyskowej. Kompresja pozwala usunąć nieaktualne wiersze poprzez przepisanie istniejących \emph{SSTable} na nowe, uporządkowane struktury. Kompresja może być wywoływana automatycznie w~zależności od wybranej strategii lub manualnie, z~wykorzystaniem polecenia \verb+nodetool compact+.
 \end{enumerate}
 
 Niemodyfikowalność struktur \emph{SSTable} ma swoje konsekwencje także dla operacji usuwania danych. Wiersz nie może zostać fizycznie skasowany. Zamiast tego oznacza się go specjalnym znacznikiem \emph{tombstone}. Wiersze oznaczone tą flagą są usuwane na etapie kompresji danych.
@@ -142,12 +142,12 @@ Niemodyfikowalność struktur \emph{SSTable} ma swoje konsekwencje także dla op
 \section{Obszary zastosowania Cassandry}
 \label{sec:cassandra_usage_areas}
 
-Specyficzny schemat danych Apache Cassandry i~brak wielu mechanizmów znanych z~relacyjnych systemów bazodanowych powodują, że nie jest ona najlepszym wyborem do przechowywania uniwersalnych danych:
+Specyficzny schemat danych Apache Cassandry i~brak wielu mechanizmów znanych z~relacyjnych systemów bazodanowych powodują, że nie jest ona najlepszym wyborem do przechowywania uniwersalnej informacji:
 
 \begin{itemize}
-	\item Brak wsparcia dla transakcji znacząco utrudnia wykorzystanie Cassandry w~dziedzinach, dla których spójność danych jest kwestią kluczową. Przykładem może być obszar finansowy. W~systemach relacyjnych spójność jest zapewniona poprzez mechanizmy bazy danych. W~przypadku Apache Cassandry odpowiedzialność zostaje przeniesiona na aplikacje dostępowe, co znacząco zwiększa ilość pracy koncepcyjnej i~zwiększa ryzyko błędów.
-	\item Brak możliwości złączania powoduje, że model danych musi być projektowany w~oparciu o~wykonywane do niego odwołania. Utrudnia to rozbudowę aplikacji. Przykładowo dla relacji jeden do wielu modelowanej poprzez tabelę, w~której identyfikatorem wiersza jest identyfikator obiektu nadrzędnego, a~w~kolumnach wpisywane są identyfikatory obiektów podrzędnych, nie jest możliwe zwrócenie wszystkich obiektów nadrzędnych wskazujących na dany obiekt podrzędny bez modyfikacji schematu.
-	\item Brak złączeń implikuje denormalizację modelu danych. Wprowadza to problemy z~zachowaniem spójności. Aby zaktualizować adres, który jest przechowywany w~formie zdenormalizowanej w~tabeli użytkownika oraz zamówienia, należy znaleźć wszystkie rekordy, które wskazują na ten adres. Odpowiedzialność za spójność danych ponownie zostaje przeniesiona na aplikację, która wykorzystuje bazę.
+	\item Brak wsparcia dla transakcji znacząco utrudnia wykorzystanie Cassandry w~dziedzinach, dla których spójność danych jest kwestią kluczową. Przykładem może być obszar finansowy. W~systemach relacyjnych spójność jest zapewniona poprzez mechanizmy bazy danych. W~przypadku Apache Cassandry odpowiedzialność zostaje przeniesiona na aplikacje dostępowe, co znacząco zwiększa ilość pracy koncepcyjnej i~potęguje ryzyko błędów.
+	\item Brak możliwości złączania powoduje, że model danych musi być projektowany w~oparciu o~wykonywane do niego odwołania. Utrudnia to rozbudowę aplikacji. Przykładowo dla relacji jeden-do-wielu modelowanej poprzez tabelę, w~której kluczem wiersza jest identyfikator obiektu nadrzędnego, a~w~kolumnach wpisywane są identyfikatory obiektów podrzędnych, nie jest możliwe zwrócenie wszystkich obiektów nadrzędnych wskazujących na dany obiekt podrzędny bez modyfikacji schematu.
+	\item Brak złączeń implikuje denormalizację modelu danych. Wprowadza to problemy z~zachowaniem spójności. Aby zaktualizować adres, który jest przechowywany w~formie zdenormalizowanej w~tabelach ,,użytkownik'' oraz ,,zamówienie'', należy znaleźć wszystkie rekordy, które wskazują na ten adres. Odpowiedzialność za spójność danych ponownie zostaje przeniesiona na aplikację, która wykorzystuje bazę.
 \end{itemize}
 
 W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono porównanie różnych aspektów Apache Cassandry i~relacyjnych systemów bazodanowych. Analizując informacje zebrane w~tabeli i~przedstawione wcześniej w~rozdziale można wyciągnąć następujące wnioski:
@@ -199,7 +199,7 @@ W~tabeli~\ref{tab:cassanda_relationship_database_comparison} przedstawiono poró
 	\item Apache Cassandra najlepiej sprawdza się w~zastosowaniu do \emph{big data}. Do poszczególnych fragmentów definicji wielkich zbiorów danych, która została przytoczona w~sekcji~\ref{sec:motivation}, można przyporządkować cechy charakteryzujące Cassandrę:
 		\begin{itemize}
 			\item ,,dużych rozmiarów'' - liniowa skalowalność horyzontalna pozwala na obsługę informacji o~dowolnej wielkości, pod warunkiem zapewnienia odpowiedniej liczby węzłów,
-			\item ,,różnorodnych'' - model danych nie jest sztywny, może być dostosowany do zmieniających się danych w~trakcie działania aplikacji,
+			\item ,,różnorodnych'' - schemat jest elastyczny i~może być dostosowany do zmieniających się danych w~trakcie działania aplikacji,
 			\item ,,często zmieniających się'' - wbudowana obsługa szeregu chronologicznego oraz optymalizacja czasu zapisu zostały zaprojektowane pod kątem dynamicznie zmieniających się danych. 
 		\end{itemize}
 \end{itemize}
@@ -242,7 +242,7 @@ Wszystkie przypadki użycia wymienione przez twórców Cassandry pokrywają scen
 \section{Struktura danych a~modelowanie}
 \label{sec:relative_vs_cassandra_model}
 
-Struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandrze zmieniają podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu danych Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
+Struktura i~mechanizm dystrybucji danych wykorzystywany w~Apache Cassandrze zmieniają podejście do modelowania dziedziny znane z~relacyjnych baz danych. Zbudowanie efektywnego modelu Cassandry wymaga skupienia się w~podobnym stopniu na zdefiniowaniu encji z~modelowanego świata, jak również na analizie odwołań, które będą wykonywane do obiektów z~tego świata.~\cite{modeling_best_practices_pt_1}
 
 Załóżmy, że celem jest modelowanie danych dla sklepu internetowego. Zakupów dokonują użytkownicy, którzy mogą wstawić wiele przedmiotów z~oferty sklepu na listę życzeń. W~przypadku baz opartych o~język SQL jest to klasyczny problem relacji typu wiele-do-wielu, do modelowania których wykorzystywana jest najczęściej tabela pośrednia. 
 
@@ -290,7 +290,7 @@ Załóżmy, że celem jest modelowanie danych dla sklepu internetowego. Zakupów
 	\label{fig:er_wishlist}
 \end{figure}
 
-Diagram prezentujący zamodelowaną relację dla listy życzeń jest przedstawiony na rysunku~\ref{fig:er_wishlist}. W~tabeli Użytkownik (\emph{User}) przechowywane są imię, nazwisko oraz identyfikator. W~tabeli Przedmiot (\emph{Item}) znajduje się nazwa, cena, a~także inne właściwości: opis, kategoria oraz waga. Tabela Lista życzeń (\emph{Wishlist}) łączy ze sobą użytkownika i~przedmiot poprzez wykorzystanie kluczy obcych. 
+Diagram prezentujący zamodelowaną relację dla listy życzeń jest przedstawiony na rysunku~\ref{fig:er_wishlist}. W~tabeli ,,użytkownik'' (\emph{User}) przechowywane są imię, nazwisko oraz identyfikator. W~tabeli ,,przedmiot'' (\emph{Item}) znajduje się nazwa, cena, a~także inne właściwości: opis, kategoria oraz waga. Tabela ,,lista życzeń'' (\emph{Wishlist}) łączy ze sobą użytkownika i~przedmiot poprzez wykorzystanie kluczy obcych. 
 
 Powyższy model jest wykorzystywany w~widoku listy życzeń na profilu użytkownika. Na liście życzeń prezentowane są informacje o~nazwie przedmiotu oraz jego cenie. Po kliknięciu nazwy użytkownik przenoszony jest do strony przedmiotu. Na listingu~\ref{lst:sql_wishlist} zaprezentowano zapytanie, które wyświetla listę życzeń.
 
@@ -412,9 +412,9 @@ Poprawiony model można poddać dalszej optymalizacji. Wyświetlenie listy życz
 \section{CQL}
 \label{sec:about_cql}
 
-Efektywne modelowanie i~obsługa danych w~Apache Cassandra wymaga dobrej znajomości wewnętrznej struktury bazy danych. Dodatkowym utrudnieniem przy korzystaniu z~początkowych wersji Cassandry była konieczność wykorzystania skomplikowanego interfejsu programistycznego opartego o~wywoływanie zdalnych procedur Thrift\footnote{Dokumentacja interfejsu dostępna jest pod adresem \url{https://wiki.apache.org/cassandra/API10}.}. Thrift jest platformą pozwalającą budować aplikacje przenośne między różnymi językami programowania. Dzięki temu rozwiązaniu baza danych dostępna była dla wszystkich platform. Niestety, skutkiem ubocznym było skomplikowanie interfejsu dostępowego.
+Efektywne modelowanie i~obsługa danych w~Apache Cassandrze wymaga dobrej znajomości wewnętrznej struktury bazy danych. Dodatkowym utrudnieniem przy korzystaniu z~początkowych wersji Cassandry była konieczność wykorzystania skomplikowanego interfejsu programistycznego opartego o~wywoływanie zdalnych procedur Thrift\footnote{Dokumentacja interfejsu dostępna jest pod adresem \url{https://wiki.apache.org/cassandra/API10}.}. Thrift jest platformą pozwalającą budować aplikacje przenośne między różnymi językami programowania. Dzięki temu rozwiązaniu baza danych dostępna była dla wszystkich platform. Niestety, skutkiem ubocznym było skomplikowanie interfejsu dostępowego.
 
-Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu do tej bazy danych. Interfejs ten nosi nazwę CQL\footnote{CQL (ang. Cassandra Query Language) - język zapytań Cassandry.} i~jest językiem zapytań, którego składnia wzorowana jest na SQL. Poza podobieństwami składniowymi języki te nie mają cech wspólnych. Nie są wzajemnie zgodne. W~chwili obecnej CQL jest rekomendowanym standardem komunikacji z~Apache Cassandra.~\cite{cql_preferred_over_thrift} Na listingu~\ref{lst:cql_example} przedstawiono zapytanie w~języku CQL, które opisuje omawianą wcześniej encję \emph{User}. Wynikiem wykonania tego zapytania jest prosty schemat modelu danych zaprezentowany na diagramie~\ref{tab:cql_example_query_result}.
+Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu do tej bazy danych. Interfejs ten nosi nazwę CQL\footnote{CQL (ang. Cassandra Query Language) - język zapytań Cassandry.} i~jest językiem zapytań, którego składnia wzorowana jest na SQL. Poza podobieństwami składniowymi języki te nie mają cech wspólnych. Nie są wzajemnie zgodne. W~chwili obecnej CQL jest rekomendowanym standardem komunikacji z~Apache Cassandrą.~\cite{cql_preferred_over_thrift} Na listingu~\ref{lst:cql_example} przedstawiono zapytanie w~języku CQL, które opisuje omawianą wcześniej encję \emph{User}. Wynikiem wykonania tego zapytania jest prosty schemat modelu danych zaprezentowany na diagramie~\ref{tab:cql_example_query_result}.
 
 \begin{verbbox}
 	CREATE TABLE User (
@@ -452,7 +452,7 @@ Wraz z~wydaniem 1.2 Apache Cassandry wprowadzony został nowy interfejs dostępu
 \section{Przykład modelowania dziedziny danych}
 \label{sec:cassandra_modelling_examples}
 
-W~Internecie znajdują się przykładowe modele danych stworzone przez użytkowników Apache Cassandry. Zapewniają one materiał do nauki dla nowych użytkowników bazy. Prezentują sprawdzone sposoby rozwiązania zadanego problemu koncentrując się na omówieniu decyzji projektowych, które należy podjąć aby zbudować efektywny schemat. Proces tworzenia wydajnych modeli danych zostanie przez autora przedstawiony z~wykorzystaniem takiego przykładu. Do modelowania zostanie wykorzystany język CQL, gdyż począwszy od wersji CQL3 jest on oficjalnym standardem zalecanym przez autorów Cassandry. 
+W~Internecie znajdują się przykładowe modele danych stworzone przez użytkowników Apache Cassandry. Zapewniają one materiał do nauki dla nowych użytkowników bazy. Prezentują sprawdzone sposoby rozwiązania zadanego problemu koncentrując się na omówieniu decyzji projektowych, które należy podjąć aby zbudować efektywny schemat. Proces tworzenia wydajnych modeli danych zostanie przedstawiony przez autora z~wykorzystaniem takiego przykładu. Do modelowania zostanie wykorzystany język CQL, gdyż począwszy od wersji CQL3 jest on oficjalnym standardem zalecanym przez autorów Cassandry. 
 
 \subsection{Twissandra}
 \label{sec:twissandra}
@@ -473,10 +473,10 @@ Pierwszym krokiem jest zdefiniowanie modelu użytkownika. Dla uproszczenia encja
 
 \begin{itemize}
 	\item Cassandra nie posiada mechanizmu generacji unikatowego klucza głównego. Zamiast tego wykorzystywane są typy \verb+uuid+ lub \verb+timeuuid+,~\cite{uuid_timeuuid} które są obliczane przez aplikację kliencką. 
-	\item Ze względu na architekturę Cassandra nie potrafi efektywnie pobrać wszystkich wierszy należących do danej tabeli. Oznacza to, że bez używania indeksów (co wiąże się z~tworzeniem kolejnych tabel) \textbf{jedyną możliwością odwołania się do wiersza jest podanie jego identyfikatora}. Wybór losowo/sekwencyjnie generowanego klucza może sprawić, że pobieranie danego wiersza będzie bardzo utrudnione.
+	\item Ze względu na architekturę Cassandra nie potrafi efektywnie pobrać wszystkich wierszy należących do danej tabeli. Oznacza to, że bez używania indeksów (co wiąże się z~tworzeniem kolejnych tabel) \textbf{jedyną możliwością odwołania się do wiersza jest podanie jego identyfikatora}. Wybór losowo/sekwencyjnie generowanego klucza może sprawić, że pobranie danego wiersza będzie bardzo utrudnione.
 \end{itemize}
 
-Dla modelu użytkownika dobrym identyfikatorem jest nazwa (zakładając jej unikatowość). Jest to dana, która będzie znana w~dowolnym kontekście odwołania. Na listingu~\ref{lst:creating_inserting_users} przedstawiono zapytanie, które pozwala utworzyć i~wstawić użytkownika do bazy danych. W~wyniku tego zapytania zostanie utworzona tabela o~strukturze przedstawionej na diagramie~\ref{tab:creating_inserting_users_structure}. 
+Dla modelu użytkownika dobrym identyfikatorem jest nazwa (zakładając jej unikatowość). Jest to dana, która będzie znana w~dowolnym kontekście odwołania. Na listingu~\ref{lst:creating_inserting_users} przedstawiono zapytania, które pozwalają zbudować schemat i~wstawić użytkownika do bazy danych. W~wyniku tych zapytań zostanie utworzona tabela o~strukturze przedstawionej na diagramie~\ref{tab:creating_inserting_users_structure}. 
 
 \begin{verbbox}
 CREATE TABLE users (
@@ -514,7 +514,7 @@ Kolejnym krokiem jest umożliwienie śledzenia użytkowników. W~relacyjnym mode
 \begin{itemize}
 	\item Nie ma możliwości efektywnego pobrania wszystkich wpisów z~tabeli \verb+followers+, a~więc nie da się ich filtrować po nazwie śledzonego użytkownika.
 	\item Istnieje możliwość stworzenia indeksu na kolumnie z~identyfikatorem śledzonego użytkownika. Dzięki temu możliwe będzie wybranie zadanych wpisów w~tabeli \verb+followers+.
-	\item Indeks tworzy niewidoczną tabelę, w~której kluczem głównym wiersza jest jedna z~unikalnych wartości komórki (w~podanym przypadku identyfikator śledzonego użytkownika), a~w~kolumnach przechowywane są identyfikatory wszystkich wierwszy, które posiadają taką wartość komórki.
+	\item Indeks tworzy niewidoczną tabelę, w~której kluczem głównym wiersza jest jedna z~unikalnych wartości komórki (w~podanym przypadku identyfikator śledzonego użytkownika), a~w~kolumnach przechowywane są identyfikatory wszystkich wierszy, które posiadają taką wartość komórki.
 \end{itemize}
 
 Analizując opis metody tworzenia indeksów łatwo dojść do wniosku, że można przekształcić model tabeli \verb+followers+ w~taki sposób, aby ich używanie nie było potrzebne. Przyjmując identyfikator śledzonego użytkownika jako klucz wiersza, a~informację o~nazwach profili śledzących przechowując w~kolejnych kolumnach, możliwe jest pobranie kompletu informacji w~jednym zapytaniu. 
@@ -522,11 +522,11 @@ Analizując opis metody tworzenia indeksów łatwo dojść do wniosku, że możn
 CQL3 umożliwia wykorzystanie dwóch typów kluczy do dwuwymiarowego podziału wierszy~\cite{compound_keys_and_clustering}:
 
 \begin{description}
-	\item[Partition key] określa, na którym węźle znajduje się dany wiersz. W~niskopoziomowym schemacie danych jest implementowany na kluczu wiersza.
+	\item[Partition key] określa, na którym węźle znajduje się dany wiersz. W~niskopoziomowym schemacie danych jest implementowany jako identyfikator wiersza.
 	\item[Clustering key] określa kolumny, względem których porządkowane są wiersze dla danej partycji. W~niskopoziomowym schemacie danych jest implementowany na kolumnach.
 \end{description}
 
-Dzięki wykorzystaniu dwóch rodzajów kluczy można zdefiniować efektywny schemat dla tabeli \verb+followers+. Odpowiednie zapytanie zostało przedstawione na listingu~\ref{lst:following_users}. Poglądowy wygląd fizycznego schematu danych uzyskanego dla omawianego zapytania został zaprezentowany na diagramie~\ref{tab:following_users_structure}.
+Dzięki wykorzystaniu dwóch rodzajów kluczy można zdefiniować efektywny schemat dla tabeli \verb+followers+. Odpowiednie zapytanie zostało przedstawione na listingu~\ref{lst:following_users}. Poglądowy kształt fizycznego schematu danych uzyskanego dla omawianego zapytania został zaprezentowany na diagramie~\ref{tab:following_users_structure}.
 
 \begin{verbbox}
 CREATE TABLE followers (
@@ -563,7 +563,7 @@ INSERT INTO followers (username, follower, since) VALUES (
 		\hhline{|-||--|}
 	\end{tabular} 
 
-	\caption{Poglądowy wynik struktury uzyskanej po wykonaniu zapytań~\ref{lst:following_users}.}
+	\caption{Poglądowy kształt struktury uzyskanej po wykonaniu zapytania~\ref{lst:following_users}.}
 	\label{tab:following_users_structure}
 \end{figure}
 
@@ -656,7 +656,7 @@ INSERT INTO tweets (tweet_id, user, body) VALUES (
 	\label{tab:tweets_structure}
 \end{figure}
 
-Tabela \verb+tweets+ nie może być wykorzystania do konstrukcji widoków osi czasu. Aby wyświetlić wszystkie wpisy użytkownika i~śledzonych przez niego osób należałoby złączyć trzy tabele - \verb+tweets+, \verb+users+ oraz \verb+followers+. Apache Cassandra nie umożliwia jednak wykonywania złączeń. Możliwe jest manualne scalanie tabel w~aplikacji, ale podobnie jak dla relacyjnych baz danych jest to rozwiązanie skrajnie niewydajne. W~celu uniknięcia złączeń należy zbudować widok osi czasu w~osobnej tabeli. Jej zawartość będzie uzupełniana podczas dodawania nowych wpisów przez użytkowników. Na osi czasu wyświetlane będą dwie informacje - nazwa użytkownika publikującego oraz treść wpisu. 
+Tabela \verb+tweets+ nie może być wykorzystana do konstrukcji widoków osi czasu. Aby wyświetlić wszystkie wpisy użytkownika i~śledzonych przez niego osób należałoby złączyć trzy tabele - \verb+tweets+, \verb+users+ oraz \verb+followers+. Apache Cassandra nie umożliwia jednak wykonywania złączeń. Możliwe jest manualne scalanie tabel w~aplikacji, ale podobnie jak dla relacyjnych baz danych jest to rozwiązanie skrajnie niewydajne. W~celu uniknięcia złączeń należy zbudować widok osi czasu w~osobnej tabeli. Jej zawartość będzie uzupełniana podczas dodawania nowych wpisów przez użytkowników. Na osi czasu wyświetlane będą dwie informacje - nazwa użytkownika publikującego oraz treść wpisu. 
 
 Autor Twissandry sugeruje, aby w~tabeli osi czasu umieścić trzy informacje - nazwę użytkownika, a~także czas publikacji oraz identyfikator wpisu. Przy tak zdefiniowanym schemacie na etapie budowy widoku dla każdego wpisu osobno pobierana jest jego treść z~tabeli \verb+tweets+. Nie jest to kluczowy problem wydajnościowy, jednakże dzięki denormalizacji dodatkowe pobranie może być łatwo wyeliminowane. Wystarczy uwzględnić treść wpisu w~tabeli osi czasu. Zapytanie, które tworzy schemat \verb+timeline+ zostało zaprezentowane na listingu~\ref{lst:timeline}. Poglądowy kształt wynikowej struktury danych przedstwia diagram~\ref{tab:timeline_structure}.
 
