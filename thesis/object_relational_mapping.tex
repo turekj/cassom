@@ -217,7 +217,7 @@ Podczas badania wydajności autor natrafił również na problemy z~przenośnoś
 
 Opisane problemy z~przenośnością kodu mogą być następstwem fundamentalnych różnic pomiędzy relacyjnymi systemami bazodanowymi a~Apache Cassandrą. Przykładowo transakcja, czyli jedno z~podstawowych pojęć związanych z~zapytaniami w~języku SQL, nie istnieje w~systemie Cassandra. Dostosowanie implementacji do interfejsu mapowania obiektowo-relacyjnego wymaga sztucznego blokowania zapytań po stronie klienta, co prowadzi do wystąpienia niepotrzebnych opóźnień i~nadmiernego wykorzystania mechanizmów synchronizacji wielowątkowej. Z~drugiej strony brak lub nieodpowiednie wykorzystanie transakcji w~przypadku bazy relacyjnej prowadzi do błędów zapytań. 
 
-Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowego dla Cassandry. Dla optymalnej wydajności należy jednak zastosować rozwiązane dedykowane:
+Wyniki badań nie świadczą o~niemożliwości implementacji mapowania obiektowego dla Cassandry. Dla optymalnej wydajności należy jednak zastosować rozwiązanie dedykowane:
 
 \begin{itemize}
 	\item Definiowanie modelu powinno być skoncentrowane wokół wewnętrznej reprezentacji danych w~Cassandrze. W~stosunku do mapowania obiektowo-relacyjnego kluczowe są aspekty obniżenia istotności relacji i~wsparcie dla operacji denormalizacji z~poziomu interfejsu.
@@ -302,7 +302,7 @@ W~powyższym przykładzie denormalizacja jest modelowana jako zdegenerowany przy
 	\label{vrb:jpa_explicit_denormalization_theory}
 \end{figure}
 
-Denormalizacja jawna posiada jednak inne wady. Przede wszystkim model nie podaje, że kolumny \emph{itemId}, \emph{name} oraz \emph{price} powinny pochodzić od instancji klasy \emph{Item}. Ponadto użytkownik mechanizmu musi pamiętać o~ręcznym wypełnieniu pól, co jest z~kolei narażone na błędy. Eleganckie połączenie tych dwóch opcji nie jest możliwe w~języku Java. 
+Denormalizacja jawna posiada jednak inne wady. Przede wszystkim model nie podaje, że kolumny \emph{itemId}, \emph{name} oraz \emph{price} powinny pochodzić od instancji klasy \emph{Item}. Ponadto użytkownik mechanizmu musi pamiętać o~ręcznym wypełnieniu pól, co jest z~kolei narażone na błędy. Połączenie denormalizacji jawnej i~niejawnej nie jest możliwe w~języku Java. 
 
 Ze względu na mechanizm metaklas w~Pythonie stworzono eleganckie i~proste implementacje ORM dla relacyjnych baz danych. Dwa najpopularniejsze mechanizmy to Django ORM\footnote{Django ORM - część platformy Django, która odpowiada za operacje bazodanowe. Dokumentacja jest dostępna pod adresem \url{https://docs.djangoproject.com/en/dev/topics/db/}.} oraz SQLAlchemy\footnote{Strona domowa projektu jest dostępna pod adresem \url{http://www.sqlalchemy.org}.}. Wykorzystując metaklasy osiągalne jest stworzenie mapowania o~interfejsie wymienionych mechanizmów, który rozwiązuje problem zasygnalizowany w~przypadku języka Java. Ilustruje to listing~\ref{vrb:sql_alchemy_like_denormalization}.
 

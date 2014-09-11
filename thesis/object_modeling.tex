@@ -574,7 +574,7 @@ W~trakcie testu zostało wygenerowanych 10000 użytkowników oraz 1000 adresów.
 
 Z~wykresu można odczytać ogromną przewagę modeli zdenormalizowanych nad modelem znormalizowanym przy masowym odczycie wielu rekordów. Jest to zgodne z~prognozami przedstawionymi w~sekcji~\ref{sec:normalization_by_table}. Liczba zapytań potrzebnych do pobrania kompletu informacji z~wykorzystaniem normalizacji przez tabelę rośnie wraz ze wzrostem ilości encji w~zbiorze danych, jak również z~gęstością połączeń. Uzyskany wykres ma charakterystykę nieliniową. W~przypadku denormalizacji przez pola/tabelę uzyskane wyniki mają charakterystykę w~przybliżeniu liniową. Ilość wykonywanych zapytań zależy wyłącznie od liczby elementów w~zbiorze danych.
 
-Należy zauważyć, że wykres nie oddaje pełni różnic pomiędzy modelami. Ponieważ czas dostępu dla zależności znormalizowanej odbiega znacząco od pozostałych, skala nie odzwierciedla różnicy pomiędzy podejściami zdenormalizowanymi. Zgodnie z~przewidywaniami mechanizm denormalizacji przez pole jest dla wszystkich punktów pomiaru w~przybliżeniu dwukrotnie szybszy od denormalizacji przez tabelę, ponieważ do pobrania informacji należy wykonać dwa razy mniej zapytań.
+Należy zauważyć, że wykres nie oddaje w~pełni różnic pomiędzy modelami. Ponieważ czas dostępu dla zależności znormalizowanej odbiega znacząco od pozostałych, skala nie odzwierciedla różnicy pomiędzy podejściami zdenormalizowanymi. Zgodnie z~przewidywaniami mechanizm denormalizacji przez pole jest dla wszystkich punktów pomiaru w~przybliżeniu dwukrotnie szybszy od denormalizacji przez tabelę, ponieważ do pobrania informacji należy wykonać dwa razy mniej zapytań.
 
 \paragraph{Skalowalność operacji wyszukiwania względem ilości encji}
 
@@ -786,7 +786,7 @@ Jeżeli powyższe założenia są spełnione aktualizacja może być zastąpiona
 	\label{fig:update_vs_insert_time_density_comparison}
 \end{figure}
 
-Wyniki pokazują, że dla gęstych modeli danych operacja wstawiania może być nawet dwukrotnie wydajniejsza niż aktualizacja. Zastosowanie wielowątkowej aplikacji do przeprowadzenia testów mogło dalej pogłębić te różnicę. Z~wyniku testu można wywnioskować, że odnajdywanie/nakładnie odpowiednich ograniczeń na dane i~przekształcanie modelu może znacząco poprawiać wydajność również w~przypadkach, w~których w~ogólności Cassandra nie sprawdza się zbyt dobrze.
+Wyniki pokazują, że dla gęstych modeli danych operacja wstawiania może być nawet dwukrotnie wydajniejsza niż aktualizacja. Zastosowanie wielowątkowej aplikacji do przeprowadzenia testów mogło dalej pogłębić tę różnicę. Z~wyniku testu można wywnioskować, że odnajdywanie/nakładnie odpowiednich ograniczeń na dane i~przekształcanie modelu może znacząco poprawiać wydajność również w~przypadkach, w~których Cassandra ogólnie nie sprawdza się zbyt dobrze.
 
 Na podstawie porównania wydajności różnych metod modelowania zależności między danymi można stwierdzić, że nie ma przypadku, w~którym denormalizacja z~wykorzystaniem tabeli ma przewagę nad pozostałymi metodami. W~każdym przypadku może być ona zastąpiona denormalizacją przez pola/modelem znormalizowanym z~uzyskaniem identycznej lub lepszej wydajności. Stosowanie tego rodzaju relacji jest uzasadnione jeżeli:
 
@@ -836,7 +836,7 @@ Udogodnieniem dla programisty korzystającego z~OMC jest możliwość automatycz
 
 \paragraph{Grupowanie odczytów dla urządzenia i~fragmentu daty} 
 
-W~przypadku gdy odczytów jest zbyt dużo by mieściły się w~jednym wierszu sugerowanym rozwiązaniem jest dodatkowe partycjonowanie wierszy po komponencie daty: miesiącu, dniu, itd. Autor wzorca sugeruje utworzenie w~modelu dodatkowego pola, do którego wpisywany jest komponent daty i~dołączenie tego pola do klucza partycjonowania. Takie modelowanie dziedziny może prowadzić do potencjalnych błędów. Ta sama dana - ślad czasu - przechowywana jest w~dwóch polach, które różnią się formatowaniem. 
+W~przypadku gdy odczytów jest zbyt dużo by mieściły się w~jednym wierszu, sugerowanym rozwiązaniem jest dodatkowe partycjonowanie wierszy po komponencie daty: miesiącu, dniu, itd. Autor wzorca sugeruje utworzenie w~modelu dodatkowego pola, do którego wpisywany jest komponent daty i~dołączenie tego pola do klucza partycjonowania. Takie modelowanie dziedziny może prowadzić do potencjalnych błędów. Ta sama dana - ślad czasu - przechowywana jest w~dwóch polach, które różnią się formatowaniem. 
 
 OMC posiada mechanizm partycjonowania dat po komponencie. W~modelu znajduje się tylko jedna dana - faktyczny ślad czasu. OMC na jej podstawie automatycznie tworzy i~formatuje klucz partycjonowania. Dzięki temu programista nie musi dbać o~ręczne wyznaczanie komponentu daty. Listing~\ref{lst:time_series_modeling_two} przedstawia opis modelu z~partycjonowaniem względem dnia.
 
