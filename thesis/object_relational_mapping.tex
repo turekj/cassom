@@ -310,7 +310,7 @@ Ze względu na mechanizm metaklas w~Pythonie stworzono eleganckie i~proste imple
 	class Wishlist(Model):
 	    userId = TextField(partition_key=True)
 	    item = DenormalizedField(relates=Item, 
-	                             clustering_keys=['itemId'], 
+	                             clustering_key=True, 
 	                             fields=['name', 'price'])
 
 	w = Wishlist()
