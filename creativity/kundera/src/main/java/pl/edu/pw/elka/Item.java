@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "items", schema = "kundera")
+@Table(name = "items", schema = "kundera@cassandra_pu")
 public class Item {
     @Id
     @Column(name="itemId")
@@ -20,7 +20,7 @@ public class Item {
     @Column(name="description")
     private String description;
 
-    @ManyToMany(mappedBy="wishlistItems")
+    @ManyToMany(mappedBy="wishlistItems", fetch = FetchType.EAGER)
     private Set<User> wishingUsers = new HashSet<User>();
 
     public String getItemId() {

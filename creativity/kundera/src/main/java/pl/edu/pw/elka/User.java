@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "users", schema = "kundera")
+@Table(name = "users", schema = "kundera@cassandra_pu")
 public class User {
     @Id
     @Column(name = "userId")
@@ -17,7 +17,7 @@ public class User {
     @Column(name = "surname")
     private String surname;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "wishlist", joinColumns = {@JoinColumn(name = "userId",
             referencedColumnName = "userId")},
             inverseJoinColumns = {@JoinColumn(name = "itemId", referencedColumnName = "itemId")},

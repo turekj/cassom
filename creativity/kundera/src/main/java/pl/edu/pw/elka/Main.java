@@ -4,12 +4,13 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import org.apache.commons.lang.time.StopWatch;
 
+import javax.persistence.*;
 import java.util.*;
 
 public class Main {
-    private static final int MAX_USERS_PERSISTED = 10000;
+    private static final int MAX_USERS_PERSISTED = 100;
     private static final int MAX_USERS_FETCHED = 10000;
-    private static final int MAX_ITEMS = 5000;
+    private static final int MAX_ITEMS = 50;
     private static final int MAX_ITEMS_PER_WISHLIST = 11;
 
     public static void main(String[] args) {
@@ -21,7 +22,24 @@ public class Main {
         List<Item> items = createItems();
         List<User> users = createUsers(items);
 
-        Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("cassandra_pu");
+        EntityManager em = emf.createEntityManager();
+        em.setFlushMode(FlushModeType.AUTO);
+
+        for (Item item : items) {
+            em.persist(item);
+        }
+
+        for (User user : users) {
+            em.persist(user);
+
+
+        }
+
+        em.close();
+        emf.close();
+
+        /*Cluster cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
         Session session = cluster.connect();
         //session.execute("DROP KEYSPACE performance_test;");
         session.execute("CREATE KEYSPACE performance_test WITH REPLICATION = { 'class' : 'SimpleStrategy', " +
@@ -79,7 +97,7 @@ public class Main {
 
         session.execute("DROP KEYSPACE performance_test;");
         session.close();
-        cluster.close();
+        cluster.close();*/
     }
 
     private List<User> createUsers(List<Item> items) {
@@ -109,6 +127,9 @@ public class Main {
             for (Integer itemId : itemsToLike) {
                 Item item = items.get(itemId);
                 user.getWishlistItems().add(item);
+                item.getWishingUsers().add(user);
+
+                System.out.println("Linked user: " + user.getUserId() + " with item: " + item.getItemId());
             }
 
             users.add(user);

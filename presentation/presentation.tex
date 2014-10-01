@@ -4,6 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[MeX]{polski}
 \usepackage{hyperref}
+\usepackage{colortbl}
 \usepackage{graphicx}
 \usepackage{pgfplots}
 \usepackage{tikz, calc}
@@ -109,10 +110,10 @@
 							tick label style={/pgf/number format/fixed},
 							ytick={2500, 5000, 8000, 10000},
 							yticklabels={2500+1250, 5000+2500, 8000+4000, 10000+5000},
-							legend style={at={(0.95,0.2)},anchor=east,fill=none, font=\tiny},
+							legend style={at={(0.95,0.25)},anchor=east,fill=none, font=\tiny},
 							every axis/.append style={font=\small}
 						]
-						\addplot[color=ios-top, very thick] coordinates {
+						\addplot[color=ios-top, thick] coordinates {
 							(23.978, 10000)
 							(19.155, 8000)
 							(12.762, 5000)
@@ -120,7 +121,7 @@
 						};
 						\addlegendentry{CQL [C*]}
 
-						\addplot[color=red, very thick] coordinates {
+						\addplot[color=red, thick] coordinates {
 							(418.915, 10000)
 							(275.532, 8000)
 							(119.453, 5000)
@@ -128,7 +129,7 @@
 						};
 						\addlegendentry{ORM [C*]}
 
-						\addplot[color=green, very thick] coordinates {
+						\addplot[color=green, thick] coordinates {
 							(328.915, 10000)
 							(223.823, 8000)
 							(100.23, 5000)
@@ -140,14 +141,77 @@
 		\end{columns}
 	\end{frame}
 
-  \begin{frame}
-    \frametitle{This is the first slide}
-    %Content goes here
-  \end{frame}
-  \begin{frame}
-    \frametitle{This is the second slide}
-    \framesubtitle{A bit more information about this}
-    %More content goes here
-  \end{frame}
-% etc
+	\begin{frame}
+		\frametitle{Analiza problemu}
+		\framesubtitle{Modelowanie relacji wiele-do-wielu przez bibliotekę Kundera}
+
+		\begin{columns}[c]
+			\column{.5\textwidth}
+				\scalebox{0.5}{
+						\begin{tikzpicture}
+							\def \n {6}
+							\def \radius {3cm}
+							\def \margin {10}
+
+							\foreach \a/\b [count=\s] in {B/-9, A/-16, F/17, E/9, D/4, C/-3}
+							{
+					  			\node[draw, circle, minimum width=1cm] at ({360/\n * (\s - 1)}:\radius) {$\a$};
+					  			\node at ({360/\n * (\s - 1)}:3.85cm) {$\b$};
+					  			\draw[>=latex] ({360/\n * (\s - 1)+\margin}:\radius) 
+					    			arc ({360/\n * (\s - 1)+\margin}:{360/\n * (\s)-\margin}:\radius);
+							}
+
+							\node[draw, rectangle, minimum height=1cm] at (-5.0, 0.8) {$klucz$};
+							\node[draw, rectangle, minimum height=1cm] at (-5.0, -1.2) {$dane$};
+							\draw[dashed, -triangle 45] (-4.95,1.3) arc (180:32:3.4cm);
+							\draw[dashed, -triangle 45] (1.5,2) arc (0:-124:3.8cm);
+							\node at (-4.0, 2.2) {$hash:$};
+							\node at (-4.2, 1.7) {$-10$};
+						\end{tikzpicture}
+				}
+
+			\column{.5\textwidth}
+
+				\begin{tabular}{l|l}
+					\multicolumn{1}{c}{\textbf{Użytkownik}} & \textbf{Wiek} \\
+					\hline
+					\cellcolor{red!10}jkowalski & 24 \\
+					\hline
+					\cellcolor{red!10}mnowak & 45 \\
+					\hline
+				\end{tabular}
+
+				\vspace{10pt}
+
+				\begin{tabular}{l|l}
+					\multicolumn{1}{c}{\textbf{Przedmiot}} & \textbf{Cena} \\
+					\hline
+					\cellcolor{red!10}laptop & 2276.99 \\
+					\hline
+					\cellcolor{red!10}audiobook & 42.40 \\
+					\hline
+				\end{tabular}
+		\end{columns}
+
+		\begin{center}
+			\begin{tabular}{l|l|l|l}
+				\multicolumn{1}{c}{\textbf{Klucz}} & \multicolumn{1}{c}{\textbf{Użytkownik}} & \multicolumn{1}{c}{\textbf{Przedmiot 1}} & \textbf{Przedmiot 2} \\
+				\hline
+				\cellcolor{red!10}1 & \cellcolor{yellow!10}jkowalski & \cellcolor{yellow!10}laptop & \cellcolor{yellow!10}audiobook \\
+				\hline
+				\cellcolor{red!10}2 & \cellcolor{yellow!10}mnowak & \cellcolor{yellow!10}audiobook & \cellcolor{yellow!10}\textit{(
+				null)} \\
+				\hline
+			\end{tabular}
+		\end{center}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Koniec}
+
+		\begin{center}
+			\LARGE \textbf{Dziękuję za uwagę!}
+		\end{center}
+	\end{frame}
+
 \end{document}
