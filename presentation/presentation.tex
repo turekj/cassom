@@ -141,6 +141,8 @@
 		\end{columns}
 	\end{frame}
 
+	\section{Zależności}
+
 	\begin{frame}
 		\frametitle{Analiza problemu}
 		\framesubtitle{Modelowanie relacji wiele-do-wielu przez bibliotekę Kundera}
@@ -199,10 +201,56 @@
 				\hline
 				\cellcolor{red!10}1 & \cellcolor{yellow!10}jkowalski & \cellcolor{yellow!10}laptop & \cellcolor{yellow!10}audiobook \\
 				\hline
-				\cellcolor{red!10}2 & \cellcolor{yellow!10}mnowak & \cellcolor{yellow!10}audiobook & \cellcolor{yellow!10}\textit{(
-				null)} \\
+				\cellcolor{red!10}2 & \cellcolor{yellow!10}mnowak & \cellcolor{yellow!10}audiobook & \cellcolor{yellow!10}\textit{(null)} \\
 				\hline
 			\end{tabular}
+		\end{center}
+	\end{frame}
+
+	\section{Modelowanie obiektowe}
+
+	\begin{frame}
+		\frametitle{Modelowanie obiektowe}
+
+		\begin{center}
+			\scalebox{0.55}{
+			\begin{tikzpicture}
+				\node[draw, circle, minimum width=10cm, minimum height=10cm, fill=yellow, opacity=.5] at (-2, 0) (object-modeling) {};
+				\node[draw, circle, minimum width=8cm, minimum height=8cm, fill=pink, opacity=.5] at (2, 0) (object-relational-mapping) {};
+
+				\node[draw, circle, minimum width=2.5cm, fill=red, opacity=.5] at (-2.5, 3.5) (modeling-patterns) {};
+				\node[draw, circle, minimum width=2.5cm, fill=green, opacity=.5] at (-2.5, -3.5) (profiling-tools) {};
+				\node[draw, circle, minimum width=2.5cm, fill=brown, opacity=.5] at (-5, 1.5) (correlation-modeling) {};
+				\node[draw, circle, minimum width=2.5cm, fill=blue, opacity=.5] at (-5, -1.5) (data-migrations) {};
+				
+				\node[draw, circle, minimum width=2.5cm, fill=black, opacity=.5] at (4.5, 0.0) (relation-modeling) {};
+
+				\node[font=\LARGE] at (-9.5, 4.8) (object-modeling-text-first-line) {Modelowanie};
+				\node[font=\LARGE] at (-9.5, 4.0) {obiektowe};
+				\node[font=\LARGE] at (-9.5, 0.4) (correlation-modeling-text-first-line) {Modelowanie};
+				\node[font=\LARGE] at (-9.5, -0.4) {zależności};
+				\node[font=\LARGE] at (-9.5, 2.7) (patterns-text-first-line) {Wzorce};
+				\node[font=\LARGE] at (-9.5, 1.9) {modelowania};
+				\node[font=\LARGE] at (-9.5, -1.9) {Migracje};
+				\node[font=\LARGE] at (-9.5, -2.7) (data-migrations-text-second-line) {danych};
+				\node[font=\LARGE] at (-9.5, -4.0) {Narzędzia};
+				\node[font=\LARGE] at (-9.5, -4.8) (profiling-tools-text-second-line) {profilowania};
+
+				\node[font=\LARGE] at (3.0, 5.6) {Modelowanie};
+				\node[font=\LARGE] at (3.0, 4.8) (relation-modeling-text-second-line) {relacji};
+
+				\node[font=\LARGE] at (3.0, -4.8) (object-relational-mapping-text-first-line) {Mapowanie};
+				\node[font=\LARGE] at (3.0, -5.6) {obiektowo-relacyjne};
+
+				\draw[->, dashed, very thick] (object-modeling-text-first-line) to [out=30, in=90, looseness=0.75] (object-modeling);
+				\draw[->, dashed, very thick] (patterns-text-first-line) to [out=40, in=150, looseness=0.4] (modeling-patterns);
+				\draw[->, dashed, very thick] (correlation-modeling-text-first-line) to [out=50, in=180, looseness=0.5] (correlation-modeling);
+				\draw[->, dashed, very thick] (data-migrations-text-second-line) to [out=330, in=240, looseness=0.5] (data-migrations);
+				\draw[->, dashed, very thick] (profiling-tools-text-second-line) to [out=320, in=240, looseness=0.5] (profiling-tools);
+				\draw[->, dashed, very thick] (object-relational-mapping-text-first-line) to [out=30, in=320, looseness=1.0] (object-relational-mapping);
+				\draw[->, dashed, very thick] (relation-modeling-text-second-line) to [out=345, in=15, looseness=1.0] (relation-modeling);
+			\end{tikzpicture}
+			}
 		\end{center}
 	\end{frame}
 
