@@ -1,0 +1,78 @@
+\documentclass{beamer}
+
+% packages
+\usepackage[utf8]{inputenc}
+\usepackage[MeX]{polski}
+\usepackage{hyperref}
+\usepackage{tikz}
+	\usetikzlibrary{shadings}
+
+% theme
+\usetheme{Ilmenau}
+\definecolor{ios-top}{RGB}{30, 119, 239}
+\definecolor{ios-bottom}{RGB}{129, 243, 254}
+\definecolor{section-top}{RGB}{88, 86, 214}
+\setbeamercolor{structure}{fg=ios-top}
+\setbeamertemplate{blocks}[rounded][shadow=true]
+\setbeamertemplate{background canvas}[vertical shading][bottom=white,top=structure.fg!25]
+\setbeamertemplate{sidebar canvas left}[horizontal shading][left=white!40!black,right=black]
+\setbeamertemplate{itemize items}[triangle]
+\setbeamercolor{section in head/foot}{fg=white,bg=structure.fg!75!black}
+\setbeamercolor{alerted text}{fg=orange} 
+\setbeamercolor{title in foot}{fg=white, bg=ios-top}
+\setbeamertemplate{headline}
+{%
+  \begin{beamercolorbox}{section in head/foot}
+  \vskip2pt\insertsectionnavigationhorizontal{\textwidth}{}{}\vskip2pt
+  \end{beamercolorbox}
+}
+\setbeamertemplate{footline}
+{%
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.75\paperwidth,ht=2.25ex,dp=1ex,center]{title in foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle\hspace*{3em}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{1ex}
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+\setbeamertemplate{navigation symbols}{}
+
+% author info 
+
+\title[Mechanizm modelowania danych i mapowania obiektowego dla Apache Cassandry]{Praca Dyplomowa Magisterska}
+\subtitle{Mechanizm modelowania danych i mapowania obiektowego dla Apache Cassandry}
+\author[Jakub Turek]{Jakub Turek \\ {\small \href{mailto:J.Turek@stud.elka.pw.edu.pl}{J.Turek@stud.elka.pw.edu.pl}}}
+\date{9 października 2014r.}
+
+\begin{document}
+	\section{Wstęp}
+
+	\titlepage
+
+	\begin{frame}
+		\frametitle{Cel pracy}
+
+		System mapowania obiektowego dla bazy Apache Cassandra:
+
+		\begin{itemize}
+			\item Zachowanie różnicy w~wydajności pomiędzy relacyjnymi bazami danych a Cassandrą.
+			\item Możliwość stosowania wzorców modelowania do optymalizacji modelu.
+			\item Zbadanie możliwości zachowania zgodności z istniejącymi mechanizmami mapowania obiektowo-relacyjnego.
+		\end{itemize}
+	\end{frame}
+
+  \begin{frame}
+    \frametitle{This is the first slide}
+    %Content goes here
+  \end{frame}
+  \begin{frame}
+    \frametitle{This is the second slide}
+    \framesubtitle{A bit more information about this}
+    %More content goes here
+  \end{frame}
+% etc
+\end{document}
