@@ -266,15 +266,15 @@
 
 	\begin{frame}
 		\frametitle{Modelowanie zależności (2/2)}
-		\framesubtitle{Zależność zdenormalizowana bezzwrotna}
+		\framesubtitle{Zależność zdenormalizowana zwrotna}
 
 		\begin{center}
 			\begin{tabular}{c|c|c|c|c|c}
 				\multicolumn{1}{c}{\textbf{Użytownik}} & \multicolumn{1}{c}{\textbf{Wiek}} & \multicolumn{1}{c}{\textbf{P. 1}} & \multicolumn{1}{c}{\textbf{C. 1}} & \multicolumn{1}{c}{\textbf{P. 2}} & \multicolumn{1}{c}{\textbf{C. 2}}\\
 				\hline
-				\cellcolor{red!10}jkowalski & 24 & audiobook & 42.40 & laptop & 2276.99 \\
+				\cellcolor{red!10}jkowalski & 24 & \cellcolor{yellow!10}audiobook & 42.40 & \cellcolor{yellow!10}laptop & 2276.99 \\
 				\hline
-				\cellcolor{red!10}mnowak & 45 & audiobook & 42.40 & \textit{(null)} & \textit{(null)} \\
+				\cellcolor{red!10}mnowak & 45 & \cellcolor{yellow!10}audiobook & 42.40 & \cellcolor{yellow!10}\textit{(null)} & \textit{(null)} \\
 				\hline
 			\end{tabular}
 		\end{center}
@@ -359,6 +359,41 @@
 	\begin{frame}
 		\frametitle{Wzorce modelowania}
 
+		\textbf{Wspierane wzorce modelowania}:
+
+		\begin{itemize}
+			\item Szereg zdarzeń:
+				\begin{itemize}
+					\item Grupowanie po komponentach daty/czasu.
+					\item Wpisy z~ograniczoną pamięcią.
+				\end{itemize}
+			\item Kolejki.
+			\item Selektywna aktualizacja.
+			\item Indeksy wartości unikalnych.
+		\end{itemize}
+	\end{frame}
+
+	\section{Podsumowanie}
+
+	\begin{frame}
+		\frametitle{Podsumowanie}
+
+		\begin{itemize}
+			\item Nie wszystkie cele udało się osiągnąć:
+				\begin{itemize}
+					\item Porzucenie zgodności z~mapowaniem obiektowo-relacyjnym na rzecz efektywnego modelu.
+				\end{itemize}
+			\item Porzucenie zgodności umożliwiło rozbudowę systemu o~narzędzia zarządzania danymi:
+				\begin{itemize}
+					\item Migracje.
+					\item Profilowanie.
+				\end{itemize}
+			\item Studium przypadku pokazało znaczną przewagę mechanizmu w~stosunku do modelowania dziedziny przy pomocy CQL:
+				\begin{itemize}
+					\item Model logiczny kontra model fizyczny.
+					\item Wbudowana logika obsługi danych.
+				\end{itemize}
+		\end{itemize}
 		
 	\end{frame}
 
