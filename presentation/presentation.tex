@@ -55,7 +55,9 @@
 \date{9 października 2014r.}
 
 \begin{document}
-	\titlepage
+	\begin{frame}
+		\titlepage
+	\end{frame}
 
 	\section{Wstęp}
 
@@ -207,6 +209,106 @@
 		\end{center}
 	\end{frame}
 
+	\begin{frame}
+		\frametitle{Modelowanie zależności (1/2)}
+		\framesubtitle{Zależność znormalizowana zwrotna}
+
+		\begin{columns}[c]
+			\column{.5\textwidth}
+
+				\begin{center}
+					\begin{tabular}{l|l}
+						\multicolumn{1}{c}{\textbf{Użytkownik}} & \textbf{Wiek} \\
+						\hline
+						\cellcolor{red!10}jkowalski & 24 \\
+						\hline
+						\cellcolor{red!10}mnowak & 45 \\
+						\hline
+					\end{tabular}
+				\end{center}
+
+			\column{.5\textwidth}
+
+				\begin{center}
+					\begin{tabular}{l|l}
+						\multicolumn{1}{c}{\textbf{Przedmiot}} & \textbf{Cena} \\
+						\hline
+						\cellcolor{red!10}laptop & 2276.99 \\
+						\hline
+						\cellcolor{red!10}audiobook & 42.40 \\
+						\hline
+					\end{tabular}
+				\end{center}
+		\end{columns}
+
+		\begin{center}
+			\begin{tabular}{l|l|l}
+				\multicolumn{1}{c}{\textbf{Użytkownik}} & \multicolumn{1}{c}{\textbf{Przedmiot 1}} & \textbf{Przedmiot 2} \\
+				\hline
+				\cellcolor{red!10}jkowalski & laptop & audiobook \\
+				\hline
+				\cellcolor{red!10}mnowak & audiobook & \textit{(null)} \\
+				\hline
+			\end{tabular}
+		\end{center}
+
+		\begin{center}
+			\begin{tabular}{l|l|l}
+				\multicolumn{1}{c}{\textbf{Przedmiot}} & \multicolumn{1}{c}{\textbf{Użytkownik 1}} & \textbf{Użytkownik 2} \\
+				\hline
+				\cellcolor{red!10}audiobook & jkowalski & mnowak \\
+				\hline
+				\cellcolor{red!10}laptop & jkowalski & \textit{(null)} \\
+				\hline
+			\end{tabular}
+		\end{center}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Modelowanie zależności (2/2)}
+		\framesubtitle{Zależność zdenormalizowana bezzwrotna}
+
+		\begin{center}
+			\begin{tabular}{c|c|c|c|c|c}
+				\multicolumn{1}{c}{\textbf{Użytownik}} & \multicolumn{1}{c}{\textbf{Wiek}} & \multicolumn{1}{c}{\textbf{P. 1}} & \multicolumn{1}{c}{\textbf{C. 1}} & \multicolumn{1}{c}{\textbf{P. 2}} & \multicolumn{1}{c}{\textbf{C. 2}}\\
+				\hline
+				\cellcolor{red!10}jkowalski & 24 & audiobook & 42.40 & laptop & 2276.99 \\
+				\hline
+				\cellcolor{red!10}mnowak & 45 & audiobook & 42.40 & \textit{(null)} & \textit{(null)} \\
+				\hline
+			\end{tabular}
+		\end{center}
+
+		\begin{columns}[t]
+			\column{0.5\textwidth}
+
+				\textbf{Zalety}:
+
+				\begin{itemize}
+					\item Bardzo wysoka wydajność:
+
+					\begin{itemize}
+						\item Pełna informacja w jednym odwołaniu.
+						\item Cassandra została zaprojektowana do wielokrotnych wstawień.
+					\end{itemize}
+
+				\end{itemize}
+
+			\column{0.5\textwidth}
+
+				\textbf{Wady}:
+
+				\begin{itemize}
+					\item Problem z~aktualizacją danych. Dwie alternatywy:
+
+					\begin{itemize}
+						\item Czasochłonna aktualizacja wymagająca dodatkowych indeksów.
+						\item Niespójność danych.
+					\end{itemize}
+				\end{itemize}
+		\end{columns}
+	\end{frame}
+
 	\section{Modelowanie obiektowe}
 
 	\begin{frame}
@@ -252,6 +354,12 @@
 			\end{tikzpicture}
 			}
 		\end{center}
+	\end{frame}
+
+	\begin{frame}
+		\frametitle{Wzorce modelowania}
+
+		
 	\end{frame}
 
 	\begin{frame}
